@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Marviz</string>
+    <string name="title_activity_main">Marviz</string>
+    <string name="package_name">com.marketvizium.marviz</string>
+    <string name="custom_url_scheme">com.marketvizium.marviz</string>
+</resources>
