@@ -201,61 +201,47 @@
       <div style="height: 100px;"></div>
 
       <!-- =============================================
-           OVERLAY: sem empresa vinculada
+           OVERLAY: sem empresa selecionada -> lista para escolher ou cadastro de nova
       ============================================== -->
       <transition name="fade">
         <div v-if="!loadingEmpresas && !temEmpresaVinculada" class="fintech-overlay">
-          <div class="overlay-content">
+
+          <!-- Modo lista: já existem empresas cadastradas no perfil -->
+          <div v-if="!mostrarFormCadastro && empresasDisponiveis.length > 0" class="overlay-content overlay-content-form">
             <div class="illustration-container">
               <div class="icon-circle-main">
-                <span class="material-symbols-outlined">add_business</span>
+                <span class="material-symbols-outlined">domain</span>
               </div>
             </div>
-            
-            <h2 class="poppins-semibold">Vamos começar?</h2>
+
+            <h2 class="poppins-semibold">Selecione sua empresa</h2>
             <p class="poppins-regular text-muted">
-              Identificamos que você ainda não possui empresas cadastradas. 
-              Para acessar suas estatísticas e cotações, vincule ao menos uma empresa que você representa.
+              Encontramos empresas já cadastradas no seu perfil. Selecione qual você representa para
+              continuar, ou cadastre uma nova empresa.
             </p>
 
-            <!-- Feature list -->
-            <div class="feature-list">
-              <div class="feature-item">
-                <span class="material-symbols-outlined feature-icon">request_quote</span>
-                <div>
-                  <strong class="poppins-semibold">Cotações em tempo real</strong>
-                  <p class="poppins-regular">Receba e responda cotações de varejistas da sua região.</p>
+            <div class="empresas-select-list">
+              <div v-for="empresa in empresasDisponiveis" :key="empresa.cnpj" class="empresa-select-card">
+                <div class="empresa-select-info">
+                  <span class="empresa-select-nome poppins-medium">{{ empresa.nome_empresa }}</span>
+                  <span class="empresa-select-cnpj poppins-regular">CNPJ: {{ empresa.cnpj }}</span>
                 </div>
-              </div>
-              <div class="feature-item">
-                <span class="material-symbols-outlined feature-icon">table_chart</span>
-                <div>
-                  <strong class="poppins-semibold">Exportação e importação via Excel</strong>
-                  <p class="poppins-regular">Importe seu catálogo e exporte pedidos fechados com um clique.</p>
-                </div>
-              </div>
-              <div class="feature-item">
-                <span class="material-symbols-outlined feature-icon">trending_up</span>
-                <div>
-                  <strong class="poppins-semibold">Painel de desempenho</strong>
-                  <p class="poppins-regular">Acompanhe suas vendas, taxa de resposta e avaliações.</p>
-                </div>
-              </div>
-              <div class="feature-item">
-                <span class="material-symbols-outlined feature-icon">explore</span>
-                <div>
-                  <strong class="poppins-semibold">Visibilidade para novos clientes</strong>
-                  <p class="poppins-regular">Seja encontrado por lojistas próximos que buscam seus produtos.</p>
-                </div>
+                <button
+                  class="select-empresa-btn poppins-medium"
+                  :disabled="selecionandoCnpj === empresa.cnpj"
+                  @click="selecionarEmpresaExistente(empresa.cnpj)"
+                >
+                  <span v-if="selecionandoCnpj === empresa.cnpj">Selecionando...</span>
+                  <span v-else>Selecionar</span>
+                </button>
               </div>
             </div>
 
             <div class="action-footer" style="margin-bottom: 90px;">
-              <button class="primary-fintech-btn poppins-medium" @click="irParaCadastroEmpresa">
-                Cadastrar Minha Primeira Empresa
-                <span class="material-symbols-outlined">arrow_forward</span>
+              <button class="secondary-fintech-btn poppins-medium" @click="abrirFormCadastro">
+                <span class="material-symbols-outlined">add_business</span>
+                Cadastrar Nova Empresa
               </button>
-              <p class="support-text poppins-regular">Leva menos de 2 minutos.</p>
 
               <!-- Contato dentro do overlay -->
               <div class="overlay-support">
@@ -268,6 +254,91 @@
               </div>
             </div>
           </div>
+
+          <!-- Modo formulário: cadastro de nova empresa -->
+          <div v-else class="overlay-content overlay-content-form">
+            <div class="illustration-container">
+              <div class="icon-circle-main">
+                <span class="material-symbols-outlined">add_business</span>
+              </div>
+            </div>
+
+            <h2 class="poppins-semibold">Cadastre sua empresa</h2>
+            <p class="poppins-regular text-muted">
+              Para acessar suas estatísticas e cotações, você precisa cadastrar a empresa que você representa.
+              Preencha os dados abaixo para liberar o acesso.
+            </p>
+
+            <div class="inline-form">
+              <div class="input-group">
+                <label>Nome da Empresa <span class="required-star">*</span></label>
+                <input
+                  v-model="cadastroForm.nome_empresa"
+                  placeholder="Ex: Distribuidora Silva"
+                  class="poppins-regular"
+                />
+              </div>
+
+              <div class="input-group">
+                <label>CNPJ <span class="required-star">*</span></label>
+                <input
+                  v-model="cadastroForm.cnpjRaw"
+                  placeholder="00.000.000/0000-00"
+                  maxlength="18"
+                  inputmode="numeric"
+                  class="poppins-regular"
+                  @input="onCnpjInput"
+                />
+              </div>
+
+              <div class="input-group">
+                <label>Pedido Mínimo (R$) <span class="required-star">*</span></label>
+                <div class="currency-input-wrap">
+                  <span class="currency-prefix">R$</span>
+                  <input
+                    v-model="cadastroForm.pedidoMinimoRaw"
+                    placeholder="0,00"
+                    inputmode="numeric"
+                    class="poppins-regular"
+                    @input="onPedidoMinimoInput"
+                  />
+                </div>
+                <span class="field-hint">Valor mínimo de pedido da sua distribuidora</span>
+              </div>
+
+              <p v-if="erroCadastro" class="form-error poppins-regular">{{ erroCadastro }}</p>
+
+              <button class="primary-fintech-btn poppins-medium" :disabled="submittingCadastro" @click="cadastrarEmpresa">
+                <span v-if="submittingCadastro">Salvando...</span>
+                <template v-else>
+                  Cadastrar Empresa
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </template>
+              </button>
+
+              <button
+                v-if="empresasDisponiveis.length > 0"
+                type="button"
+                class="link-back-btn poppins-regular"
+                @click="voltarParaLista"
+              >
+                Voltar para lista de empresas
+              </button>
+
+              <p class="support-text poppins-regular">Leva menos de 2 minutos.</p>
+
+              <!-- Contato dentro do overlay -->
+              <div class="overlay-support" style="margin-bottom: 90px;">
+                <p class="poppins-regular overlay-support-title">Dúvidas? Fale com a gente:</p>
+                <div class="overlay-support-links">
+                  <a href="mailto:marketvizium@gmail.com" class="overlay-support-link">
+                    <span class="material-symbols-outlined">mail</span> marketvizium@gmail.com
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </transition>
 
@@ -338,7 +409,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { IonPage, IonContent, IonSpinner } from '@ionic/vue';
+import { IonPage, IonContent, IonSpinner, toastController } from '@ionic/vue';
 import VueApexCharts from "vue3-apexcharts";
 import { api } from '@/services/api';
 
@@ -456,6 +527,18 @@ export default defineComponent({
       temEmpresaVinculada: true, 
       temPedidoMinimo: true,
       loadingEmpresas: true,
+      empresasDisponiveis: [] as any[],
+      mostrarFormCadastro: false,
+      selecionandoCnpj: '',
+      cadastroForm: {
+        nome_empresa: '',
+        cnpjRaw: '',
+        cnpj: '',
+        pedidoMinimoRaw: '',
+        pedido_minimo: 0
+      },
+      erroCadastro: '',
+      submittingCadastro: false,
     };
   },
   methods: {
@@ -466,11 +549,14 @@ export default defineComponent({
       try {
         const responseEmpresas = await api.get('/mvpu/usuario/operacoesEmpresaVendedor/');
         const empresas = responseEmpresas.data?.data || [];
+        this.empresasDisponiveis = empresas;
 
         let verificaSelecionada = false
 
         if (empresas.length === 0) {
+          // Sem nenhuma empresa cadastrada: vai direto para o formulário de cadastro
           this.temEmpresaVinculada = false;
+          this.mostrarFormCadastro = true;
           this.loadingEmpresas = false;
           return;
         } else {
@@ -482,6 +568,7 @@ export default defineComponent({
         }
 
         if(!verificaSelecionada){
+          // Já existem empresas cadastradas, mas nenhuma selecionada: mostra a lista para escolher
           this.temEmpresaVinculada = false;
           this.loadingEmpresas = false;
           return;
@@ -527,6 +614,130 @@ export default defineComponent({
 
     irParaCadastroEmpresa() {
       this.$router.push({ name: 'MinhasEmpresas' }); 
+    },
+
+    // ── Máscaras / helpers de formulário ──────────────────────────────────
+    aplicarMascaraCnpj(valor: string): string {
+      let v = valor.replace(/\D/g, '').slice(0, 14);
+
+      if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+      }
+      if (v.length > 6) {
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+      }
+      if (v.length > 9) {
+        v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+      }
+      if (v.length > 13) {
+        v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+      }
+      return v;
+    },
+    cnpjSomenteNumeros(valor: string): string {
+      return valor.replace(/\D/g, '');
+    },
+    centavosParaExibicao(centavos: number): string {
+      return (centavos / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    },
+    extrairErroApi(error: any): string {
+      const data = error?.response?.data;
+      if (data && (data.MSG || data.COD)) {
+        return `Erro: ${data.MSG ?? 'Desconhecido'} (COD: ${data.COD ?? '?'})`;
+      }
+      return 'Erro desconhecido. Tente novamente.';
+    },
+    onCnpjInput(e: Event) {
+      const input = e.target as HTMLInputElement;
+      const masked = this.aplicarMascaraCnpj(input.value);
+
+      this.cadastroForm.cnpjRaw = masked;
+      this.cadastroForm.cnpj = this.cnpjSomenteNumeros(masked);
+      input.value = masked;
+    },
+    onPedidoMinimoInput(e: Event) {
+      const raw = (e.target as HTMLInputElement).value.replace(/\D/g, '');
+      const centavos = parseInt(raw || '0', 10);
+      const formatado = this.centavosParaExibicao(centavos);
+
+      this.cadastroForm.pedidoMinimoRaw = formatado;
+      this.cadastroForm.pedido_minimo = centavos / 100;
+      (e.target as HTMLInputElement).value = formatado;
+    },
+    async showToast(msg: string, color = 'success') {
+      const toast = await toastController.create({
+        message: msg,
+        duration: 3000,
+        color,
+        position: 'bottom'
+      });
+      await toast.present();
+    },
+    // ── Seleção de empresa já cadastrada ─────────────────────────────────
+    async selecionarEmpresaExistente(cnpj: string) {
+      this.selecionandoCnpj = cnpj;
+      try {
+        await api.post(`/mvpu/usuario/selecionarEmpresa/${cnpj}`, {});
+        this.showToast('Empresa selecionada com sucesso!');
+        await this.fetchDashboardData();
+      } catch (err: any) {
+        this.showToast(this.extrairErroApi(err), 'danger');
+      } finally {
+        this.selecionandoCnpj = '';
+      }
+    },
+    abrirFormCadastro() {
+      this.resetCadastroForm();
+      this.mostrarFormCadastro = true;
+    },
+    voltarParaLista() {
+      this.resetCadastroForm();
+      this.mostrarFormCadastro = false;
+    },
+    // ── Cadastro de nova empresa ──────────────────────────────────────────
+    async cadastrarEmpresa() {
+      this.erroCadastro = '';
+
+      if (!this.cadastroForm.nome_empresa.trim()) {
+        this.erroCadastro = 'Informe o nome da empresa.';
+        return;
+      }
+      if (this.cadastroForm.cnpj.length !== 14) {
+        this.erroCadastro = 'CNPJ inválido. Informe os 14 dígitos.';
+        return;
+      }
+      if (!this.cadastroForm.pedido_minimo || this.cadastroForm.pedido_minimo <= 0) {
+        this.erroCadastro = 'Informe o pedido mínimo da distribuidora.';
+        return;
+      }
+
+      this.submittingCadastro = true;
+      try {
+        await api.post('/mvpu/usuario/operacoesEmpresaVendedor/', {
+          cnpj: this.cadastroForm.cnpj,
+          nome_empresa: this.cadastroForm.nome_empresa,
+          pedido_minimo: this.cadastroForm.pedido_minimo
+        });
+        this.showToast('Empresa cadastrada com sucesso!');
+        this.resetCadastroForm();
+        this.mostrarFormCadastro = false;
+        this.fetchDashboardData();
+      } catch (err: any) {
+        this.erroCadastro = this.extrairErroApi(err);
+        this.showToast(this.erroCadastro, 'danger');
+      } finally {
+        this.submittingCadastro = false;
+      }
+    },
+    resetCadastroForm() {
+      this.cadastroForm = {
+        nome_empresa: '',
+        cnpjRaw: '',
+        cnpj: '',
+        pedidoMinimoRaw: '',
+        pedido_minimo: 0
+      };
+      this.erroCadastro = '';
     },
 
     navigateToDetails(quote: any) {
@@ -976,6 +1187,191 @@ export default defineComponent({
   max-width: 340px;
   width: 100%;
   padding-bottom: 40px;
+}
+
+.overlay-content-form {
+  max-width: 380px;
+}
+
+/* Formulário de cadastro inline (overlay sem empresa) */
+.inline-form {
+  text-align: left;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #64748b;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  outline: none;
+  transition: 0.3s;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.input-group input:focus {
+  border-color: #ff8049;
+}
+
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.currency-input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.currency-input-wrap:focus-within {
+  border-color: #ff8049;
+}
+
+.currency-prefix {
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-right: 1.5px solid #e2e8f0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+}
+
+.currency-input-wrap input {
+  border: none;
+  outline: none;
+  padding: 14px 12px;
+  font-size: 15px;
+  width: 100%;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.field-hint {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.form-error {
+  color: #ef4444;
+  font-size: 13px;
+  margin: 0 0 14px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  text-align: left;
+}
+
+/* Lista de empresas já cadastradas (overlay de seleção) */
+.empresas-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding-right: 2px;
+  text-align: left;
+}
+
+.empresa-select-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.empresa-select-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.empresa-select-nome {
+  font-size: 14px;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empresa-select-cnpj {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.select-empresa-btn {
+  flex-shrink: 0;
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.select-empresa-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.secondary-fintech-btn {
+  width: 100%;
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  padding: 16px 24px;
+  border-radius: 16px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.secondary-fintech-btn span {
+  font-size: 18px;
+}
+
+.link-back-btn {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 13px;
+  padding: 12px 0 0;
+  text-align: center;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .icon-circle-main {

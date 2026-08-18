@@ -250,8 +250,6 @@
         </div>
       </Dialog>
 
-      <div style="height: 180px;"></div>
-
     </ion-content>
   </ion-page>
 </template>
@@ -276,12 +274,25 @@ function extrairErroApi(error: any): string {
 
 /** Formata string numérica para máscara de CNPJ: 00.000.000/0000-00 */
 function aplicarMascaraCnpj(valor: string): string {
-  const nums = valor.replace(/\D/g, '').slice(0, 14);
-  return nums
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.?(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
+  let v = valor.replace(/\D/g, '').slice(0, 14);
+
+  if (v.length > 2) {
+    v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+  }
+
+  if (v.length > 6) {
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+  }
+
+  if (v.length > 9) {
+    v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+  }
+
+  if (v.length > 13) {
+    v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+  }
+
+  return v;
 }
 
 /** Remove máscara do CNPJ, retornando apenas dígitos. */
@@ -344,11 +355,14 @@ export default defineComponent({
     // ── Handlers de máscara ─────────────────────────────────────────────────
 
     const onCnpjInputNova = (e: Event) => {
-      const raw = (e.target as HTMLInputElement).value;
-      const masked = aplicarMascaraCnpj(raw);
+      const input = e.target as HTMLInputElement;
+
+      const masked = aplicarMascaraCnpj(input.value);
+
       novaEmpresa.value.cnpjRaw = masked;
       novaEmpresa.value.cnpj = cnpjSomenteNumeros(masked);
-      (e.target as HTMLInputElement).value = masked;
+
+      input.value = masked;
     };
 
     const onPedidoMinimoInputNova = (e: Event) => {

@@ -103,7 +103,7 @@
             class="p-button-text p-button-danger w-full logout-btn poppins-semibold"
             @click="handleLogout"
           />
-          <p class="app-version">Versão {{version}} • Market Vizium</p>
+          <p class="app-version">Versão 1.0.0 • Market Vizium</p>
         </div>
 
       </div>
@@ -121,7 +121,6 @@ import Button from 'primevue/button';
 import { useAuthStore } from '@/stores/auth';
 import { mapState } from 'pinia';
 import RefresherIonic from '../components/refresherIonic.vue';
-import pkg from '../../package.json';
 
 export default defineComponent({
   name: 'ProfilePage',
@@ -131,7 +130,6 @@ export default defineComponent({
       // Variável local que armazena os dados do usuário.
       // O template NUNCA acessa "usuario" da store diretamente,
       // evitando erro quando a store resetar para null (logout).
-      version: pkg.version,
       usuarioLocal: null as any,
     };
   },

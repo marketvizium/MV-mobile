@@ -190,13 +190,6 @@
             <p class="resend-text poppins-regular">
               Não recebeu o código? <a @click="generateAndSendCode" class="brand-link">Reenviar código</a>
             </p>
-
-            <p style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.8rem); text-align: center;">
-                Ao fazer login, você concorda com nossa 
-                <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Política de Privacidade</a> e 
-                <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Termos de Uso</a>
-                e declara estar ciente das condições de uso da plataforma.
-            </p>
           </div>
         </transition>
 

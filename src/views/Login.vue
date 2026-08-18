@@ -56,18 +56,18 @@
           </div>
   
           <div class="actions-section">
+
             <div class="margin-section-button">
               <ion-button expand="block" class="main-button poppins-semibold" @click="handleLogin">
                 Login
               </ion-button>
-              <p style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.8rem); text-align: center;">
+              <p style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.9rem); text-align: center;">
                 Ao fazer login, você concorda com nossa 
                 <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Política de Privacidade</a> e 
                 <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Termos de Uso</a>
                 e declara estar ciente das condições de uso da plataforma.
               </p>
             </div>
-            
             
             <!--
             <div class="divider">
@@ -105,8 +105,8 @@ import Password from 'primevue/password';
 import { useAuthStore } from '@/stores/auth';
 import exibeErro from '@/utils/ExibeErro';
 import { toastService } from '@/services/toast';
-import { api } from '@/services/api';
 import pkg from '../../package.json';
+import { api } from '@/services/api';
 
 export default defineComponent({
   name: 'LoginPage',
@@ -135,7 +135,6 @@ export default defineComponent({
     async handleLogin() {
 
        try{
-
 
         const payloadTermos = {
           email: this.pacoteUsuario.email,
@@ -342,7 +341,7 @@ export default defineComponent({
   margin-top: 10px;
 }
 
-.margin-bottom {
+.margin-section-button{
   margin-bottom: clamp(30px, 10vh, 80px);
 }
 
@@ -441,7 +440,6 @@ export default defineComponent({
   .main-button {
     height: 46px;
     font-size: 0.85rem;
-    
   }
 
   .margin-section-button{

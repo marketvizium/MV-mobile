@@ -53,6 +53,22 @@ export const useAuthStore = defineStore('auth', {
         },
 
         {
+          name_front: 'Pedido direto',
+          name: "PedidoDiretoVend",
+          icon: "move_group",
+          route: "/pedido-direto-v",
+          roles: [5],
+        },
+        
+        {
+          name_front: 'Marviz Trends',
+          name: "TrendsVendedor",
+          icon: "view_in_ar",
+          route: "/trends-vendedor",
+          roles: [5],
+        },
+
+        {
           name_front: 'Lojas',
           name: "Lojas",
           icon: "storefront",
@@ -79,13 +95,30 @@ export const useAuthStore = defineStore('auth', {
           route: "/dashboard-admin",
           roles: [1, 6],
         },
+        
 
         {
           name_front: 'Minhas cotações',
           name: "MinhasCotacoes",
           icon: "box",
+          route: "/cons-pedido-direto",
+          roles: [1, 6, 7],
+        },
+
+        {
+          name_front: 'Pedido direto',
+          name: "ConsPedidosDiretos",
+          icon: "move_group",
           route: "/minhas-cotacoes",
           roles: [1, 6, 7],
+        },
+
+        {
+          name_front: 'Marviz Trends',
+          name: "TrendsVarejor",
+          icon: "view_in_ar",
+          route: "/marviz-trends-var",
+          roles: [1, 6],
         },
 
         {
@@ -193,9 +226,6 @@ export const useAuthStore = defineStore('auth', {
         // =========================================
         // TOKEN
         // =========================================
-
-
-        console.log("AAAA FOI O LOGIN")
 
         this.token = data.data.token
 

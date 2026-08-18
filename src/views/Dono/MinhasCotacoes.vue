@@ -317,6 +317,7 @@ export default defineComponent({
         busca: '',
         datas: null as [Date, Date] | null,
       },
+      
 
       periodPresets: [
         { key: 'hoje',   label: 'Hoje' },

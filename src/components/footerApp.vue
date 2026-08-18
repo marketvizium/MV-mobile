@@ -31,7 +31,7 @@
       <button class="dashboard-button" v-if="dashButtonData.name" @click="handleItemClick(dashButtonData, -1)">
         <div style="display: flex; align-items: center; padding-left: 5px; font-size: 19px;">
           <i class="material-symbols-outlined botaoIcone" style="color: #FFF;">dashboard</i>
-          <div style="padding-left: 10px; font-size: 14px;">{{ dashButtonData.name }}</div>
+          <div style="padding-left: 10px; font-size: 14px;">Dashboard</div>
           <div class="novo-estilo">Novo</div>
         </div>
       </button>
@@ -43,6 +43,7 @@
         </div>
       </button>
     </div>
+    
 
     <!-- Itens do menu -->
     <div class="itens-section">
@@ -51,9 +52,10 @@
 
           <!-- Botão pai -->
           <button
-            :class="{ 'itens-style': expandindo, 'itens-style2': !expandindo }"
+            :class="{ 'itens-style': expandindo, 'itens-style2': !expandindo, 'item-bloqueado': itemBloqueado(item) }"
             :style="abaAtiva === item.name ? 'border-right: solid 5px #FF8049; background-color: #f5f5f5;' : ''"
             style="color: #000; "
+            :disabled="itemBloqueado(item)"
             @click="handleItemClick(item, index)"
           >
             <div style="display: flex; align-items: center; padding-left: 5px; font-size: 19px;">
@@ -111,45 +113,70 @@
   <!-- ══ MOBILE (<992px): Footer tab-bar ══ -->
   <ion-footer v-else class="ion-no-border">
     <div class="footer-container">
-      <div class="tab-bar-custom">
 
-        <template v-for="(menu, index) in menuPermitido" :key="menu.name">
+      <!-- Sempre 3 itens no mobile, nessa ordem: Menu | Explorar (FAB) | Perfil -->
+      <div class="tab-bar-custom tab-bar-compact">
 
-          <div style="background: transparent;" v-if="user.nivel == 5">
-            <div style="background: transparent;" v-if="index === Math.floor(menuPermitido.length / 2)" class="fab-wrapper">
-              <button class="fab-button" @click="navegar('Explorar')">
-                <span class="material-symbols-outlined">search</span>
-              </button>
-            </div>
-          </div>
-          <div style="background: transparent;" v-else-if="user.nivel == 1">
-            <div style="background: transparent;" v-if="index === Math.floor(menuPermitido.length / 2)" class="fab-wrapper">
-              <button class="fab-button" @click="navegar('ExplorarVendedores')">
-                <span class="material-symbols-outlined">search</span>
-              </button>
-            </div>
-          </div>
+        <button class="tab-btn menu-toggle-btn" @click="menuLateralAberto = true">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
 
-          <button
-            class="tab-btn"
-            :class="{ 'active': abaAtiva === menu.name }"
-            @click="navegar(menu.name)"
-          >
-          
-            <template v-if="menu.name == 'Perfil' || menu.name == 'MeuPerfil'">
-              <img v-if="user.foto_perfil" :src="user.foto_perfil" class="tab-avatar" />
-              <img v-else-if="user.foto" :src="user.foto" class="tab-avatar" />
-              <img v-else src="../assets/personagem.png" class="tab-avatar" />
-            </template>
-            <template v-else>
-              <span class="material-symbols-outlined">{{ menu.icon }}</span>
-            </template>
+        <div class="fab-wrapper" v-if="user.nivel == 5 || user.nivel == 1">
+          <button class="fab-button" @click="navegar(user.nivel == 5 ? 'Explorar' : 'ExplorarVendedores')">
+            <span class="material-symbols-outlined">search</span>
           </button>
+        </div>
 
-        </template>
+        <button
+          class="tab-btn"
+          :class="{ 'active': abaAtiva === 'Perfil' || abaAtiva === 'MeuPerfil' }"
+          @click="navegar(user.nivel == 5 ? 'Perfil' : 'MeuPerfil')"
+        >
+          <img v-if="user.foto_perfil" :src="user.foto_perfil" class="tab-avatar" />
+          <img v-else-if="user.foto" :src="user.foto" class="tab-avatar" />
+          <img v-else src="../assets/personagem.png" class="tab-avatar" />
+        </button>
 
       </div>
     </div>
+
+    <!-- ═ Menu lateral (drawer) — abre pelo botão de menu no mobile ═ -->
+    <transition name="menu-lateral-fade">
+      <div v-if="menuLateralAberto" class="menu-lateral-overlay" @click.self="menuLateralAberto = false">
+        <transition name="menu-lateral-slide" appear>
+          <div class="menu-lateral-panel">
+            <div class="menu-lateral-header">
+              <div class="menu-lateral-user">
+                <img v-if="user.foto_perfil" :src="user.foto_perfil" class="menu-lateral-avatar" />
+                <img v-else-if="user.foto" :src="user.foto" class="menu-lateral-avatar" />
+                <img v-else src="../assets/personagem.png" class="menu-lateral-avatar" />
+                <div class="user-info">
+                  <span class="nome-user-negrito poppins-extrabold">{{ nome }}</span>
+                  <span class="nome-user">{{ email }}</span>
+                </div>
+              </div>
+              <button class="menu-lateral-close" @click="menuLateralAberto = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div class="menu-lateral-itens">
+              <button
+                v-for="menu in menuPermitido"
+                :key="menu.name"
+                class="menu-lateral-item"
+                :class="{ active: abaAtiva === menu.name, 'item-bloqueado': itemBloqueado(menu) }"
+                :disabled="itemBloqueado(menu)"
+                @click="navegarLateral(menu.name)"
+              >
+                <span class="material-symbols-outlined">{{ menu.icon }}</span>
+                <span>{{ menu.name_front || menu.name }}</span>
+              </button>
+            </div>
+          </div>
+        </transition>
+      </div>
+    </transition>
   </ion-footer>
 </template>
 
@@ -169,6 +196,10 @@ import { defineComponent } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { mapState } from 'pinia';
 import headerApp from '@/components/headerApp.vue';
+import { api } from '@/services/api';
+
+// Itens do menu que exigem empresa cadastrada para o Vendedor (nivel 5)
+const ITENS_REQUER_EMPRESA = ['PedidoDiretoVend', 'TrendsVendedor'];
 
 export default defineComponent({
   name: 'footerApp',
@@ -197,6 +228,12 @@ export default defineComponent({
       email: null as string | null,
       nivel: null as number | null,
       foto_perfil: null as string | null,
+
+      menuLateralAberto: false,
+
+      // Vendedor (nivel 5): controla se possui empresa cadastrada E selecionada.
+      // Começa true para não "piscar" desabilitado antes da checagem terminar.
+      temEmpresaSelecionada: true,
     };
   },
   computed: {
@@ -218,12 +255,23 @@ export default defineComponent({
 
     // Mobile: navega e atualiza aba
     navegar(routeName: string) {
+      if (!routeName) return;
       this.abaAtiva = routeName;
       this.$router.push({ name: routeName });
     },
 
+    // Mobile compacto: navega a partir do menu lateral e fecha o drawer
+    navegarLateral(routeName: string) {
+      if (this.itemBloqueado({ name: routeName })) return;
+      this.navegar(routeName);
+      this.menuLateralAberto = false;
+    },
+
     // Desktop: navega por item do sidebar
     handleItemClick(item: any, index: number) {
+
+      if (this.itemBloqueado(item)) return;
+
       if (!this.expandindo) this.expandindo = true;
 
       if (item.children && item.children.length) {
@@ -246,17 +294,50 @@ export default defineComponent({
       this.isDesktop = e.matches;
     },
 
+    // Vendedor (nivel 5): verifica se há empresa cadastrada E selecionada.
+    // Enquanto não houver (nenhuma cadastrada OU nenhuma marcada como selecionada),
+    // os itens em ITENS_REQUER_EMPRESA ficam bloqueados.
+    async verificarEmpresaVendedor() {
+      try {
+        const response = await api.get('/mvpu/usuario/operacoesEmpresaVendedor/');
+        const empresas = response.data?.data || [];
+
+        if (empresas.length === 0) {
+          // Nenhuma empresa cadastrada
+          this.temEmpresaSelecionada = false;
+          return;
+        }
+
+        // Precisa existir pelo menos uma empresa marcada como selecionada
+        this.temEmpresaSelecionada = empresas.some((empresa: any) => empresa.selecionada);
+      } catch (err) {
+        // Em caso de falha na verificação, não bloqueia o usuário indevidamente
+        this.temEmpresaSelecionada = true;
+      }
+    },
+
+    // Indica se o item do menu deve ficar bloqueado para o vendedor sem empresa cadastrada/selecionada
+    itemBloqueado(item: any): boolean {
+      return (
+        this.nivel === 5 &&
+        !this.temEmpresaSelecionada &&
+        ITENS_REQUER_EMPRESA.includes(item.name)
+      );
+    },
+
     initSidebarData() {
       const auth = useAuthStore();
       const usuario = auth.usuario || auth.user;
       const arrayItens: any[] = [];
 
       auth.menuPermitido.forEach((item: any) => {
-        if (item.name === 'Dashboard') {
+        if (item.name === 'Dashboard' || item.name === 'DashboardAdmin') {
           this.dashButtonData = item;
         } else {
-          arrayItens.push(item);
+            arrayItens.push(item);
         }
+
+        
       });
 
       this.itens       = arrayItens;
@@ -273,6 +354,10 @@ export default defineComponent({
       this.nome        = usuario?.nome ?? null;
       this.email       = usuario?.email ?? null;
       this.foto_perfil = usuario?.foto ?? null;
+
+      if (this.nivel === 5) {
+        this.verificarEmpresaVendedor();
+      }
     }
   },
   mounted() {
@@ -299,6 +384,7 @@ export default defineComponent({
   watch: {
     '$route.name'(newVal) {
       if (newVal) this.abaAtiva = newVal as string;
+      this.menuLateralAberto = false;
     },
 
     expandir(novoValor){
@@ -501,6 +587,16 @@ export default defineComponent({
   font-style: normal;
 }
 
+/* Item de menu bloqueado (vendedor sem empresa cadastrada) */
+.item-bloqueado,
+.item-bloqueado:hover {
+  cursor: not-allowed !important;
+  opacity: 0.45;
+  pointer-events: none;
+  border-right: none !important;
+  background-color: transparent !important;
+}
+
 /* Botão colapsar/expandir sidebar */
 .toggle-btn {
   position: absolute;
@@ -534,29 +630,38 @@ export default defineComponent({
 ══════════════════════════ */
 
 .footer-container {
-  background: transparent;
-  padding: 0 16px 40px 16px;
+  background: #eef1f3;
+  /* Barra fixa "grudada" na base, sem gap flutuante. 15px de respiro pros
+     ícones + a área segura do dispositivo (notch/gesture bar). */
+  padding: 8px 16px calc(15px + env(safe-area-inset-bottom, 0px)) 16px;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .tab-bar-custom {
-  background: #eef1f3;
-  height: 72px;
-  border-radius: 35px;
+  background: transparent;
+  height: 56px;
+  border-radius: 0;
   display: flex;
   justify-content: space-around;
   align-items: center;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.tab-bar-compact {
+  justify-content: space-between;
+  padding: 0 4px;
 }
 
 .fab-wrapper {
   position: relative;
-  top: -22px;
+  /* Continua "subindo" o botão de busca como destaque visual, mas os demais
+     ícones ficam todos alinhados na mesma altura da barra. */
+  top: -18px;
 }
 
 .fab-button {
-  width: 62px;
-  height: 62px;
+  width: 56px;
+  height: 56px;
   background: #ff7f50;
   border: none;
   border-radius: 50%;
@@ -580,7 +685,11 @@ export default defineComponent({
   background: none;
   border: none;
   color: #64748b;
-  padding: 10px;
+  height: 56px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -591,6 +700,10 @@ export default defineComponent({
 
 .tab-btn.active .material-symbols-outlined {
   font-variation-settings: 'wght' 400, 'opsz' 24;
+}
+
+.menu-toggle-btn {
+  color: #1e293b;
 }
 
 .tab-avatar {
@@ -605,6 +718,116 @@ export default defineComponent({
 .active .tab-avatar {
   filter: grayscale(0%);
   border-color: #ff7f50;
+}
+
+/* ══════════════════════════
+   MENU LATERAL (<450px)
+══════════════════════════ */
+
+.menu-lateral-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 9999;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.menu-lateral-panel {
+  width: 78%;
+  max-width: 300px;
+  height: 100%;
+  background: #fff;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.menu-lateral-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-lateral-user {
+  display: flex;
+  align-items: center;
+}
+
+.menu-lateral-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.menu-lateral-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f3f5;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+
+.menu-lateral-itens {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 8px;
+}
+
+.menu-lateral-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: transparent;
+  color: #222;
+  border-radius: 10px;
+  padding: 12px 10px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-lateral-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-lateral-item.active {
+  background: #ffe8df;
+  color: #ff7f50;
+}
+
+.menu-lateral-item.active .material-symbols-outlined {
+  color: #ff7f50;
+}
+
+.menu-lateral-fade-enter-active,
+.menu-lateral-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.menu-lateral-fade-enter-from,
+.menu-lateral-fade-leave-to {
+  opacity: 0;
+}
+
+.menu-lateral-slide-enter-active,
+.menu-lateral-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+.menu-lateral-slide-enter-from,
+.menu-lateral-slide-leave-to {
+  transform: translateX(-100%);
 }
 
 .main-content {

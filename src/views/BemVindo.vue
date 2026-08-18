@@ -39,10 +39,6 @@
               Criar conta de vendedor
             </ion-button>
           </div>
-
-          <div style="display: flex; justify-content: center; color: #AAA; transform: translateY(-20px); font-size: 12px;">
-            <p style="margin: 0; padding: 0;">Versão {{version}} • Market Vizium</p>
-          </div>
         </div>
       </div>
     </ion-content>
@@ -54,7 +50,6 @@ import { defineComponent } from 'vue';
 import { IonButton, IonPage, IonContent } from '@ionic/vue';
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Pagination } from 'swiper/modules';
-import pkg from '../../package.json';
 
 // Estilos do Swiper
 import 'swiper/css';
@@ -72,7 +67,6 @@ export default defineComponent({
   data() {
     return {
       modules: [Pagination],
-      version: pkg.version,
       slides: [
         {
           description: 'Solicite, acompanhe e organize suas cotações de forma prática diretamente pelo celular.'

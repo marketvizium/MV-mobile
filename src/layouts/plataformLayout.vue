@@ -12,11 +12,13 @@
 
       <ion-content :fullscreen="true" :scroll-events="true">
 
-        <ModalAtualizacaoTermos />
+          <!--
+          <ModalAtualizacaoTermos />
+          -->
 
         <ion-router-outlet
           class="main-content"
-          style="padding-top: 90px; padding-bottom: 90px; margin-top: 90px; margin-bottom: 30px; overflow-y: auto;"
+          style="padding-top: 90px; padding-bottom: 90px; margin-top: 80px; margin-bottom: 30px; overflow-y: auto;"
         />
 
       </ion-content>
@@ -38,8 +40,7 @@ import { useAuthStore } from '@/stores/auth';
 import { mapState } from 'pinia';
 import headerApp from '@/components/headerApp.vue';
 import footerApp from '@/components/footerApp.vue';
-import ModalAtualizacaoTermos from '@/components/modalAtualizacaoTermos.vue';
-
+//import ModalAtualizacaoTermos from '@/components/modalAtualizacaoTermos.vue';
 
 export default defineComponent({
   name: 'PlataformLayout',
@@ -48,7 +49,7 @@ export default defineComponent({
     IonRouterOutlet,
     headerApp,
     footerApp,
-    ModalAtualizacaoTermos
+    //ModalAtualizacaoTermos
   },
   data() {
     return {
@@ -150,6 +151,15 @@ ion-content {
 .main-content {
   background: #FFFFFF;
   --ion-background-color: #ffffff;
+  height: calc(100vh - 90px);
+}
+
+@media(max-width: 992px){
+  .main-content {
+    background: #FFFFFF;
+    --ion-background-color: #ffffff;
+    height: calc(100vh - 170px);
+  }
 }
 
 /* Estilização do Refresher para não sobrepor o Header */

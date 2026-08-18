@@ -154,12 +154,6 @@
         </div>
       </div>
 
-      <div style="display: flex; justify-content: center;">
-          <button @click="$router.push({name: 'Privacidade'})" style="padding: 10px; background-color: #777; color: #FFF; border-radius: 7px; font-size: 15px; width: 100%; max-width: 576px">
-            Privacidade
-          </button>
-      </div>
-
       <div class="bottom-spacer"></div>
     </ion-content>
   </ion-page>
@@ -540,5 +534,5 @@ export default defineComponent({
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-.bottom-spacer { height: 150px; }
+.bottom-spacer { height: 60px; }
 </style>

@@ -1,9 +1,9 @@
 {
   "name": "marviz-app",
   "private": true,
-  "version"  : "1.1.4", 
-  "termosuso": "1.0",   
-  "polpriv"  : "1.0",   
+  "version": "1.1.4",
+  "termosuso": "1.0",
+  "polpriv": "1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -30,6 +30,7 @@
     "@primeuix/themes": "^2.0.2",
     "apexcharts": "^5.3.6",
     "axios": "^1.13.2",
+    "chart.js": "^4.5.1",
     "fast-xml-parser": "^5.8.0",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",

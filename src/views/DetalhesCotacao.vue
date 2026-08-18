@@ -140,6 +140,15 @@
             </div>
           </div>
 
+          <transition name="fade-slide">
+            <div v-if="currentQuoteData?.participando" class="participando-banner">
+              <span class="participando-banner-icon">
+                <span class="material-symbols-outlined">check_circle</span>
+              </span>
+              <span class="participando-banner-text">Você está participando dessa cotação</span>
+            </div>
+          </transition>
+
           <p v-if="currentQuoteStatus === 'finalizada'" class="closed-info">
             Cotação finalizada em {{ formatDate(currentQuoteData?.final_cotacao) }}. Apenas consulta.
           </p>
@@ -279,6 +288,8 @@
               
 
               <!-- Expandable: Produto Equivalente -->
+
+              <!--
               <div class="expandable" v-if="isQuoteOpen">
                 <button
                   class="expand-toggle"
@@ -320,6 +331,7 @@
                   </div>
                 </transition>
               </div>
+              -->
 
             </div>
           </div>
@@ -390,7 +402,9 @@
                     <th>Qtd</th>
                     <th>Tipo</th>
                     <th>Preço Ofertado</th>
-                    <th>Equivalente</th>
+                    <!--
+                      <th>Equivalente</th>
+                    -->
                     <th>Ações</th>
                   </tr>
                 </thead>
@@ -447,23 +461,25 @@
                     </td>
 
                     <!-- Produto Equivalente: chamada bem visível para abrir o modal -->
-                    <td>
-                      <button
-                        v-if="isQuoteOpen"
-                        class="equivalente-btn"
-                        :class="{ filled: tempOffers[item.id_solicitado]?.segundo_preco }"
-                        @click="abrirModalEquivalente(item)"
-                        title="Adicionar produto equivalente"
-                      >
-                        <span class="material-symbols-outlined">swap_horiz</span>
-                        <span v-if="tempOffers[item.id_solicitado]?.segundo_preco">Equivalente adicionado</span>
-                        <span v-else>Adicionar equivalente</span>
-                      </button>
-                      <span v-else-if="tempOffers[item.id_solicitado]?.nome_equivalente" class="muted">
-                        {{ tempOffers[item.id_solicitado]?.nome_equivalente }}
-                      </span>
-                      <span v-else class="muted">—</span>
-                    </td>
+                     <!--
+                     <td>
+                       <button
+                         v-if="isQuoteOpen"
+                         class="equivalente-btn"
+                         :class="{ filled: tempOffers[item.id_solicitado]?.segundo_preco }"
+                         @click="abrirModalEquivalente(item)"
+                         title="Adicionar produto equivalente"
+                       >
+                         <span class="material-symbols-outlined">swap_horiz</span>
+                         <span v-if="tempOffers[item.id_solicitado]?.segundo_preco">Equivalente adicionado</span>
+                         <span v-else>Adicionar equivalente</span>
+                       </button>
+                       <span v-else-if="tempOffers[item.id_solicitado]?.nome_equivalente" class="muted">
+                         {{ tempOffers[item.id_solicitado]?.nome_equivalente }}
+                       </span>
+                       <span v-else class="muted">—</span>
+                     </td>
+                     -->
 
                     <td>
                       <div class="row-actions">
@@ -1010,6 +1026,10 @@ export default defineComponent({
         // Find oferta_existente from current combinedItems
         const oferta = this.offers.find(o => o.id_solicitado === id);
 
+        // Se o vendedor ainda não possuía nenhuma oferta nesta cotação e este item
+        // também não tinha oferta, esta será a sua primeira participação na cotação.
+        const eraPrimeiraOferta = !oferta && this.offers.length === 0;
+
         if (oferta) {
           const payload = { atualizar: [{ ...currentTempOffer, id_oferta: oferta.id_oferta }] };
 
@@ -1037,6 +1057,17 @@ export default defineComponent({
 
               this.items = resItems.data.data || [];
               this.offers = resOffers.data.data || [];
+
+              // Primeira oferta enviada com sucesso nesta cotação: avisa o vendedor
+              // que ele agora está participando.
+              if (eraPrimeiraOferta && this.offers.length > 0) {
+                this.$toast.add({
+                  severity: 'success',
+                  summary: 'Participando da cotação',
+                  detail: 'Agora você está participando da cotação',
+                  life: 4000
+                });
+              }
 
               const newTempOffers: Record<string, any> = {};
               this.items.forEach(item => {
@@ -1819,7 +1850,42 @@ ion-content {
 .items-count { font-size: 12px; color: #999; font-weight: 500; }
 .quote-subtitle { font-size: 13px; color: #666; margin: 4px 0 0; }
 
+/* ===== BANNER "PARTICIPANDO DA COTAÇÃO" ===== */
+.participando-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04));
+  border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 0 6px;
+}
+.participando-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+}
+.participando-banner-icon .material-symbols-outlined { font-size: 16px; color: #fff; }
+.participando-banner-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #059669;
+  letter-spacing: 0.01em;
+}
 
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fade-slide-enter-from, .fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 
 .closed-info { font-size: 11px; color: #999; margin: 4px 0 12px; }
 

@@ -17,14 +17,14 @@
       </div>
     </ion-header>
 
-    <ion-content :fullscreen="true" class="console-content">
-      <div class="form-container" style="padding-bottom: 120px;">
-        <div class="title-section">
+    <ion-content :fullscreen="true" :scroll-y="false" class="console-content">
+      <div class="form-container" style="padding-bottom: 0;">
+        <div class="title-section" style="flex-shrink: 0;">
           <h2 class="poppins-semibold">Registrar Cotação</h2>
           <p class="poppins-regular muted">Crie uma nova cotação informando nome e período de validade.</p>
         </div>
 
-        <div class="form-group margin-top-20">
+        <div class="form-group margin-top-20" style="flex-shrink: 0;">
           <label class="form-label poppins-medium">Nome da cotação *</label>
           <input
             type="text"
@@ -35,7 +35,7 @@
           />
         </div>
 
-        <div class="form-row margin-top-20 calendar-section">
+        <div class="form-row margin-top-20 calendar-section" style="flex-shrink: 0;">
           <div class="form-col">
             <label class="form-label poppins-medium">Início da cotação *</label>
             <div class="input-date-wrapper">
@@ -68,7 +68,7 @@
         </div>
 
         <!-- SWITCH: Itens não respondidos -->
-        <div class="form-group margin-top-20">
+        <div class="form-group margin-top-20" style="flex-shrink: 0;">
           <div class="switch-wrapper" @click="adicionarItensNaoRespondidos = !adicionarItensNaoRespondidos">
             <div class="switch-track" :class="{ active: adicionarItensNaoRespondidos }">
               <div class="switch-thumb" :class="{ active: adicionarItensNaoRespondidos }" />
@@ -80,8 +80,8 @@
         </div>
 
         <!-- SEÇÃO: Vendedores -->
-        <div class="vendedores-section margin-top-20">
-          <div class="vendedores-header">
+        <div class="vendedores-section margin-top-20" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <div class="vendedores-header" style="flex-shrink: 0;">
             <div>
               <p class="section-title poppins-semibold">Vendedores participantes</p>
               <p class="section-subtitle poppins-regular">
@@ -94,7 +94,7 @@
             </button>
           </div>
 
-          <div class="search-box">
+          <div class="search-box" style="flex-shrink: 0;">
             <span class="material-symbols-outlined search-icon">search</span>
             <input
               v-model="busca"
@@ -144,14 +144,14 @@
           </div>
 
           <!-- Paginação -->
-          <div v-if="totalPaginas > 1" class="paginacao">
+          <div v-if="totalPaginas > 1" class="paginacao" style="flex-shrink: 0;">
             <button class="btn-pag" :disabled="paginaAtual === 1" @click="paginaAtual--">‹</button>
             <span class="pag-info poppins-regular">{{ paginaAtual }} / {{ totalPaginas }}</span>
             <button class="btn-pag" :disabled="paginaAtual === totalPaginas" @click="paginaAtual++">›</button>
           </div>
         </div>
 
-        <div class="form-actions-row margin-top-30">
+        <div class="form-actions-row margin-top-30" style="flex-shrink: 0;">
           <button
             @click="limparTudo"
             class="action-btn btn-outline-gray poppins-medium full-w height-50"
@@ -163,7 +163,7 @@
           <button
             @click="cadastrarCotacao"
             class="action-btn btn-primary poppins-medium full-w height-50"
-            :disabled="loading"
+            :disabled="loading || vendedoresSelecionados.length === 0"
           >
             <ion-spinner name="crescent" v-if="loading" class="spinner-button"></ion-spinner>
             <span v-else>Cadastrar cotação</span>
@@ -346,6 +346,17 @@ export default defineComponent({
         return
       }
 
+      if (this.vendedoresSelecionados.length === 0) {
+        this.$toast.add({
+            severity: 'info',
+            summary: 'Vendedores não selecionados',
+            detail: 'Selecione ao menos um vendedor para criar a cotação',
+            life: 3000
+            });
+
+        return
+      }
+
       
       try {
         this.loading = true
@@ -423,12 +434,14 @@ export default defineComponent({
 .console-page {
   --background: #FFF !important;
   background-color: #FFF !important;
+  height: 100%;
 }
 
 .console-content {
   --background: #FFF !important;
   background-color: #FFF !important;
   color: #000;
+  height: 100%;
 }
 
 .form-container {
@@ -436,7 +449,9 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   background-color: #FFF;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .title-section {
@@ -727,6 +742,10 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .vendedor-card {

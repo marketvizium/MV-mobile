@@ -198,11 +198,87 @@ const privateRoutes: RouteRecordRaw = {
           subtitle: 'Consulte todos os produtos cadastrados no sisema'
       }
     },
+
     {
       path: 'privacidade',
       name: 'Privacidade',
       component: () => import('@/views/Privacidade.vue'),
+      meta: {
+          title: 'Conferir privacidade',
+          subtitle: 'Confira termos e privacidade no sistema'
+      }
     },
+
+    {
+      path: 'trends-vendedor',
+      name: 'TrendsVendedor',
+      component: () => import('@/views/TrendsVendedor.vue'),
+      meta: {
+          title: 'Participe do Marviz Trends',
+          subtitle: 'Crie seu catálogo de produtos e lançamentos e aumente seu ticket médio.'
+      }
+    },
+
+    {
+      path: 'marviz-trends-var',
+      name: 'TrendsVarejor',
+      component: () => import('@/views/Dono/TrendsVarejo.vue'),
+      meta: {
+          title: 'Participe do Marviz Trends',
+          subtitle: 'Encontre as melhores ofertas de vendedores e adicione em seus pedidos ou cotações.'
+      }
+    },
+
+    {
+      path: 'cons-pedido-direto',
+      name: 'ConsPedidosDiretos',
+      component: () => import('@/views/Dono/ConsPedidosDiretos.vue'),
+      meta: {
+          title: 'Consulte seus pedidos diretos',
+          subtitle: 'Faça seus pedidos sem precisar de cotação'
+      }
+    },
+
+    {
+      path: 'criar-pedido-direto',
+      name: 'CriarPedidoDireto',
+      component: () => import('@/views/Dono/criarPedidoDireto.vue'),
+      meta: {
+          title: 'Cadastre seu pedido direto',
+          subtitle: 'Cadastre um novo pedido direto para enviar demandas sem precisar de cotação'
+      }
+    },
+
+    {
+      path: 'pedido-direto',
+      name: 'PedidoDireto',
+      component: () => import('@/views/Dono/PedidoDireto.vue'),
+      meta: {
+          title: 'Pedido direto',
+          subtitle: 'Adicione produtos cadastrados ou não cadastrados e faça seus pedidos sem precisar de cotação.'
+      }
+    },
+
+    {
+      path: 'pedido-direto-v',
+      name: 'PedidoDiretoVend',
+      component: () => import('@/views/PedidoDiretoVend.vue'),
+      meta: {
+          title: 'Pedido direto',
+          subtitle: 'Confira os pedidos diretos que você está associado e fature imediatamente sem cotar'
+      }
+    },
+
+    {
+      path: 'detalhes-pedido-direto',
+      name: 'DetalhesPedidoDireto',
+      component: () => import('@/views/DetalhesPedidoDireto.vue'),
+      meta: {
+          title: 'Pedido direto',
+          subtitle: 'Consulte seu faturamento no pedido direto'
+      }
+    },
+
   ]
 };
 

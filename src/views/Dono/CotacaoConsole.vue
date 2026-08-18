@@ -2094,7 +2094,6 @@ export default defineComponent({
     },
 
     async onBarcodeScanned(codigo) {
-      console.log('Código escaneado:', codigo)
 
       // Exemplo para catálogo
       this.searchCatalogo = codigo

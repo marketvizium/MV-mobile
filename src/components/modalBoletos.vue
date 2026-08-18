@@ -349,8 +349,6 @@ async function carregarOperacao() {
 
   } catch (e) {
 
-    console.log(e)
-
     if (e?.response?.status === 404) {
       // Nenhum boleto cadastrado ainda: estado inicial padrão (1 boleto)
       existeRegistro.value = false

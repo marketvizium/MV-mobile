@@ -1,6 +1,6 @@
 <template>
   <ion-page class="edit-profile-page">
-    <ion-content :fullscreen="true" class="ion-padding" >
+    <ion-content :fullscreen="true" class="ion-padding">
       
       <RefresherIonic />
 
@@ -106,7 +106,7 @@
         </div>
 
         <div style="display: flex; justify-content: center;">
-          <button @click="$router.push({name: 'MinhasEmpresas'})" style="padding: 10px; background-color: #ff8049; color: #FFF; border-radius: 7px; font-size: 15px; width: 100%; max-width: 576px">
+          <button @click="$router.push({name: 'MinhasEmpresas'})" style="padding: 10px; background-color: #ff8049; color: #FFF; border-radius: 7px; font-size: 15px;">
             Cadastrar nova empresa + 
           </button>
         </div>
@@ -172,15 +172,15 @@
               <div class="display-value">{{ form.estado }}</div>
               <span class="material-symbols-outlined arrow">chevron_right</span>
             </div>
-            
           </div>
         </div>
-        <div style="display: flex; justify-content: center;">
+      </div>
+
+      <div style="display: flex; justify-content: center;">
           <button @click="$router.push({name: 'Privacidade'})" style="padding: 10px; background-color: #777; color: #FFF; border-radius: 7px; font-size: 15px; width: 100%; max-width: 576px">
             Privacidade
           </button>
         </div>
-      </div>
 
       <div class="bottom-spacer"></div>
     </ion-content>

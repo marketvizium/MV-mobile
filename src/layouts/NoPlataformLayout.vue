@@ -2,9 +2,11 @@
   <div class="ion-page"> 
     
     <transition name="fade">
-      <div v-if="carregandoMarketVizium" class="loading-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <div v-if="carregandoMarketVizium" class="loading-overlay">
         <img src="../assets/logo.png" alt="Logo" class="pulse-logo" style="width: 150px;" >
-        <p class="loading-text">Carregando <span>Marviz</span>...</p>
+        <div class="loading-content">
+          <p class="loading-text">Carregando <span>Marviz</span>...</p>
+        </div>
       </div>
     </transition>
 

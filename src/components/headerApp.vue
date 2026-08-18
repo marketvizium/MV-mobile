@@ -161,7 +161,6 @@ export default defineComponent({
 
     toggleDropdown() {
       this.dropdownAberto = !this.dropdownAberto;
-      console.log(this.dropdownAberto)
     },
 
     fecharDropdown(e: MouseEvent) {

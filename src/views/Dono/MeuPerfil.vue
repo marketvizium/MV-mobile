@@ -134,7 +134,7 @@
             class="p-button-text p-button-danger w-full logout-btn poppins-semibold"
             @click="handleLogout"
           />
-          <p class="app-version">Versão {{version}} • Market Vizium</p>
+          <p class="app-version">Versão 1.0.0 • Market Vizium</p>
         </div>
 
       </div>
@@ -153,7 +153,6 @@ import { useAuthStore } from '@/stores/auth';
 import { mapState } from 'pinia';
 import personagem from '@/assets/personagem.png';
 import RefresherIonic from '@/components/refresherIonic.vue';
-import pkg from '../../../package.json';
 
 export default defineComponent({
   name: 'MeuPerfil',
@@ -165,7 +164,6 @@ export default defineComponent({
       // evitando erro quando a store resetar para null (logout).
       usuarioLocal: null as any,
       personagem,
-      version: pkg.version,
     };
   },
   computed: {

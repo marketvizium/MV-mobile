@@ -168,11 +168,11 @@ export default defineComponent({
           versao_priv: this.versaoPrivacidade,
         };
 
-        const termosAceitos = await api.post('/mvpu/usuario/conTermos/', payloadTermos);
+        //const termosAceitos = await api.post('/mvpu/usuario/conTermos/', payloadTermos);
 
-        if (!termosAceitos.data.data.length) {
-          this.isOpen = true;
-        }
+        //if (!termosAceitos.data.data.length) {
+        //  this.isOpen = true;
+        //}
       } catch (e) {
         // Falha silenciosa na verificação — não bloqueia o usuário indevidamente
       } finally {
@@ -215,7 +215,6 @@ export default defineComponent({
     },
   },
   mounted() {
-    console.log("AOBA")
     this.verificarTermos();
   },
 });
