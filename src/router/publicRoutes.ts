@@ -30,9 +30,16 @@ const noPlataformRoutes: RouteRecordRaw = {
       name: 'SelecionarLoja',
       component: () => import('@/views/Dono/SelecionarLoja.vue')
     },
-    { path: '/esqueci-senha', 
+    { 
+      path: '/esqueci-senha', 
       name: 'EsqueciSenha', 
-      component: () => import('@/views/EsqueciSenha.vue') }
+      component: () => import('@/views/EsqueciSenha.vue') 
+    },
+    { 
+      path: '/selecionar-dispositivo', 
+      name: 'SelecionarDispositivo', 
+      component: () => import('@/views/TelasColetor/SelecionarDispositivo.vue') 
+    }
   ]
 };
 

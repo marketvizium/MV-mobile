@@ -17,139 +17,239 @@
       </div>
     </ion-header>
 
-    <ion-content :fullscreen="true" :scroll-y="false" class="console-content">
+    <ion-content :fullscreen="true"  class="console-content">
       <div class="form-container" style="padding-bottom: 0;">
-        <div class="title-section" style="flex-shrink: 0;">
-          <h2 class="poppins-semibold">Registrar Cotação</h2>
-          <p class="poppins-regular muted">Crie uma nova cotação informando nome e período de validade.</p>
-        </div>
 
-        <div class="form-group margin-top-20" style="flex-shrink: 0;">
-          <label class="form-label poppins-medium">Nome da cotação *</label>
-          <input
-            type="text"
-            maxlength="27"
-            placeholder="Ex: Cotação de Alimentos Nov/26"
-            v-model="cotacao.nome_cotacao"
-            class="form-input poppins-regular"
-          />
-        </div>
-
-        <div class="form-row margin-top-20 calendar-section" style="flex-shrink: 0;">
-          <div class="form-col">
-            <label class="form-label poppins-medium">Início da cotação *</label>
-            <div class="input-date-wrapper">
-              <Calendar
-                v-model="inicioCotacaoDate"
-                showTime
-                hourFormat="24"
-                dateFormat="dd/mm/yy"
-                placeholder="Selecione data e hora"
-                class="w-full prime-calendar"
-                inputClass="form-input poppins-regular input-date w-full"
-              />
-            </div>
+        <div style="overflow-y: scroll;">
+          <div class="title-section" style="flex-shrink: 0;">
+            <h2 class="poppins-semibold">Registrar Cotação</h2>
+            <p class="poppins-regular muted">Crie uma nova cotação informando nome e período de validade.</p>
           </div>
-
-          <div class="form-col">
-            <label class="form-label poppins-medium">Final da cotação *</label>
-            <div class="input-date-wrapper">
-              <Calendar
-                v-model="fimCotacaoDate"
-                showTime
-                hourFormat="24"
-                dateFormat="dd/mm/yy"
-                placeholder="Selecione data e hora"
-                class="w-full prime-calendar"
-                inputClass="form-input poppins-regular input-date w-full"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- SWITCH: Itens não respondidos -->
-        <div class="form-group margin-top-20" style="flex-shrink: 0;">
-          <div class="switch-wrapper" @click="adicionarItensNaoRespondidos = !adicionarItensNaoRespondidos">
-            <div class="switch-track" :class="{ active: adicionarItensNaoRespondidos }">
-              <div class="switch-thumb" :class="{ active: adicionarItensNaoRespondidos }" />
-            </div>
-            <span class="switch-label poppins-regular">
-              Adicionar produtos não respondidos de cotações anteriores (últimos 30 dias)
-            </span>
-          </div>
-        </div>
-
-        <!-- SEÇÃO: Vendedores -->
-        <div class="vendedores-section margin-top-20" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
-          <div class="vendedores-header" style="flex-shrink: 0;">
-            <div>
-              <p class="section-title poppins-semibold">Vendedores participantes</p>
-              <p class="section-subtitle poppins-regular">
-                {{ vendedoresSelecionados.length }} de {{ vendedoresFiltrados.length }} selecionado(s)
-              </p>
-            </div>
-
-            <button class="btn-sel-todos poppins-medium" @click="toggleSelecionarTodos">
-              {{ todosSelecionados ? 'Desmarcar todos' : 'Selecionar todos' }}
-            </button>
-          </div>
-
-          <div class="search-box" style="flex-shrink: 0;">
-            <span class="material-symbols-outlined search-icon">search</span>
+  
+          <div class="form-group margin-top-20" style="flex-shrink: 0;">
+            <label class="form-label poppins-medium">Nome da cotação *</label>
             <input
-              v-model="busca"
-              class="search-input poppins-regular"
-              placeholder="Buscar por nome, empresa, CNPJ..."
+              type="text"
+              maxlength="27"
+              placeholder="Ex: Cotação de Alimentos Nov/26"
+              v-model="cotacao.nome_cotacao"
+              class="form-input poppins-regular"
             />
           </div>
-
-          <!-- Loading -->
-          <div v-if="loadingVendedores" class="loading-vendedores poppins-regular">
-            Carregando vendedores...
-          </div>
-
-          <!-- Lista -->
-          <div v-else class="vendedores-list">
-            <div
-              v-for="vendedor in vendedoresPaginados"
-              :key="vendedor.id_vendedor"
-              class="vendedor-card"
-              :class="{ selecionado: vendedoresSelecionados.includes(vendedor.id_vendedor) }"
-              @click="toggleVendedor(vendedor.id_vendedor)"
-            >
-              <div class="check-circle" :class="{ checked: vendedoresSelecionados.includes(vendedor.id_vendedor) }">
-                <span v-if="vendedoresSelecionados.includes(vendedor.id_vendedor)" class="material-symbols-outlined check-icon">check</span>
-              </div>
-
-              <div class="vendedor-info">
-                <div class="vendedor-top">
-                  <span class="vendedor-nome poppins-medium">{{ vendedor.nome }}</span>
-                  <span class="vendedor-empresa poppins-medium">{{ vendedor.nome_empresa }}</span>
-                </div>
-                <div class="vendedor-bottom">
-                  <span class="vendedor-cnpj poppins-regular">CNPJ: {{ formatarCNPJ(vendedor.cnpj) }}</span>
-                  <span v-if="vendedor.cidade" class="vendedor-cidade poppins-regular">{{ vendedor.cidade }}{{ vendedor.estado ? ` / ${vendedor.estado}` : '' }}</span>
-                </div>
-              </div>
-
-              <div class="vendedor-taxa">
-                <span class="taxa-valor poppins-semibold">{{ vendedor.taxa_resposta ?? 0 }}%</span>
-                <span class="taxa-label poppins-regular">resposta</span>
+  
+          <div class="form-row margin-top-20 calendar-section" style="flex-shrink: 0;">
+            <div class="form-col">
+              <label class="form-label poppins-medium">Início da cotação *</label>
+              <div class="input-date-wrapper">
+                <Calendar
+                  v-model="inicioCotacaoDate"
+                  showTime
+                  hourFormat="24"
+                  dateFormat="dd/mm/yy"
+                  placeholder="Selecione data e hora"
+                  class="w-full prime-calendar"
+                  inputClass="form-input poppins-regular input-date w-full"
+                />
               </div>
             </div>
-
-            <div v-if="vendedoresFiltrados.length === 0" class="sem-vendedores poppins-regular">
-              Nenhum vendedor encontrado.
+  
+            <div class="form-col">
+              <label class="form-label poppins-medium">Final da cotação *</label>
+              <div class="input-date-wrapper">
+                <Calendar
+                  v-model="fimCotacaoDate"
+                  showTime
+                  hourFormat="24"
+                  dateFormat="dd/mm/yy"
+                  placeholder="Selecione data e hora"
+                  class="w-full prime-calendar"
+                  inputClass="form-input poppins-regular input-date w-full"
+                />
+              </div>
             </div>
           </div>
-
-          <!-- Paginação -->
-          <div v-if="totalPaginas > 1" class="paginacao" style="flex-shrink: 0;">
-            <button class="btn-pag" :disabled="paginaAtual === 1" @click="paginaAtual--">‹</button>
-            <span class="pag-info poppins-regular">{{ paginaAtual }} / {{ totalPaginas }}</span>
-            <button class="btn-pag" :disabled="paginaAtual === totalPaginas" @click="paginaAtual++">›</button>
+  
+          <!-- OBSERVAÇÃO -->
+          <div class="form-group margin-top-20" style="flex-shrink: 0;">
+            <div class="obs-header">
+              <label class="form-label poppins-medium" style="margin-bottom: 0;">Observação (opcional)</label>
+              <span class="obs-contador poppins-regular" :class="{ limite: (cotacao.observacao || '').length >= 255 }">
+                {{ (cotacao.observacao || '').length }}/255
+              </span>
+            </div>
+            <textarea
+              v-model="cotacao.observacao"
+              maxlength="255"
+              rows="2"
+              class="obs-textarea poppins-regular"
+              placeholder="Deixe uma observação para os vendedores sobre esta cotação..."
+            />
+          </div>
+  
+          <!-- CONDIÇÃO DE PAGAMENTO (BOLETOS) -->
+          <div class="form-group margin-top-20" style="flex-shrink: 0;">
+            <label class="form-label poppins-medium">Condição de pagamento (opcional)</label>
+            <button type="button" class="condicao-btn" @click="abrirModalBoletos">
+              <div class="condicao-btn-info">
+                <span class="material-symbols-outlined condicao-btn-icon">receipt_long</span>
+                <span class="condicao-btn-texto poppins-regular" :class="{ vazio: !cotacao.prazo_boleto }">
+                  {{ resumoCondicaoPagamento }}
+                </span>
+              </div>
+              <span class="material-symbols-outlined condicao-btn-seta">chevron_right</span>
+            </button>
+          </div>
+  
+         
+          <!-- SWITCH: Itens não respondidos -->
+          <div class="form-group margin-top-20" style="flex-shrink: 0;">
+            <div class="switch-wrapper" @click="adicionarItensNaoRespondidos = !adicionarItensNaoRespondidos">
+              <div class="switch-track" :class="{ active: adicionarItensNaoRespondidos }">
+                <div class="switch-thumb" :class="{ active: adicionarItensNaoRespondidos }" />
+              </div>
+              <span class="switch-label poppins-regular">
+                Adicionar produtos não respondido na cotação anterior
+              </span>
+            </div>
+          </div>
+  
+          <!-- SEÇÃO: Vendedores -->
+          <div class="vendedores-section margin-top-20" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="vendedores-header" style="flex-shrink: 0;">
+              <div>
+                <p class="section-title poppins-semibold">Vendedores participantes</p>
+                <p class="section-subtitle poppins-regular">
+                  {{ vendedoresSelecionados.length }} de {{ vendedoresFiltrados.length }} selecionado(s)
+                </p>
+              </div>
+  
+              <button class="btn-sel-todos poppins-medium" @click="toggleSelecionarTodos">
+                {{ todosSelecionados ? 'Desmarcar todos' : 'Selecionar todos' }}
+              </button>
+            </div>
+  
+            <div class="search-box" style="flex-shrink: 0;">
+              <span class="material-symbols-outlined search-icon">search</span>
+              <input
+                v-model="busca"
+                class="search-input poppins-regular"
+                placeholder="Buscar por nome, empresa, CNPJ..."
+              />
+            </div>
+  
+            <!-- Loading -->
+            <div v-if="loadingVendedores" class="loading-vendedores poppins-regular">
+              Carregando vendedores...
+            </div>
+  
+            <!-- Lista -->
+            <div v-else class="vendedores-list">
+              <div
+                v-for="vendedor in vendedoresPaginados"
+                :key="vendedor.id_vendedor"
+                class="vendedor-card"
+                :class="{ selecionado: vendedoresSelecionados.includes(vendedor.id_vendedor) }"
+                @click="toggleVendedor(vendedor.id_vendedor)"
+              >
+                <div class="check-circle" :class="{ checked: vendedoresSelecionados.includes(vendedor.id_vendedor) }">
+                  <span v-if="vendedoresSelecionados.includes(vendedor.id_vendedor)" class="material-symbols-outlined check-icon">check</span>
+                </div>
+  
+                <div class="vendedor-info">
+                  <div class="vendedor-top">
+                    <span class="vendedor-nome poppins-medium">{{ vendedor.nome }}</span>
+                    <span class="vendedor-empresa poppins-medium">{{ vendedor.nome_empresa }}</span>
+                  </div>
+                  <div class="vendedor-bottom">
+                    <span class="vendedor-cnpj poppins-regular">CNPJ: {{ formatarCNPJ(vendedor.cnpj) }}</span>
+                    <span v-if="vendedor.cidade" class="vendedor-cidade poppins-regular">{{ vendedor.cidade }}{{ vendedor.estado ? ` / ${vendedor.estado}` : '' }}</span>
+                  </div>
+                </div>
+  
+                <div class="vendedor-taxa">
+                  <span class="taxa-valor poppins-semibold">{{ vendedor.taxa_resposta ?? 0 }}%</span>
+                  <span class="taxa-label poppins-regular">resposta</span>
+                </div>
+              </div>
+  
+              <div v-if="vendedoresFiltrados.length === 0" class="sem-vendedores poppins-regular">
+                Nenhum vendedor encontrado.
+              </div>
+            </div>
+  
+            <!-- Paginação -->
+            <div v-if="totalPaginas > 1" class="paginacao" style="flex-shrink: 0;">
+              <button class="btn-pag" :disabled="paginaAtual === 1" @click="paginaAtual--">‹</button>
+              <span class="pag-info poppins-regular">{{ paginaAtual }} / {{ totalPaginas }}</span>
+              <button class="btn-pag" :disabled="paginaAtual === totalPaginas" @click="paginaAtual++">›</button>
+            </div>
           </div>
         </div>
+
+         <!-- MODAL: Condição de pagamento -->
+        <Teleport to="body">
+          <div v-if="modalBoletoAberto" class="boleto-modal-overlay" @click.self="fecharModalBoletos">
+            <div class="boleto-modal">
+              <div class="boleto-modal-header">
+                <h3 class="poppins-semibold">Condição de pagamento</h3>
+                <button type="button" class="boleto-modal-close" @click="fecharModalBoletos">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div class="boleto-modal-body">
+                <!-- Passo 1: quantidade de boletos -->
+                <p class="boleto-step-title poppins-semibold">1. Quantos boletos?</p>
+                <div class="qtd-boletos-group">
+                  <button
+                    v-for="qtd in [1, 2, 3]"
+                    :key="qtd"
+                    type="button"
+                    class="qtd-boleto-btn poppins-semibold"
+                    :class="{ active: qtdBoletosTemp === qtd }"
+                    @click="selecionarQtdBoletos(qtd)"
+                  >
+                    {{ qtd }} {{ qtd === 1 ? 'boleto' : 'boletos' }}
+                  </button>
+                </div>
+
+                <!-- Passo 2: prazo (combinação já pronta) -->
+                <div v-if="qtdBoletosTemp">
+                  <p class="boleto-step-title poppins-semibold">2. Selecione o prazo</p>
+                  <div class="prazo-radio-list">
+                    <div
+                      v-for="opcao in opcoesPrazoAtual"
+                      :key="opcao"
+                      class="prazo-radio-item poppins-regular"
+                      @click="selecionarPrazo(opcao)"
+                    >
+                      <span>{{ opcao }} dias</span>
+                      <span class="radio-circle" :class="{ checked: prazoSelecionadoTemp === opcao }" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="boleto-modal-footer">
+                <p class="boleto-resumo poppins-semibold">{{ resumoModal }}</p>
+                <div class="boleto-modal-actions">
+                  <button type="button" class="boleto-btn-cancelar poppins-medium" @click="fecharModalBoletos">
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="boleto-btn-confirmar poppins-medium"
+                    :disabled="!qtdBoletosTemp || !prazoSelecionadoTemp"
+                    @click="confirmarCondicaoPagamento"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Teleport>
+
 
         <div class="form-actions-row margin-top-30" style="flex-shrink: 0;">
           <button
@@ -175,7 +275,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, Teleport } from 'vue'
 import { 
   IonPage, 
   IonHeader,
@@ -208,11 +308,19 @@ export default defineComponent({
       loadingVendedores: false,
       auth: null as any,
       cotacao: {
-        nome_cotacao: null as string | null
+        nome_cotacao: null as string | null,
+        observacao: '' as string,
+        qtd_boletos: null as number | null,
+        prazo_boleto: null as string | null
       },
       // Tipagem alterada para Date pois o PrimeVue retorna objetos Date
       inicioCotacaoDate: null as Date | null,
       fimCotacaoDate: null as Date | null,
+
+      // Modal condição de pagamento (boletos)
+      modalBoletoAberto: false,
+      qtdBoletosTemp: null as number | null,
+      prazoSelecionadoTemp: null as string | null,
 
       // Flag itens não respondidos
       adicionarItensNaoRespondidos: false,
@@ -250,6 +358,52 @@ export default defineComponent({
     todosSelecionados (): boolean {
       if (this.vendedoresFiltrados.length === 0) return false
       return this.vendedoresFiltrados.every((v: any) => this.vendedoresSelecionados.includes(v.id_vendedor))
+    },
+
+    // Bases de prazo (múltiplos de 7) usadas para montar as combinações, até ~80 dias
+    basesPrazo (): number[] {
+      const bases: number[] = []
+      for (let dias = 7; dias <= 70; dias += 7) {
+        bases.push(dias)
+      }
+      return bases
+    },
+
+    // Combinações prontas de prazo para a quantidade de boletos escolhida no modal
+    // Ex.: 1 boleto → ['7', '14', '21', ...] | 2 boletos → ['7/14', '14/21', '21/28', ...]
+    opcoesPrazoAtual (): string[] {
+      if (!this.qtdBoletosTemp) return []
+      return this.basesPrazo.map(base => {
+        const combinacao: number[] = []
+        for (let i = 0; i < (this.qtdBoletosTemp as number); i++) {
+          combinacao.push(base + (i * 7))
+        }
+        return combinacao.join('/')
+      })
+    },
+
+    // Texto exibido no botão da tela principal
+    resumoCondicaoPagamento (): string {
+      if (!this.cotacao.qtd_boletos || !this.cotacao.prazo_boleto) {
+        return 'Selecionar condição de pagamento'
+      }
+      const qtd = this.cotacao.qtd_boletos
+      const label = qtd === 1 ? 'boleto' : 'boletos'
+      return `${qtd} ${label} • ${this.cotacao.prazo_boleto.split('/').join('/')} dias`
+    },
+
+    // Texto exibido no rodapé do modal enquanto o usuário seleciona
+    resumoModal (): string {
+      if (!this.qtdBoletosTemp) {
+        return 'Selecione a quantidade de boletos para começar.'
+      }
+      if (!this.prazoSelecionadoTemp) {
+        return 'Selecione o prazo desejado.'
+      }
+      const qtd = this.qtdBoletosTemp
+      const label = qtd === 1 ? 'boleto' : 'boletos'
+      const dias = this.prazoSelecionadoTemp.split('/').join(' e ')
+      return `Condição de pagamento: ${qtd} ${label} — ${dias} dias`
     }
   },
 
@@ -262,12 +416,47 @@ export default defineComponent({
   methods: {
     limparTudo() {
       this.cotacao.nome_cotacao = null
+      this.cotacao.observacao = ''
+      this.cotacao.qtd_boletos = null
+      this.cotacao.prazo_boleto = null
       this.inicioCotacaoDate = null
       this.fimCotacaoDate = null
       this.adicionarItensNaoRespondidos = false
       this.vendedoresSelecionados = []
       this.busca = ''
       this.paginaAtual = 1
+      this.qtdBoletosTemp = null
+      this.prazoSelecionadoTemp = null
+    },
+
+    abrirModalBoletos () {
+      // Pré-carrega o modal com a condição já salva, se houver
+      this.qtdBoletosTemp = this.cotacao.qtd_boletos || null
+      this.prazoSelecionadoTemp = this.cotacao.prazo_boleto || null
+      this.modalBoletoAberto = true
+    },
+
+    fecharModalBoletos () {
+      this.modalBoletoAberto = false
+    },
+
+    selecionarQtdBoletos (qtd: number) {
+      this.qtdBoletosTemp = qtd
+      // Ao trocar a quantidade, a combinação anterior não é mais válida
+      this.prazoSelecionadoTemp = null
+    },
+
+    selecionarPrazo (opcao: string) {
+      this.prazoSelecionadoTemp = opcao
+    },
+
+    confirmarCondicaoPagamento () {
+      if (!this.qtdBoletosTemp || !this.prazoSelecionadoTemp) return
+
+      this.cotacao.qtd_boletos = this.qtdBoletosTemp
+      this.cotacao.prazo_boleto = this.prazoSelecionadoTemp
+
+      this.modalBoletoAberto = false
     },
 
     formatarCNPJ (cnpj: string): string {
@@ -389,6 +578,9 @@ export default defineComponent({
 
         const payload = {
           nome_cotacao: this.cotacao.nome_cotacao,
+          observacao: this.cotacao.observacao,
+          qtd_boletos: this.cotacao.qtd_boletos,
+          prazo_boleto: this.cotacao.prazo_boleto,
           // Agora podemos chamar o getTime() diretamente no objeto Date
           inicio_cotacao: this.inicioCotacaoDate.getTime(),
           final_cotacao: this.fimCotacaoDate.getTime(),
@@ -434,14 +626,14 @@ export default defineComponent({
 .console-page {
   --background: #FFF !important;
   background-color: #FFF !important;
-  height: 100%;
+  overflow-y: scroll;
 }
 
 .console-content {
   --background: #FFF !important;
   background-color: #FFF !important;
   color: #000;
-  height: 100%;
+
 }
 
 .form-container {
@@ -615,6 +807,292 @@ export default defineComponent({
 .margin-top-20 { margin-top: 20px; }
 .margin-top-30 { margin-top: 30px; }
 
+/* === OBSERVAÇÃO === */
+.obs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.obs-contador {
+  font-size: 11px;
+  color: #888 !important;
+}
+
+.obs-contador.limite {
+  color: #e05353 !important;
+}
+
+.obs-textarea {
+  width: 100%;
+  background-color: #f0f0f0 !important;
+  border: 1px solid rgb(177, 177, 177) !important;
+  color: #000 !important;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  resize: none;
+  transition: border-color 0.3s ease;
+}
+
+.obs-textarea:focus {
+  border-color: #FF8049 !important;
+}
+
+.obs-textarea::placeholder {
+  color: #474747 !important;
+}
+
+/* === CONDIÇÃO DE PAGAMENTO (BOTÃO) === */
+.condicao-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f0f0f0 !important;
+  border: 1px solid rgb(177, 177, 177) !important;
+  border-radius: 10px;
+  padding: 12px 14px;
+  height: 48px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.condicao-btn:active {
+  border-color: #FF8049 !important;
+}
+
+.condicao-btn-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.condicao-btn-icon {
+  color: #FF8049 !important;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.condicao-btn-texto {
+  font-size: 15px;
+  color: #000 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.condicao-btn-texto.vazio {
+  color: #474747 !important;
+}
+
+.condicao-btn-seta {
+  color: #999 !important;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* === MODAL BOLETOS === */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.boleto-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.boleto-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.boleto-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.boleto-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #222 !important;
+}
+
+.boleto-modal-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #999 !important;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+}
+
+.boleto-modal-close:active {
+  color: #555 !important;
+}
+
+.boleto-modal-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.boleto-step-title {
+  font-size: 15px;
+  color: #444 !important;
+  margin: 0 0 10px;
+}
+
+.boleto-modal-body > div:not(:last-child) {
+  margin-bottom: 22px;
+}
+
+/* Passo 1: quantidade de boletos */
+.qtd-boletos-group {
+  display: flex;
+  gap: 8px;
+}
+
+.qtd-boleto-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  color: #555 !important;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.qtd-boleto-btn.active {
+  border-color: #FF8049;
+  background: #FF8049 !important;
+  color: #fff !important;
+}
+
+/* Passo 2: lista de rádio de prazos */
+.prazo-radio-list {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.prazo-radio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2f2f2;
+  cursor: pointer;
+  font-size: 15px;
+  color: #333 !important;
+  transition: background 0.15s;
+}
+
+.prazo-radio-item:last-child {
+  border-bottom: none;
+}
+
+.radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.radio-circle.checked {
+  border-color: #FF8049;
+}
+
+.radio-circle.checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #FF8049;
+}
+
+.boleto-modal-footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.boleto-resumo {
+  font-size: 12.5px;
+  color: #000 !important;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.boleto-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.boleto-btn-cancelar {
+  flex: 1;
+  height: 42px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #666 !important;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.boleto-btn-confirmar {
+  flex: 2;
+  height: 42px;
+  border-radius: 6px;
+  border: none;
+  background: #FF8049 !important;
+  color: #fff !important;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.boleto-btn-confirmar:disabled {
+  background: #ffb894 !important;
+  cursor: not-allowed;
+}
+
 /* === SWITCH === */
 .switch-wrapper {
   display: flex;
@@ -743,7 +1221,7 @@ export default defineComponent({
   flex-direction: column;
   gap: 8px;
   flex: 1;
-  min-height: 0;
+  min-height: 400px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

@@ -2,94 +2,144 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div class="login-wrapper">
-        
 
+        <!-- LEFT: marketing / visual panel — desktop only -->
+        <div class="visual">
+          <div
+            v-for="(slide, i) in slidesData"
+            :key="'bg' + i"
+            class="bg-layer"
+            :style="{ backgroundImage: 'url(' + slide.img + ')', opacity: i === current ? 1 : 0 }"
+          ></div>
+          <div class="visual-overlay"></div>
+
+
+          <div class="caption-wrap">
+            <div class="slides">
+              <div
+                v-for="(slide, i) in slidesData"
+                :key="'slide' + i"
+                class="slide"
+                :class="{ active: i === current }"
+              >
+                <span class="material-symbols-outlined slide-icon">{{ slide.icon }}</span>
+                <h2>{{ slide.title }}</h2>
+                <p>{{ slide.desc }}</p>
+              </div>
+            </div>
+
+            <div class="dots">
+              <div
+                v-for="(slide, i) in slidesData"
+                :key="'dot' + i"
+                class="dot"
+                :class="{ active: i === current, done: i < current }"
+                :style="{ '--dur': slideDuration + 'ms' }"
+                @click="goTo(i)"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: login form -->
         <div class="content-inner">
-          <div class="content-top">
-            <div class="back-row" @click="$router.push({name: 'BemVindo'})">
-              <div class="back-btn">
-                <span class="material-symbols-outlined back-icon">arrow_back_ios</span>
-              </div>
-              <div class="back-text">
-                Voltar
-              </div>
-            </div>
-            <div class="header-section">
-              <h1 class="poppins-bold title">Login</h1>
-              <p class="poppins-regular subtitle">Seja bem-vindo ao nosso app.</p>
-            </div>
-    
-            <div class="form-section">
-              <div class="field">
-                <label for="email" class="poppins-medium label">Endereço de Email</label>
-                <InputText 
-                  id="email" 
-                  type="email"
-                  v-model="pacoteUsuario.email" 
-                  placeholder="Ex: usuarioexemplo@com" 
-                  class="w-full custom-input poppins-regular" 
-                  style="width: 100%;"
-                />
-              </div>
-    
-              <div class="field">
-                <div class="label-row">
-                  <label for="password" class="poppins-medium label">Senha</label>
-                  <a @click="$router.push({name: 'EsqueciSenha'})" class="forgot-link poppins-regular">Esqueceu a senha?</a>
+
+          <div>
+
+          </div>
+
+          <div>
+
+            <div class="content-top">
+              <div class="back-row" @click="$router.push({name: 'BemVindo'})">
+                <div class="back-btn">
+                  <span class="material-symbols-outlined back-icon">arrow_back_ios</span>
                 </div>
-                <Password 
-                  id="password" 
-                  v-model="pacoteUsuario.passe_usuario" 
-                  toggleMask 
-                  :feedback="false" 
-                  placeholder="••••••••"
-                  fluid
-                  class="custom-password"
-                />
+                <div class="back-text">
+                  Voltar
+                </div>
               </div>
-    
-              <div class="checkbox-container">
-                <ion-checkbox mode="md" v-model="pacoteUsuario.manter_conectado" class="custom-checkbox"></ion-checkbox>
-                <span class="poppins-regular checkbox-text">Me mantenha conectado</span>
+              <div class="header-section">
+                <h1 class="poppins-bold title">Login</h1>
+                <p class="poppins-regular subtitle">Seja bem-vindo ao nosso app.</p>
               </div>
-            </div>
-          </div>
   
-          <div class="actions-section">
-
-            <div class="margin-section-button">
-              <ion-button expand="block" class="main-button poppins-semibold" @click="handleLogin">
-                Login
+              <div class="form-section">
+                <div class="field">
+                  <label for="email" class="poppins-medium label">Endereço de Email</label>
+                  <InputText
+                    id="email"
+                    type="email"
+                    v-model="pacoteUsuario.email"
+                    placeholder="Ex: usuarioexemplo@com"
+                    class="w-full custom-input poppins-regular"
+                    style="width: 100%;"
+                  />
+                </div>
+  
+                <div class="field">
+                  <div class="label-row">
+                    <label for="password" class="poppins-medium label">Senha</label>
+                    <a @click="$router.push({name: 'EsqueciSenha'})" class="forgot-link poppins-regular">Esqueceu a senha?</a>
+                  </div>
+                  <Password
+                    id="password"
+                    v-model="pacoteUsuario.passe_usuario"
+                    toggleMask
+                    :feedback="false"
+                    placeholder="••••••••"
+                    fluid
+                    class="custom-password"
+                  />
+                </div>
+  
+                <div class="checkbox-container">
+                  <ion-checkbox mode="md" v-model="pacoteUsuario.manter_conectado" class="custom-checkbox"></ion-checkbox>
+                  <span class="poppins-regular checkbox-text">Me mantenha conectado</span>
+                </div>
+              </div>
+            </div>
+  
+            <div class="actions-section">
+  
+              <div class="margin-section-button">
+                <ion-button expand="block" class="main-button poppins-semibold" @click="handleLogin">
+                  Login
+                </ion-button>
+                <p style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.9rem); text-align: center;">
+                  Ao fazer login, você concorda com nossa
+                  <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Política de Privacidade</a> e
+                  <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Termos de Uso</a>
+                  e declara estar ciente das condições de uso da plataforma.
+                </p>
+              </div>
+  
+  
+              <!--
+              <div class="divider">
+                <span class="line"></span>
+                <span class="divider-text poppins-regular">Entre também com</span>
+                <span class="line"></span>
+              </div>
+              -->
+  
+              <!--
+              <ion-button expand="block" fill="clear" class="google-button poppins-medium">
+                <img src="../assets/google-icon.png" alt="Google" slot="start" class="google-logo" />
+                Continuar com Google
               </ion-button>
-              <p style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.9rem); text-align: center;">
-                Ao fazer login, você concorda com nossa 
-                <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Política de Privacidade</a> e 
-                <a style="color: #555; font-weight: 500;" href="https://market-vizium.cloud/legal"> Termos de Uso</a>
-                e declara estar ciente das condições de uso da plataforma.
-              </p>
+              -->
+  
+  
+  
+              
             </div>
-            
-            <!--
-            <div class="divider">
-              <span class="line"></span>
-              <span class="divider-text poppins-regular">Entre também com</span>
-              <span class="line"></span>
-            </div>
-            -->
-            
-            <!--
-            <ion-button expand="block" fill="clear" class="google-button poppins-medium">
-              <img src="../assets/google-icon.png" alt="Google" slot="start" class="google-logo" />
-              Continuar com Google
-            </ion-button>
-            -->
-            
-            
-
-            <p class="footer-text poppins-regular">
-              Você é vendedor e não <br> possui conta? <a @click="irPara('/cadastro')" class="brand-link">Criar uma nova conta!</a>
-            </p>
           </div>
+
+          <p class="footer-text poppins-regular">
+              <div style="color: #888; font-size: clamp(0.6rem, 3.5vw, 0.9rem); text-align: center; width: 100%;">v{{ version }}</div>
+              Você é vendedor e não <br> possui conta? <a @click="irPara('/cadastro')" class="brand-link">Criar uma nova conta!</a>
+           </p>
         </div>
 
       </div>
@@ -110,13 +160,13 @@ import { api } from '@/services/api';
 
 export default defineComponent({
   name: 'LoginPage',
-  components: { 
-    IonPage, 
-    IonContent, 
-    IonButton, 
+  components: {
+    IonPage,
+    IonContent,
+    IonButton,
     IonCheckbox,
-    InputText, 
-    Password 
+    InputText,
+    Password
   },
   data() {
     return {
@@ -125,12 +175,55 @@ export default defineComponent({
         passe_usuario: "",
         manter_conectado: true,
       },
-      loading: false
+      loading: false,
+      version: pkg.version,
+
+      // ---- painel de marketing (desktop) ----
+      current: 0,
+      timer: null as ReturnType<typeof setInterval> | null,
+      slideDuration: 6000,
+      slidesData: [
+        {
+          icon: 'hub',
+          title: 'Um jeito mais inteligente de comprar',
+          desc: 'Do pedido direto à cotação em massa: peça direto ao fornecedor, lance cotações ilimitadas ou deixe a automação encontrar a melhor oferta por você.',
+          img: new URL('../assets/img/loading-a.png', import.meta.url).href
+        },
+        {
+          icon: 'diversity_3',
+          title: 'Conecte-se com toda a rede Marviz',
+          desc: 'Fale com os fornecedores de sempre ou amplie sua cotação para outros vendedores da rede e aumente as chances de fechar um preço melhor.',
+          img: new URL('../assets/img/loading-b.png', import.meta.url).href
+        },
+        {
+          icon: 'trending_up',
+          title: 'Marviz Trends: fique à frente do mercado',
+          desc: 'Descubra tendências e lançamentos do seu segmento direto na tela onde você já faz suas cotações, sem sair do sistema.',
+          img: new URL('../assets/img/loading-c.png', import.meta.url).href
+        }
+      ]
     };
+  },
+  mounted() {
+    this.resetTimer();
+  },
+  beforeUnmount() {
+    if (this.timer) clearInterval(this.timer);
   },
   methods: {
     irPara(rota: string) {
       this.$router.push(rota);
+    },
+    goTo(i: number) {
+      this.current = i;
+      this.resetTimer();
+    },
+    nextSlide() {
+      this.current = (this.current + 1) % this.slidesData.length;
+    },
+    resetTimer() {
+      if (this.timer) clearInterval(this.timer);
+      this.timer = setInterval(this.nextSlide, this.slideDuration);
     },
     async handleLogin() {
 
@@ -203,6 +296,164 @@ export default defineComponent({
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
+}
+
+/* ===========================
+   PAINEL DE MARKETING (visual)
+   escondido no mobile, aparece no desktop
+   =========================== */
+.visual {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background: #111;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 1.2s ease;
+}
+
+.visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.3) 0%, rgba(0,0,0,0.8) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.brand {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 44px 0;
+}
+
+.brand .logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255,255,255,.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand .logo .material-symbols-outlined {
+  font-size: 20px;
+  color: #ff8049;
+}
+
+.brand-name {
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: .2px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* legendas do carrossel — alinhadas à esquerda, com o contador
+   diretamente abaixo, sem fundo (transparente) */
+.caption-wrap {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  padding: 0 44px 46px;
+  text-align: left;
+  background: transparent;
+}
+
+.slides {
+  position: relative;
+  min-height: 168px;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s ease, transform .6s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.slide-icon {
+  color: #fff;
+  font-size: 22px;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 12px rgba(0,0,0,.35);
+}
+
+.slide h2 {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  max-width: 420px;
+  text-shadow: 0 2px 18px rgba(0,0,0,.35);
+  margin-bottom: 8px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.slide p {
+  color: rgba(255,255,255,.85);
+  font-size: 13.5px;
+  font-weight: 300;
+  max-width: 380px;
+  line-height: 1.5;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* contador — logo abaixo da descrição, fundo transparente, sem "fita" */
+.dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+  background: transparent;
+}
+
+.dot {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255,255,255,.35);
+  width: 26px;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.dot::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: #fff;
+}
+
+.dot.done::after { width: 100%; transition: none; }
+.dot.active::after { width: 0%; animation: fillProgress var(--dur, 6s) linear forwards; }
+
+@keyframes fillProgress {
+  from { width: 0%; }
+  to { width: 100%; }
 }
 
 /* Botão Voltar */
@@ -492,6 +743,52 @@ export default defineComponent({
 @media (min-width: 600px) {
   .content-inner {
     max-width: 480px;
+  }
+}
+
+/* ===========================
+   DESKTOP — split-screen integrado à tela,
+   SEM aparência de card (sem sombra, sem
+   raio de borda, sem largura máxima central)
+   =========================== */
+@media (min-width: 900px) {
+  .login-wrapper {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+    height: 100%;
+    min-height: 100%;
+    width: 100%;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .visual {
+    display: flex;
+    flex: 1.15;
+    min-width: 0;
+  }
+
+  .content-inner {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0 clamp(48px, 6vw, 96px);
+    padding-top: 150px;
+    padding-bottom: 10px;
+    overflow-y: auto;
+  }
+
+  .content-top,
+  .actions-section {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
   }
 }
 </style>

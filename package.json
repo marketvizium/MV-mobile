@@ -1,7 +1,7 @@
 {
   "name": "marviz-app",
   "private": true,
-  "version": "1.1.4",
+  "version": "2.1.9",
   "termosuso": "1.0",
   "polpriv": "1.0",
   "type": "module",

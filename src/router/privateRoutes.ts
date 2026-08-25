@@ -279,6 +279,16 @@ const privateRoutes: RouteRecordRaw = {
       }
     },
 
+    {
+      path: 'cotacao-console-c',
+      name: 'cotacaoConsoleColetor',
+      component: () => import('@/views/TelasColetor/CotacaoConsole.vue'),
+      meta: {
+          title: 'Pedido direto',
+          subtitle: 'Consulte seu faturamento no pedido direto'
+      }
+    },
+
   ]
 };
 

@@ -171,7 +171,13 @@ body {
 
 @media(max-width: 576px){
   .toast-style{
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    box-sizing: border-box;
+    padding: 0 8px;
   }
 }
 </style>

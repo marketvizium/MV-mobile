@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', {
     conectado: localStorage.getItem('conectado') || null,
     user     : localStorage.getItem('token') ? jwtDecode<User>(localStorage.getItem('token')!) : null as User | null,
     loj: JSON.parse(localStorage.getItem('loj') || '{}'),
+    dispositivo: (localStorage.getItem('dispositivo') as 'celular' | 'coletor' | null) || null,
 
   }),
 
@@ -26,6 +27,7 @@ export const useAuthStore = defineStore('auth', {
     usuario: (state) => state.user,
     id_usuario: (state) => state.user ? state.user.id_usuario : null,
     loja: (state) => state.loj,
+    tipoDispositivo: (state) => state.dispositivo,
 
     // Getter para menus adaptado para Ionicons
     menuPermitido: (state) => {
@@ -110,7 +112,7 @@ export const useAuthStore = defineStore('auth', {
           name: "ConsPedidosDiretos",
           icon: "move_group",
           route: "/minhas-cotacoes",
-          roles: [1, 6, 7],
+          roles: [1, 6],
         },
 
         {
@@ -346,7 +348,7 @@ export const useAuthStore = defineStore('auth', {
             this.loj = responseSis.data.data[0]
 
             localStorage.setItem('conectado', payload.manter_conectado)
-            await router.replace({ name: 'MinhasCotacoes' })
+            await router.replace({ name: 'SelecionarDispositivo' })
             return
           }
         }else {
@@ -373,6 +375,14 @@ export const useAuthStore = defineStore('auth', {
       return true
     },
 
+    setDispositivo(payload: 'celular' | 'coletor'){
+      localStorage.setItem('dispositivo', payload)
+
+      this.dispositivo = payload
+
+      return true
+    },
+
     setUsuario(payload: any){
       if(!payload) return
       this.user = payload
@@ -394,11 +404,13 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('loj')
       localStorage.removeItem('conectado')
       localStorage.removeItem('auth')
+      localStorage.removeItem('dispositivo')
 
       this.token      = null
       this.loj        = null
       this.conectado  = null
       this.user       = null
+      this.dispositivo = null
 
       window.location.replace('/login')
       

@@ -112,7 +112,7 @@
 
   <!-- ══ MOBILE (<992px): Footer tab-bar ══ -->
   <ion-footer v-else class="ion-no-border">
-    <div class="footer-container">
+    <div class="footer-container" style="padding-bottom: 25px;">
 
       <!-- Sempre 3 itens no mobile, nessa ordem: Menu | Explorar (FAB) | Perfil -->
       <div class="tab-bar-custom tab-bar-compact">

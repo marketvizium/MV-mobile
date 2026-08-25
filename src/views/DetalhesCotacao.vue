@@ -82,7 +82,7 @@
             </div>
             <div class="stat-box accent">
               <span class="stat-label">Valor Total</span>
-              <span class="stat-value">R$ {{ valorTotalFaturamento }}</span>
+              <span class="stat-value">R$ {{ valorTotalFaturamento.toFixed(2) }}</span>
             </div>
           </div>
 

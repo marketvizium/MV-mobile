@@ -155,6 +155,9 @@
                 <span class="pc-cat poppins-regular" v-if="p.categoria">{{ p.categoria }}</span>
               </div>
               <div class="pc-actions" v-if="podeEditarProduto">
+                <button class="icon-btn edit" @click="abrirDetalhes(p)">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
                 <button class="icon-btn edit" @click="abrirEditarProduto(p)">
                   <span class="material-symbols-outlined">edit</span>
                 </button>
@@ -444,158 +447,338 @@
         <div class="modal-handle"></div>
         <div class="modal-box">
           <div class="modal-header">
-            <span class="poppins-semibold">Adicionar Produto</span>
+            <span class="poppins-semibold">
+              <template v-if="!modoSelecaoMultipla">Adicionar Produto</template>
+              <template v-else-if="etapaSelecaoMultipla === 'selecionar'">Selecionar Produtos</template>
+              <template v-else>Configurar Produtos</template>
+            </span>
             <button class="modal-close" @click="fecharModalAddProduto">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
+
           <div class="modal-body">
-            <p class="modal-hint poppins-regular">Busque por código de barras, descrição do produto ou leia pela câmera.</p>
 
-            <!-- Busca + botão câmera -->
-            <div class="search-camera-row">
-              <div class="search-wrap search-wrap-flex">
-                <span class="material-symbols-outlined sb-icon">search</span>
-                <input
-                  type="text"
-                  ref="searchCatalogoInput"
-                  v-model="searchCatalogo"
-                  placeholder="Nome, cód. barras, descrição..."
-                  class="sb-input poppins-regular"
-                  :readonly="bloquearTecladoCatalogo"
-                  @input="buscarCatalogo($event)"
-                  @focus="onFocusSearchCatalogo"
-                />
-              </div>
-            </div>
+            <template v-if="!(modoSelecaoMultipla && etapaSelecaoMultipla === 'configurar')">
+              <p class="modal-hint poppins-regular">Busque por código de barras, descrição do produto ou leia pela câmera.</p>
 
-            <!-- ── ETAPA 1: Lista de resultados (nenhum produto selecionado ainda) ── -->
-            <template v-if="!addProduto.id_produto">
-              <!-- Loading da busca -->
-              <div v-if="loadingCatalogo" class="catalogo-loading poppins-regular">
-                <ion-spinner name="crescent" color="primary" style="width:18px;height:18px"></ion-spinner>
-                Buscando...
-              </div>
-
-              <!-- Resultados -->
-              <div class="catalogo-list" v-else-if="catalogoFiltrado.length > 0">
-                <div
-                  v-for="p in catalogoFiltrado"
-                  :key="p.id_produto"
-                  class="catalogo-item"
-                  @click="selecionarProdutoCatalogo(p)"
-                >
-                  <div class="catalogo-item-info">
-                    <span class="prod-name poppins-semibold">{{ p.nome }}</span>
-                    <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
-                    <!--
-                      <span class="poppins-regular catalogo-fornecedor" v-if="p.nome_fornecedor">{{ p.nome_fornecedor }}</span>
-                    -->
-                  </div>
-                  <div class="catalogo-item-right">
-                    <span class="prod-price poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
-                    <span class="material-symbols-outlined catalogo-arrow">chevron_right</span>
+              <!-- Busca + botão câmera -->
+              <div class="search-camera-row">
+                <div class="search-wrap search-wrap-flex">
+                  <span class="material-symbols-outlined sb-icon">search</span>
+                  <input
+                    type="text"
+                    ref="searchCatalogoInput"
+                    v-model="searchCatalogo"
+                    placeholder="Nome, cód. barras, descrição..."
+                    class="sb-input poppins-regular"
+                    :readonly="bloquearTecladoCatalogo"
+                    @input="buscarCatalogo($event)"
+                    @focus="onFocusSearchCatalogo"
+                  />
+                </div>
+                <div v-if="searchCatalogo.length" @click="limparTudo" style="background-color: #EEE; border-radius: 50px; height: 30px; width: 30px; font-size: 12px; color: #333;
+                  display: flex; justify-content: center; align-items: center; ">
+                  <div>
+                    X
                   </div>
                 </div>
-              </div>
-
-              <!-- Paginação -->
-              <div class="catalogo-pagination" v-if="catalogoFiltrado.length > 0 && catalogoPages > 1">
-                <button
-                  class="pag-btn poppins-medium"
-                  :disabled="catalogoPage <= 1"
-                  @click="mudarPaginaCatalogo(catalogoPage - 1)"
-                >
-                  <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                <span class="pag-info poppins-regular">{{ catalogoPage }} / {{ catalogoPages }}</span>
-                <button
-                  class="pag-btn poppins-medium"
-                  :disabled="catalogoPage >= catalogoPages"
-                  @click="mudarPaginaCatalogo(catalogoPage + 1)"
-                >
-                  <span class="material-symbols-outlined">chevron_right</span>
-                </button>
-              </div>
-
-              <!-- Sem resultados -->
-              <div v-else-if="!loadingCatalogo && searchCatalogo.length >= 2" class="muted poppins-regular text-center" style="padding:16px 0">
-                Nenhum produto encontrado.
               </div>
             </template>
 
-            <!-- ── ETAPA 2: Produto selecionado — detalhe + campos ── -->
-            <div v-if="addProduto.id_produto" class="form-selected-prod">
+            <!-- ═══════════════════════════════════════
+                 MODO SELEÇÃO ÚNICA (padrão)
+            ═══════════════════════════════════════ -->
+            <template v-if="!modoSelecaoMultipla">
 
-              <!-- Card de detalhe do produto selecionado -->
-              <div class="selected-prod-detail">
-                <div class="selected-prod-detail-top">
-                  <span class="material-symbols-outlined spd-icon">inventory_2</span>
-                  <div class="spd-info">
-                    <span class="spd-name poppins-semibold">{{ addProduto.nome }}</span>
-                    <span class="spd-barcode mono poppins-regular">{{ addProduto.codigo_barra || 'Sem código' }}</span>
-                    <!--
-                    <span class="spd-fornecedor poppins-regular muted" v-if="addProduto.nome_fornecedor">{{ addProduto.nome_fornecedor }}</span>
-                    -->
-                  </div>
-                </div>
-                <div class="spd-prices" v-if="addProduto.preco_custo != null || addProduto.preco_venda != null">
-                  <div class="spd-price-item" v-if="addProduto.preco_custo != null">
-                    <span class="spd-price-label poppins-regular">Custo</span>
-                    <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_custo) }}</span>
-                  </div>
-                  <div class="spd-price-item" v-if="addProduto.margem != null">
-                    <span class="spd-price-label poppins-regular">Margem</span>
-                    <span :class="['spd-price-val poppins-semibold', addProduto.margem > 0 ? 'pos' : 'neg']">{{ addProduto.margem }}%</span>
-                  </div>
-                  <div class="spd-price-item" v-if="addProduto.preco_venda != null">
-                    <span class="spd-price-label poppins-regular">Venda</span>
-                    <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_venda) }}</span>
-                  </div>
-                  <div class="spd-price-item">
-                    <span class="spd-price-label poppins-regular">Ult. Preço</span>
-                    <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.ultimo_preco) || "--" }}</span>
-                  </div>
-                  <div class="spd-price-item">
-                    <span class="spd-price-label poppins-regular">Ult. Qtd</span>
-                    <span class="spd-price-val poppins-semibold">{{ `${formatVal(addProduto.ultima_quantidade) } ${addProduto.tipo || ""}`  || "--" }}</span>
-                  </div>
-                </div>
-                <!-- Botão de voltar para a lista -->
-                <button class="trocar-prod-btn poppins-medium" @click="voltarParaListaCatalogo">
-                  <span class="material-symbols-outlined">arrow_back</span> Trocar produto
+              <!-- ── ETAPA 1: Lista de resultados (nenhum produto selecionado ainda) ── -->
+              <template v-if="!addProduto.id_produto">
+
+                <button
+                  class="multi-select-btn poppins-semibold"
+                  v-if="catalogoFiltrado.length > 0"
+                  @click="ativarSelecaoMultipla"
+                >
+                  <span class="material-symbols-outlined">playlist_add_check</span>
+                  Selecionar mais de um produto
                 </button>
-              </div>
 
-              <!-- Campos de quantidade / tipo / composição -->
-              <div class="form-group">
-                <label class="form-label poppins-medium">Quantidade *</label>
-                <input type="number" v-model.number="addProduto.quantidade" min="1" class="form-input poppins-regular" />
+                <!-- Loading da busca -->
+                <div v-if="loadingCatalogo" class="catalogo-loading poppins-regular">
+                  <ion-spinner name="crescent" color="primary" style="width:18px;height:18px"></ion-spinner>
+                  Buscando...
+                </div>
+
+                <!-- Resultados -->
+                <div class="catalogo-list" v-else-if="catalogoFiltrado.length > 0">
+                  <div
+                    v-for="p in catalogoFiltrado"
+                    :key="p.id_produto"
+                    class="catalogo-item"
+                    @click="selecionarProdutoCatalogo(p)"
+                  >
+                    <div class="catalogo-item-info">
+                      <span class="prod-name poppins-semibold">{{ p.nome }}</span>
+                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                      <!--
+                        <span class="poppins-regular catalogo-fornecedor" v-if="p.nome_fornecedor">{{ p.nome_fornecedor }}</span>
+                      -->
+                    </div>
+                    <div class="catalogo-item-right">
+                      <span class="prod-price poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
+                      <span class="material-symbols-outlined catalogo-arrow">chevron_right</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Paginação -->
+                <div class="catalogo-pagination" v-if="catalogoFiltrado.length > 0 && catalogoPages > 1">
+                  <button
+                    class="pag-btn poppins-medium"
+                    :disabled="catalogoPage <= 1"
+                    @click="mudarPaginaCatalogo(catalogoPage - 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_left</span>
+                  </button>
+                  <span class="pag-info poppins-regular">{{ catalogoPage }} / {{ catalogoPages }}</span>
+                  <button
+                    class="pag-btn poppins-medium"
+                    :disabled="catalogoPage >= catalogoPages"
+                    @click="mudarPaginaCatalogo(catalogoPage + 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_right</span>
+                  </button>
+                </div>
+
+                <!-- Sem resultados -->
+                <div v-else-if="!loadingCatalogo && searchCatalogo.length >= 2 && catalogoFiltrado.length == 0" class="muted poppins-regular text-center" style="padding:16px 0">
+                  Nenhum produto encontrado.
+                </div>
+              </template>
+
+              <!-- ── ETAPA 2: Produto selecionado — detalhe + campos ── -->
+              <div v-if="addProduto.id_produto" class="form-selected-prod">
+
+                <!-- Card de detalhe do produto selecionado -->
+                <div class="selected-prod-detail">
+                  <div class="selected-prod-detail-top">
+                    <span class="material-symbols-outlined spd-icon">inventory_2</span>
+                    <div class="spd-info">
+                      <span class="spd-name poppins-semibold">{{ addProduto.nome }}</span>
+                      <span class="spd-barcode mono poppins-regular">{{ addProduto.codigo_barra || 'Sem código' }}</span>
+                      <!--
+                      <span class="spd-fornecedor poppins-regular muted" v-if="addProduto.nome_fornecedor">{{ addProduto.nome_fornecedor }}</span>
+                      -->
+                    </div>
+                  </div>
+                  <div class="spd-prices" v-if="addProduto.preco_custo != null || addProduto.preco_venda != null">
+                    <div class="spd-price-item" v-if="addProduto.preco_custo != null">
+                      <span class="spd-price-label poppins-regular">Custo</span>
+                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_custo) }}</span>
+                    </div>
+                    <div class="spd-price-item" v-if="addProduto.margem != null">
+                      <span class="spd-price-label poppins-regular">Margem</span>
+                      <span :class="['spd-price-val poppins-semibold', addProduto.margem > 0 ? 'pos' : 'neg']">{{ addProduto.margem }}%</span>
+                    </div>
+                    <div class="spd-price-item" v-if="addProduto.preco_venda != null">
+                      <span class="spd-price-label poppins-regular">Venda</span>
+                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_venda) }}</span>
+                    </div>
+                    <div class="spd-price-item">
+                      <span class="spd-price-label poppins-regular">Ult. Preço</span>
+                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.ultimo_preco) || "--" }}</span>
+                    </div>
+                    <div class="spd-price-item">
+                      <span class="spd-price-label poppins-regular">Ult. Qtd</span>
+                      <span class="spd-price-val poppins-semibold">{{ `${formatVal(addProduto.ultima_quantidade) } ${addProduto.tipo || ""}`  || "--" }}</span>
+                    </div>
+                  </div>
+                  <!-- Botão de voltar para a lista -->
+                  <button class="trocar-prod-btn poppins-medium" @click="voltarParaListaCatalogo">
+                    <span class="material-symbols-outlined">arrow_back</span> Trocar produto
+                  </button>
+                </div>
+
+                <!-- Campos de quantidade / tipo / composição -->
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Quantidade *</label>
+                  <input type="number" v-model.number="addProduto.quantidade" min="1" class="form-input poppins-regular" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Tipo</label>
+                  <select v-model="addProduto.tipo" class="form-input poppins-regular">
+                    <option value="">Selecionar...</option>
+                    <option value="unidade">Unidade</option>
+                    <option value="caixa">Caixa</option>
+                    <option value="fardo">Fardo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Qtd por embalagem</label>
+                  <input type="number" v-model.number="addProduto.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" />
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label poppins-medium">Tipo</label>
-                <select v-model="addProduto.tipo" class="form-input poppins-regular">
-                  <option value="">Selecionar...</option>
-                  <option value="unidade">Unidade</option>
-                  <option value="caixa">Caixa</option>
-                  <option value="fardo">Fardo</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label poppins-medium">Qtd por embalagem</label>
-                <input type="number" v-model.number="addProduto.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" />
-              </div>
-            </div>
+            </template>
+
+            <!-- ═══════════════════════════════════════
+                 MODO SELEÇÃO MÚLTIPLA
+            ═══════════════════════════════════════ -->
+            <template v-else>
+
+              <!-- ── ETAPA 1: seleção dos produtos ── -->
+              <template v-if="etapaSelecaoMultipla === 'selecionar'">
+
+                <div class="multi-header">
+                  <span class="multi-header-count poppins-medium">
+                    {{ produtosSelecionadosMultiplos.length }} produto(s) selecionado(s)
+                  </span>
+                  <button class="multi-exit-btn poppins-medium" @click="cancelarSelecaoMultipla">
+                    <span class="material-symbols-outlined">close</span> Sair da seleção
+                  </button>
+                </div>
+
+                <!-- Produtos já selecionados (scroll) -->
+                <div class="multi-selected-scroll" v-if="produtosSelecionadosMultiplos.length > 0">
+                  <div class="multi-chip" v-for="p in produtosSelecionadosMultiplos" :key="p.id_produto">
+                    <span class="multi-chip-name poppins-medium">{{ p.nome }}</span>
+                    <button class="multi-chip-remove" @click.stop="removerProdutoMultiplo(p)">
+                      <span class="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Loading da busca -->
+                <div v-if="loadingCatalogo" class="catalogo-loading poppins-regular">
+                  <ion-spinner name="crescent" color="primary" style="width:18px;height:18px"></ion-spinner>
+                  Buscando...
+                </div>
+
+                <!-- Resultados (com checkbox) -->
+                <div class="catalogo-list" v-else-if="catalogoFiltrado.length > 0">
+                  <div
+                    v-for="p in catalogoFiltrado"
+                    :key="p.id_produto"
+                    :class="['catalogo-item', { 'catalogo-item-selected': isProdutoSelecionadoMultiplo(p) }]"
+                    @click="toggleProdutoMultiplo(p)"
+                  >
+                    <span class="material-symbols-outlined catalogo-item-check">
+                      {{ isProdutoSelecionadoMultiplo(p) ? 'check_box' : 'check_box_outline_blank' }}
+                    </span>
+                    <div class="catalogo-item-info">
+                      <span class="prod-name poppins-semibold">{{ p.nome }}</span>
+                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                    </div>
+                    <div class="catalogo-item-right">
+                      <span class="prod-price poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Paginação -->
+                <div class="catalogo-pagination" v-if="catalogoFiltrado.length > 0 && catalogoPages > 1">
+                  <button
+                    class="pag-btn poppins-medium"
+                    :disabled="catalogoPage <= 1"
+                    @click="mudarPaginaCatalogo(catalogoPage - 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_left</span>
+                  </button>
+                  <span class="pag-info poppins-regular">{{ catalogoPage }} / {{ catalogoPages }}</span>
+                  <button
+                    class="pag-btn poppins-medium"
+                    :disabled="catalogoPage >= catalogoPages"
+                    @click="mudarPaginaCatalogo(catalogoPage + 1)"
+                  >
+                    <span class="material-symbols-outlined">chevron_right</span>
+                  </button>
+                </div>
+
+                <!-- Sem resultados -->
+                <div v-else-if="!loadingCatalogo && searchCatalogo.length >= 2" class="muted poppins-regular text-center" style="padding:16px 0">
+                  Nenhum produto encontrado.
+                </div>
+              </template>
+
+              <!-- ── ETAPA 2: configurar quantidade/tipo/composição para todos ── -->
+              <template v-else>
+
+                <button class="trocar-prod-btn poppins-medium" style="margin-bottom:12px;" @click="voltarSelecaoMultipla">
+                  <span class="material-symbols-outlined">arrow_back</span> Voltar para seleção
+                </button>
+
+                <p class="modal-hint poppins-regular">
+                  Defina a quantidade, o tipo e a composição que serão aplicados a todos os produtos selecionados.
+                </p>
+
+                <!-- Lista dos produtos selecionados (scroll) -->
+                <div class="multi-selected-list">
+                  <div class="multi-selected-item" v-for="p in produtosSelecionadosMultiplos" :key="p.id_produto">
+                    <span class="material-symbols-outlined spd-icon" style="font-size:18px;">inventory_2</span>
+                    <div class="multi-selected-item-info">
+                      <span class="poppins-semibold">{{ p.nome }}</span>
+                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                    </div>
+                    <button class="multi-chip-remove" @click="removerProdutoMultiplo(p)">
+                      <span class="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Campos compartilhados -->
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Quantidade *</label>
+                  <input type="number" v-model.number="multiploConfig.quantidade" min="1" class="form-input poppins-regular" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Tipo *</label>
+                  <select v-model="multiploConfig.tipo" class="form-input poppins-regular">
+                    <option value="">Selecionar...</option>
+                    <option value="unidade">Unidade</option>
+                    <option value="caixa">Caixa</option>
+                    <option value="fardo">Fardo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label poppins-medium">Qtd por embalagem</label>
+                  <input type="number" v-model.number="multiploConfig.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" />
+                </div>
+              </template>
+            </template>
+
           </div>
           <div class="modal-footer">
-            <button class="action-btn btn-outline poppins-medium full-w" @click="fecharModalAddProduto">Cancelar</button>
-            <button
-              class="action-btn btn-primary poppins-medium full-w"
-              :disabled="!addProduto.id_produto || !addProduto.quantidade || !addProduto.tipo || loadingAdd"
-              @click="adicionarProduto()"
-            >
-              <span class="material-symbols-outlined">add</span> Adicionar
-            </button>
+            <template v-if="!modoSelecaoMultipla">
+              <button class="action-btn btn-outline poppins-medium full-w" @click="fecharModalAddProduto">Cancelar</button>
+              <button
+                class="action-btn btn-primary poppins-medium full-w"
+                :disabled="!addProduto.id_produto || !addProduto.quantidade || !addProduto.tipo || loadingAdd"
+                @click="adicionarProduto()"
+              >
+                <span class="material-symbols-outlined">add</span> Adicionar
+              </button>
+            </template>
+            <template v-else-if="etapaSelecaoMultipla === 'selecionar'">
+              <button class="action-btn btn-outline poppins-medium full-w" @click="cancelarSelecaoMultipla">Cancelar</button>
+              <button
+                class="action-btn btn-primary poppins-medium full-w"
+                :disabled="produtosSelecionadosMultiplos.length === 0"
+                @click="avancarSelecaoMultipla"
+              >
+                <span class="material-symbols-outlined">arrow_forward</span>
+                Avançar ({{ produtosSelecionadosMultiplos.length }})
+              </button>
+            </template>
+            <template v-else>
+              <button class="action-btn btn-outline poppins-medium full-w" @click="voltarSelecaoMultipla">Voltar</button>
+              <button
+                class="action-btn btn-primary poppins-medium full-w"
+                :disabled="!multiploConfig.quantidade || !multiploConfig.tipo || produtosSelecionadosMultiplos.length === 0 || loadingAdd"
+                @click="adicionarProduto()"
+              >
+                <span class="material-symbols-outlined">add</span>
+                Adicionar todos ({{ produtosSelecionadosMultiplos.length }})
+              </button>
+            </template>
           </div>
         </div>
       </ion-content>
@@ -918,6 +1101,11 @@
       </button>
     </div>
 
+    <ModalDetalhesProduto
+      v-model="showDetalhesProduto"
+      :produto="produtoDetalhes"
+    />
+
     <!-- ══ TOASTS ══ -->
     
   </ion-page>
@@ -947,6 +1135,7 @@ import { Camera, CameraPermissionState } from '@capacitor/camera'
 */
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
 import { mapState } from 'pinia'
+import ModalDetalhesProduto from '@/components/ModalDetalhesProduto.vue'
 
 export default defineComponent({
   name: 'ConsoleCotacaoMobile',
@@ -956,7 +1145,8 @@ export default defineComponent({
     IonContent,
     IonSpinner,
     IonModal,
-    RefresherIonic
+    RefresherIonic,
+    ModalDetalhesProduto
   },
 
   props: {
@@ -976,6 +1166,9 @@ export default defineComponent({
       ofertas: [] as any[],
       vendedores: [] as any[],
       sugestoes: [] as any[],
+
+      showDetalhesProduto: false,
+      produtoDetalhes: null,
 
       // Loading flags
       loadingProdutos: false,
@@ -1024,6 +1217,16 @@ export default defineComponent({
         ultimo_preco: null as number | null,
         ultima_quantidade: null as number | null,
         tipo: null as string | null,
+      },
+
+      // Add múltiplos produtos simultaneamente
+      modoSelecaoMultipla: false,
+      etapaSelecaoMultipla: 'selecionar' as 'selecionar' | 'configurar',
+      produtosSelecionadosMultiplos: [] as any[],
+      multiploConfig: {
+        quantidade: null as number | null,
+        tipo: '' as string,
+        qtd_unitaria_composicao: null as number | null,
       },
 
       // Add produto não cadastrado
@@ -1359,6 +1562,11 @@ export default defineComponent({
       }
     },
 
+    abrirDetalhes(produto) {
+      this.produtoDetalhes = produto
+      this.showDetalhesProduto = true
+    },
+
     async buscarCatalogoExtra() {
       if (!this.fatExtra.searchProd || this.fatExtra.searchProd.length < 2) {
         this.catalogoExtra = []
@@ -1558,6 +1766,8 @@ export default defineComponent({
       this.escanearCodigoBarrasCatalogo()
     },
 
+    
+
     /**
      * Escaneia código de barras e preenche o campo de busca do catálogo.
      * Usa html5-qrcode — funciona em web, Android (WebView) e iOS (WKWebView).
@@ -1750,9 +1960,125 @@ export default defineComponent({
       this.catalogoPage = 1
       this.catalogoPages = 1
       this.bloquearTecladoCatalogo = false
+      this.cancelarSelecaoMultipla()
     },
 
+    // ─── SELEÇÃO MÚLTIPLA DE PRODUTOS ─────────────────────────────
+    ativarSelecaoMultipla() {
+      this.modoSelecaoMultipla = true
+      this.etapaSelecaoMultipla = 'selecionar'
+      this.produtosSelecionadosMultiplos = []
+    },
+
+    cancelarSelecaoMultipla() {
+      this.modoSelecaoMultipla = false
+      this.etapaSelecaoMultipla = 'selecionar'
+      this.produtosSelecionadosMultiplos = []
+      this.multiploConfig = { quantidade: null, tipo: '', qtd_unitaria_composicao: null }
+    },
+
+    toggleProdutoMultiplo(p: any) {
+      const idx = this.produtosSelecionadosMultiplos.findIndex((sp: any) => sp.id_produto === p.id_produto)
+      if (idx >= 0) {
+        this.produtosSelecionadosMultiplos.splice(idx, 1)
+      } else {
+        this.produtosSelecionadosMultiplos.push(p)
+      }
+    },
+
+    isProdutoSelecionadoMultiplo(p: any): boolean {
+      return this.produtosSelecionadosMultiplos.some((sp: any) => sp.id_produto === p.id_produto)
+    },
+
+    removerProdutoMultiplo(p: any) {
+      const idx = this.produtosSelecionadosMultiplos.findIndex((sp: any) => sp.id_produto === p.id_produto)
+      if (idx >= 0) this.produtosSelecionadosMultiplos.splice(idx, 1)
+    },
+
+    avancarSelecaoMultipla() {
+      if (this.produtosSelecionadosMultiplos.length === 0) {
+        this.$toast.add({
+          severity: 'info',
+          summary: 'Nenhum produto selecionado',
+          detail: 'Selecione ao menos um produto para continuar',
+          life: 3000
+        });
+        return
+      }
+      this.etapaSelecaoMultipla = 'configurar'
+    },
+
+    voltarSelecaoMultipla() {
+      this.etapaSelecaoMultipla = 'selecionar'
+    },
+
+    resetarNovoProdutoAdicionado(){
+      this.addProduto = {
+        id_produto: null, nome: '', codigo_barra: '', nome_fornecedor: '',
+        preco_custo: null, preco_venda: null, margem: null,
+        quantidade: null, tipo: '', qtd_unitaria_composicao: null,
+      }
+    },
+
+    limparTudo(){
+      this.searchCatalogo=''
+      this.catalogoExtra = []
+      this.catalogoFiltrado = []
+      this.catalogoPage = 1
+      this.catalogoPages = 1
+    },
+
+    /**
+     * Envia à API um ou mais itens para serem adicionados à cotação.
+     * `itens` é uma matriz de itens, cada um na ordem:
+     * [codigo_barra, quantidade, tipo, qtd_unitaria_composicao]
+     */
+    async _enviarItensCotacao(itens: any[][]) {
+      for (const item of itens) {
+        const codigoBarra = item[0]
+        const produtoJaAdicionado = this.itens.find(
+          (i: any) => i.codigo_barra === codigoBarra
+        )
+
+        if (produtoJaAdicionado) {
+          this.$toast.add({ 
+            severity: 'warn', 
+            summary: `Produto já existe na cotação.`, 
+            detail: `O Produto com código de barra ${codigoBarra} já foi adicionado à cotação. Feche essa janela e procure o produto para alterar a quantidade`, 
+            life: 3000 
+          });
+          return
+        }
+      }
+
+      const payloadRequisicao = {
+        codigo_barra: itens,
+        id_cotacao: `${this.idCotacaoLocal}`,
+      }
+
+      await api.post(`/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`, payloadRequisicao)
+      this.$toast.add({ 
+        severity: 'success', 
+        summary: `Sucesso ao adicionar produtos`, 
+        detail: `Produtos adicionados com sucesso, ao fechar, confira na lista`, 
+        life: 3000 
+      });
+      this.resetarNovoProdutoAdicionado()
+    },
+
+    /**
+     * Adiciona produto(s) à cotação.
+     * - Modo padrão: adiciona o produto único selecionado em `addProduto`.
+     * - Modo seleção múltipla: adiciona todos os produtos em
+     *   `produtosSelecionadosMultiplos`, aplicando a mesma quantidade,
+     *   tipo e qtd_unitaria_composicao (definidos em `multiploConfig`)
+     *   para todos eles em uma única requisição.
+     */
     async adicionarProduto() {
+      if (this.modoSelecaoMultipla) {
+        return await this.adicionarProdutosMultiplos()
+      }
+
       try {
 
         if(!this.addProduto.quantidade || !this.addProduto.tipo || !this.addProduto.codigo_barra){
@@ -1772,13 +2098,51 @@ export default defineComponent({
           this.addProduto.tipo,
           this.addProduto.qtd_unitaria_composicao,
         ]
-        const payloadRequisicao = {
-          codigo_barra: [payload_item],
-          id_cotacao: `${this.idCotacaoLocal}`,
+        await this._enviarItensCotacao([payload_item])
+        await this.carregarProdutos()
+      } catch (e) {
+        exibeErro(e, this.$toast)
+      } finally {
+        this.loadingAdd = false
+      }
+    },
+
+    /**
+     * Adiciona todos os produtos selecionados no modo múltiplo,
+     * usando a mesma quantidade/tipo/composição para cada um.
+     */
+    async adicionarProdutosMultiplos() {
+      try {
+        if (!this.multiploConfig.quantidade || !this.multiploConfig.tipo) {
+          this.$toast.add({
+            severity: 'info',
+            summary: 'Dados faltantes',
+            detail: `Preencha os campos obrigatórios para prosseguir`,
+            life: 3000
+          });
+          return
         }
-        await api.post(`/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`, payloadRequisicao)
-        this.toast('Produto adicionado!')
-        this.fecharModalAddProduto()
+
+        if (this.produtosSelecionadosMultiplos.length === 0) {
+          this.$toast.add({
+            severity: 'info',
+            summary: 'Nenhum produto selecionado',
+            detail: 'Selecione ao menos um produto para continuar',
+            life: 3000
+          });
+          return
+        }
+
+        this.loadingAdd = true
+        const itens = this.produtosSelecionadosMultiplos.map((p: any) => [
+          p.codigo_barra,
+          this.multiploConfig.quantidade,
+          this.multiploConfig.tipo,
+          this.multiploConfig.qtd_unitaria_composicao,
+        ])
+        await this._enviarItensCotacao(itens)
+        this.toast(`${itens.length} produto(s) adicionado(s)!`)
+        this.cancelarSelecaoMultipla()
         await this.carregarProdutos()
       } catch (e) {
         exibeErro(e, this.$toast)
@@ -2345,7 +2709,23 @@ export default defineComponent({
 .pane-header {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px;
-  flex-wrap: wrap;
+}
+
+
+@media(max-width: 600px){
+  .pane-header{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: start;
+  }
+  .search-wrap{
+    width: 100%;
+  }
+  .pane-btn-group{
+    width: 100%;
+  }
+  
 }
 
 /* ══ SEARCH ══ */
@@ -2416,7 +2796,7 @@ export default defineComponent({
 }
 .pc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
 .pc-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.pc-name { font-size: 13px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-name { font-size: 13px; color: #1e293b; }
 .pc-barcode { font-size: 11px; }
 .pc-cat { font-size: 11px; color: #94a3b8; }
 .pc-actions { display: flex; gap: 6px; flex-shrink: 0; }
@@ -2821,6 +3201,67 @@ ion-modal.ofertas-modal-sheet {
   padding: 8px 0;
 }
 .oih-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+
+/* ══ SELEÇÃO MÚLTIPLA DE PRODUTOS ══ */
+.multi-select-btn {
+  width: 100%; height: 40px; color: #FFF; font-family: 'Poppins'; font-weight: 650;
+  background-color: #ff8049; margin-bottom: 10px; border-radius: 10px;
+  border: none; display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: opacity .15s;
+}
+.multi-select-btn span { font-size: 18px; }
+.multi-select-btn:active { opacity: .85; }
+
+.multi-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.multi-header-count { font-size: 13px; color: #1e293b; }
+.multi-exit-btn {
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: 1px solid #e2e8f0; border-radius: 9px;
+  padding: 6px 10px; font-size: 12px; color: #64748b; cursor: pointer;
+  transition: all .15s;
+}
+.multi-exit-btn span { font-size: 16px; }
+.multi-exit-btn:active { background: #f1f5f9; border-color: #cbd5e1; }
+
+.multi-selected-scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+.multi-selected-scroll::-webkit-scrollbar { display: none; }
+.multi-chip {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  background: rgba(255,128,73,.1); border: 1px solid rgba(255,128,73,.3);
+  color: #ff8049; border-radius: 999px; padding: 6px 8px 6px 12px;
+  font-size: 12px; white-space: nowrap; max-width: 180px;
+}
+.multi-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.multi-chip-remove {
+  display: flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,128,73,.2); border: none; color: #ff8049; cursor: pointer;
+}
+.multi-chip-remove span { font-size: 13px; }
+
+.catalogo-item-check { font-size: 20px; color: #ff8049; flex-shrink: 0; }
+.catalogo-item-selected { background: rgba(255,128,73,.08); }
+
+.multi-selected-list {
+  max-height: 180px; overflow-y: auto;
+  border: 1px solid #e2e8f0; border-radius: 12px;
+  margin-bottom: 14px;
+}
+.multi-selected-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 12px; border-bottom: 1px solid #f1f5f9;
+}
+.multi-selected-item:last-child { border-bottom: none; }
+.multi-selected-item-info {
+  display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;
+}
+.multi-selected-item-info span:first-child { font-size: 13px; color: #1e293b; }
 
 /* Fim dos estilos */
 </style>

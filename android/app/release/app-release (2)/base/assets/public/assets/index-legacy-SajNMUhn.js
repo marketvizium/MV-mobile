@@ -1,1 +1,0 @@
-System.register(["./index-legacy-DBSGI1iD.js","./index-legacy-Du6re5qY.js"],function(e,r){"use strict";var t,s;return{setters:[e=>{t=e._},e=>{s=e.r}],execute:function(){e("B",s("Browser",{web:()=>t(()=>r.import("./web-legacy-CmtrG2Tq.js"),void 0).then(e=>new e.BrowserWeb)}))}}});
