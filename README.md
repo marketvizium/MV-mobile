@@ -17,3 +17,9 @@
 - Trablhei na UI de minhas cotações para o coletor e o celular mobile.
 - Integrei o coletor de dados junto ao aplicativo para poder versionar e distribuir a aplicação na play store. Agora o usuário deve selecionar qual dispositivo está utilizando antes de prosseguir com o acesso ao aplicativo.
 - Melhorei o design e exibição da tela de login no Marviz.
+
+
+# V220 - Atualização em cotações
+- Adicionando botão de criar cotação na consulta de cotação, antigamente estava sem, e não dá para criar cotação se não for no aplicativo de computador, estou flexibilizando para utilizar o app de qualquer lugar.
+- Adicionando novos menus na plataforma web como Colaboradores e Vendedores. Antigamente só dava para cadastrar colaborador pelo aplicativo, e era péssimo, agora em qualquer lugar dá para cadastrar um novo colaborador e associar vendedores às lojas. 
+- No mobile adicionarei as novas colunas na próxima versão, por enquanto no mobile foram as correções de interface para criar cotação

@@ -1,0 +1,4 @@
+npx capacitor-assets generate - Gerar assets
+ionic build  - Build da dist ionic
+npx cap sync android - sincronizar com android studio
+npx cap open android - abrir android studio

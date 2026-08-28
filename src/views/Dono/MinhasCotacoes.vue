@@ -218,6 +218,20 @@
           </div>
         </section>
 
+        <div class="results-bar" v-if="user?.nivel == 1 || user?.nivel == 6">
+          <button style="width: 100%; display: flex; justify-content: center; align-items: center;
+           text-align: center; height: 40px; font-family: 'Poppins'; font-size: 15px; font-weight: 600;
+            background-color: #ff8049; color: #fff; border-radius: 8px;" @click="$router.push({name: 'registrarCotacao'})"
+            >
+            <span class="material-symbols-outlined">
+              add
+            </span>
+            <div>
+              Criar nova cotação
+            </div>
+          </button>
+        </div>
+
         <!-- ════════════════════════════════════════════
              CONTADOR DE RESULTADOS
         ════════════════════════════════════════════ -->
@@ -650,19 +664,53 @@ export default defineComponent({
         })
 
       }else{
-        this.$router.push({
-          name: 'consoleCotacao',
-          query: {
-            nome_cotacao: cotacao.nome_cotacao,
-            id_cotacao: cotacao.id_cotacao,
-            id_usuario: cotacao.id_usuario,
-          },
-        })
+        if (window.innerWidth > 992) {
+
+          this.$router.push({
+            name: 'ConsoleCotacaoDesktop',
+            query: {
+              nome_cotacao: cotacao.nome_cotacao,
+              id_cotacao: cotacao.id_cotacao,
+              id_usuario: cotacao.id_usuario,
+            },
+          })
+
+        } else {
+
+          this.$router.push({
+            name: 'consoleCotacao',
+            query: {
+              nome_cotacao: cotacao.nome_cotacao,
+              id_cotacao: cotacao.id_cotacao,
+              id_usuario: cotacao.id_usuario,
+            },
+          })
+
+        }
       }
     },
   },
 
   mounted() {
+    const authStore = useAuthStore()
+
+    if (!authStore.token && !localStorage.getItem('token')) {
+      this.$router.replace({ name: 'Login' })
+      return
+    }
+
+    this.auth = authStore
+
+    // Operador (nível 7): trava o filtro de status em "Indisponível"
+    if (this.user?.nivel == 7) {
+      this.filtroStatus = 'indisponivel'
+    }
+
+    this.buscarCotacoes()
+    this.verificarExibirModal()
+  },
+
+  ionViewDidEnter() {
     const authStore = useAuthStore()
 
     if (!authStore.token && !localStorage.getItem('token')) {

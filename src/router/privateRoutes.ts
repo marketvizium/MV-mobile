@@ -289,6 +289,16 @@ const privateRoutes: RouteRecordRaw = {
       }
     },
 
+    {
+      path: 'console-cotacao-d',
+      name: 'ConsoleCotacaoDesktop',
+      component: () => import('@/views/Dono/ConsoleCotacaoDesktop.vue'),
+      meta: {
+          title: 'Console de cotação',
+          subtitle: 'Aqui você pode monitorar responder os itens da cotação'
+      }
+    },
+
   ]
 };
 
