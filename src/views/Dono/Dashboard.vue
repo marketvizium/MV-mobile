@@ -1,28 +1,40 @@
 <template>
   <ion-page class="dash-cotacao-page">
     <ion-content :fullscreen="true" class="dash-content">
-
       <RefresherIonic />
 
       <div class="cotacao-root">
-
         <!-- ══ HEADER ══ -->
         <div class="reports-header">
           <div class="rh-left">
             <div class="rh-brand">
-              <span class="material-symbols-outlined rh-brand-icon">request_quote</span>
+              <span class="material-symbols-outlined rh-brand-icon"
+                >request_quote</span
+              >
               <div>
-                <div class="rh-title poppins-semibold">Dashboard de Cotações</div>
-                <div class="rh-sub poppins-regular">Cotações · Área de Compras</div>
+                <div class="rh-title poppins-semibold">
+                  Sua central de compras
+                </div>
+                <div class="rh-sub poppins-regular">MARVIZ / VISÃO GERAL</div>
               </div>
             </div>
           </div>
           <div class="rh-right">
             <div class="rh-sync">
-              <span class="material-symbols-outlined" style="font-size:14px;color:var(--green)">fiber_manual_record</span>
-              <span class="rh-sync-text">Tempo real</span>
+              <span
+                class="material-symbols-outlined"
+                style="font-size: 14px; color: var(--green)"
+                >fiber_manual_record</span
+              >
+              <span class="rh-sync-text">Dados da operação</span>
             </div>
-            <button class="rh-refresh-btn" @click="refreshData" :class="{ spinning: loadingDashboard }">
+            <button
+              class="rh-refresh-btn"
+              aria-label="Atualizar indicadores"
+              :disabled="loadingDashboard"
+              @click="refreshData"
+              :class="{ spinning: loadingDashboard }"
+            >
               <span class="material-symbols-outlined">refresh</span>
             </button>
           </div>
@@ -45,12 +57,151 @@
         </div>
 
         <template v-else>
-
+          <section class="welcome-row">
+            <div>
+              <span class="eyebrow">SUA OPERAÇÃO, MAIS CONECTADA</span>
+              <h1>Boas compras começam aqui<span>.</span></h1>
+              <p>
+                Cote, descubra oportunidades e acompanhe cada pedido em um só
+                lugar.
+              </p>
+            </div>
+            <button
+              class="primary-action"
+              @click="$router.push({ name: 'registrarCotacao' })"
+            >
+              <span class="material-symbols-outlined">add</span> Nova cotação
+            </button>
+          </section>
+          <nav class="quick-actions" aria-label="Acessos rápidos">
+            <button
+              v-for="action in quickActions"
+              :key="action.route"
+              @click="$router.push({ name: action.route })"
+            >
+              <span
+                class="quick-icon material-symbols-outlined"
+                :class="action.tone"
+                >{{ action.icon }}</span
+              ><span
+                ><strong>{{ action.title }}</strong
+                ><small>{{ action.text }}</small></span
+              ><span class="material-symbols-outlined quick-arrow"
+                >north_east</span
+              >
+            </button>
+          </nav>
+          <section
+            class="discover-section"
+            aria-label="Conheça os recursos Marviz"
+            aria-roledescription="carrossel"
+          >
+            <div class="discover-heading">
+              <div>
+                <span class="eyebrow">FEITO PARA O RITMO DA SUA LOJA</span>
+                <h2>Mais possibilidades. Menos trabalho.</h2>
+              </div>
+              <div class="carousel-arrows">
+                <button
+                  aria-label="Banner anterior"
+                  @click="moveCarousel('heroTrack', -1)"
+                >
+                  <span class="material-symbols-outlined">west</span></button
+                ><button
+                  aria-label="Próximo banner"
+                  @click="moveCarousel('heroTrack', 1)"
+                >
+                  <span class="material-symbols-outlined">east</span>
+                </button>
+              </div>
+            </div>
+            <div
+              ref="heroTrack"
+              class="hero-track"
+              tabindex="0"
+              aria-label="Banners: use as setas ou deslize"
+              @scroll.passive="syncHero"
+              @keydown.left.prevent="moveCarousel('heroTrack', -1)"
+              @keydown.right.prevent="moveCarousel('heroTrack', 1)"
+            >
+              <article
+                v-for="(slide, index) in featureSlides"
+                :key="slide.title"
+                class="feature-slide"
+                :class="slide.tone"
+                aria-roledescription="slide"
+                :aria-label="`${index + 1} de ${featureSlides.length}: ${
+                  slide.title
+                }`"
+              >
+                <div class="feature-copy">
+                  <span class="feature-badge"
+                    ><span class="material-symbols-outlined">{{
+                      slide.icon
+                    }}</span
+                    >{{ slide.badge }}</span
+                  >
+                  <h2>{{ slide.title }}</h2>
+                  <p>{{ slide.description }}</p>
+                  <button
+                    class="feature-cta"
+                    @click="$router.push({ name: slide.route })"
+                  >
+                    {{ slide.cta
+                    }}<span class="material-symbols-outlined"
+                      >arrow_forward</span
+                    >
+                  </button>
+                </div>
+                <div class="feature-art" aria-hidden="true">
+                  <div class="art-orbit"></div>
+                  <span class="material-symbols-outlined art-icon">{{
+                    slide.icon
+                  }}</span>
+                  <div class="art-label">
+                    <span class="material-symbols-outlined">{{
+                      slide.detailIcon
+                    }}</span
+                    >{{ slide.detail }}
+                  </div>
+                  <div class="art-caption">{{ slide.caption }}</div>
+                </div>
+              </article>
+            </div>
+            <div class="carousel-pagination">
+              <span
+                >Explore o Marviz
+                <span class="mobile-swipe">· deslize para descobrir</span></span
+              >
+              <div>
+                <button
+                  v-for="(slide, index) in featureSlides"
+                  :key="slide.title"
+                  :class="{ selected: heroIndex === index }"
+                  :aria-label="`Mostrar banner ${index + 1}: ${slide.title}`"
+                  :aria-current="heroIndex === index ? 'true' : undefined"
+                  @click="goHero(index)"
+                ></button>
+              </div>
+              <span aria-live="polite"
+                >{{ heroIndex + 1 }} / {{ featureSlides.length }}</span
+              >
+            </div>
+          </section>
+          <div class="analytics-heading">
+            <div>
+              <span class="eyebrow">ACOMPANHE SUA OPERAÇÃO</span>
+              <h2>O panorama das suas compras</h2>
+            </div>
+            <span class="update-label">Atualizado em {{ lastUpdate }}</span>
+          </div>
           <!-- ══ FILTER BAR ══ -->
           <div class="filter-bar">
             <div class="filter-section">
               <span class="filter-label">
-                <span class="material-symbols-outlined" style="font-size:15px">calendar_month</span>
+                <span class="material-symbols-outlined" style="font-size: 15px"
+                  >calendar_month</span
+                >
                 Período
               </span>
               <div class="period-chips">
@@ -60,29 +211,52 @@
                   class="pchip poppins-medium"
                   :class="{ active: activePeriod === p.key }"
                   @click="setPreset(p.key)"
-                >{{ p.label }}</button>
+                >
+                  {{ p.label }}
+                </button>
               </div>
             </div>
             <div class="date-range">
               <span class="dr-label">De</span>
-              <input type="date" v-model="dateFrom" class="dr-input" />
+              <input
+                type="date"
+                v-model="dateFrom"
+                class="dr-input"
+                aria-label="Data inicial"
+                :max="dateTo"
+              />
               <span class="dr-label">Até</span>
-              <input type="date" v-model="dateTo" class="dr-input" />
+              <input
+                type="date"
+                v-model="dateTo"
+                class="dr-input"
+                aria-label="Data final"
+                :min="dateFrom"
+              />
               <button class="btn-apply" @click="applyCustomRange">
-                <span class="material-symbols-outlined" style="font-size:15px">search</span>
+                <span class="material-symbols-outlined" style="font-size: 15px"
+                  >search</span
+                >
                 <span class="btn-apply-text">Aplicar</span>
               </button>
             </div>
           </div>
 
+          <p v-if="dateError" class="date-error" role="alert">
+            {{ dateError }}
+          </p>
           <!-- ══ PERIOD BADGE ══ -->
           <div class="period-badge-row">
             <div class="period-badge">
-              <span class="material-symbols-outlined" style="font-size:14px">date_range</span>
+              <span class="material-symbols-outlined" style="font-size: 14px"
+                >date_range</span
+              >
               {{ periodLabel }}
             </div>
             <div class="pb-location">
-              <span class="material-symbols-outlined" style="font-size:14px">shopping_cart</span>
+              <span class="material-symbols-outlined" style="font-size: 14px"
+                >shopping_cart</span
+              >
               {{ totalCotacoes }} cotações
             </div>
             <div class="pb-stats-wrap">
@@ -99,7 +273,9 @@
                 <span class="pb-stat-lbl">Taxa Concl.</span>
               </div>
               <div class="pb-stat">
-                <span class="pb-stat-val" style="color:var(--blue)">R$ {{ valorMedioCotacao }}</span>
+                <span class="pb-stat-val" style="color: var(--blue)"
+                  >R$ {{ valorMedioCotacao }}</span
+                >
                 <span class="pb-stat-lbl">Valor Médio</span>
               </div>
             </div>
@@ -107,10 +283,6 @@
 
           <!-- ══ CONTENT ══ -->
           <div class="reports-content">
-
-
-            <BannerSite />
-
             <!-- ═══ KPIs PRINCIPAIS ═══ -->
             <div class="section-block">
               <div class="section-header">
@@ -118,28 +290,59 @@
                   <span class="material-symbols-outlined">monitoring</span>
                 </div>
                 <div>
-                  <div class="section-title poppins-semibold">Resumo Executivo de Cotações</div>
-                  <div class="section-sub poppins-regular">Indicadores gerais · {{ periodLabel }}</div>
+                  <div class="section-title poppins-semibold">
+                    Seus resultados no período
+                  </div>
+                  <div class="section-sub poppins-regular">
+                    Indicadores gerais · {{ periodLabel }}
+                  </div>
                 </div>
               </div>
 
               <div class="kpi-grid-4">
-                <div v-for="k in mainKpis" :key="k.label" class="kpi-report" :class="k.cls">
-                  <div class="kr-icon"><span class="material-symbols-outlined">{{ k.icon }}</span></div>
+                <div
+                  v-for="k in mainKpis"
+                  :key="k.label"
+                  class="kpi-report"
+                  :class="k.cls"
+                >
+                  <div class="kr-icon">
+                    <span class="material-symbols-outlined">{{ k.icon }}</span>
+                  </div>
                   <div class="kr-body">
                     <div class="kr-label">{{ k.label }}</div>
                     <div class="kr-value poppins-semibold">{{ k.value }}</div>
                     <div class="kr-footer">
-                      <span class="kr-delta" :class="k.up === true ? 'up' : k.up === false ? 'down' : 'neutral'">
-                        <span class="material-symbols-outlined" style="font-size:12px">
-                          {{ k.up === true ? 'trending_up' : k.up === false ? 'trending_down' : 'remove' }}
+                      <span
+                        class="kr-delta"
+                        :class="
+                          k.up === true
+                            ? 'up'
+                            : k.up === false
+                            ? 'down'
+                            : 'neutral'
+                        "
+                      >
+                        <span
+                          class="material-symbols-outlined"
+                          style="font-size: 12px"
+                        >
+                          {{
+                            k.up === true
+                              ? "trending_up"
+                              : k.up === false
+                              ? "trending_down"
+                              : "remove"
+                          }}
                         </span>
                         {{ k.delta }}
                       </span>
-                      <span class="kr-sub">vs ant.</span>
+                      <span class="kr-sub">vs período anterior</span>
                     </div>
                   </div>
-                  <span class="material-symbols-outlined kr-bg">{{ k.icon }}</span>
+                  <span class="material-symbols-outlined kr-bg">{{
+                    k.icon
+                  }}</span>
                 </div>
               </div>
 
@@ -148,8 +351,19 @@
                 <div v-for="m in miniKpis" :key="m.label" class="kpi-mini">
                   <div class="kmr-label">{{ m.label }}</div>
                   <div class="kmr-value poppins-semibold">{{ m.value }}</div>
-                  <div class="kmr-sub" :style="{ color: m.up ? 'var(--green)' : m.up === false ? 'var(--red)' : 'var(--muted)' }">
-                    <span v-if="m.trend">{{ m.up ? '▲' : '▼' }} {{ m.trend }}</span>
+                  <div
+                    class="kmr-sub"
+                    :style="{
+                      color: m.up
+                        ? 'var(--green)'
+                        : m.up === false
+                        ? 'var(--red)'
+                        : 'var(--muted)',
+                    }"
+                  >
+                    <span v-if="m.trend"
+                      >{{ m.up ? "▲" : "▼" }} {{ m.trend }}</span
+                    >
                     {{ m.sub }}
                   </div>
                 </div>
@@ -254,7 +468,6 @@
               </div>
             
             -->
-            
 
             <!-- ═══ VENDEDORES / FORNECEDORES ═══ -->
             <div class="section-block">
@@ -263,29 +476,41 @@
                   <span class="material-symbols-outlined">group</span>
                 </div>
                 <div>
-                  <div class="section-title poppins-semibold">Performance de Vendedores / Fornecedores</div>
-                  <div class="section-sub poppins-regular">Ranking, tempo de resposta e participação em cotações</div>
+                  <div class="section-title poppins-semibold">
+                    Quem faz negócio com você
+                  </div>
+                  <div class="section-sub poppins-regular">
+                    Ranking, tempo de resposta e participação em cotações
+                  </div>
                 </div>
               </div>
 
               <!-- Tabela ranking vendedores -->
               <div class="card">
                 <div class="card-head">
-                  <div class="card-icon c-blue"><span class="material-symbols-outlined">leaderboard</span></div>
+                  <div class="card-icon c-blue">
+                    <span class="material-symbols-outlined">leaderboard</span>
+                  </div>
                   <div>
-                    <div class="card-title poppins-semibold">Ranking Detalhado de Vendedores</div>
-                    <div class="card-sub">Vendas, cotações e tempo de resposta</div>
+                    <div class="card-title poppins-semibold">
+                      Ranking de vendedores
+                    </div>
+                    <div class="card-sub">
+                      Vendas, cotações e tempo de resposta
+                    </div>
                   </div>
                 </div>
                 <div class="card-actions-row">
                   <div class="chip-filter-row">
                     <button
-                      v-for="f in ['Vendas','Cotações','Resposta','Aceite']"
+                      v-for="f in ['Vendas', 'Cotações', 'Resposta', 'Aceite']"
                       :key="f"
                       class="chip poppins-medium"
                       :class="{ active: sellerRankFilter === f }"
                       @click="sellerRankFilter = f"
-                    >{{ f }}</button>
+                    >
+                      {{ f }}
+                    </button>
                   </div>
                 </div>
 
@@ -308,34 +533,78 @@
                     </thead>
                     <tbody>
                       <tr v-for="(s, i) in sellersDetailed" :key="s.name">
-                        <td>
-                          <span class="rank-num poppins-semibold" :class="['gold','silver','bronze'][i]||''">{{ i+1 }}</span>
+                        <td data-label="Posição">
+                          <span
+                            class="rank-num poppins-semibold"
+                            :class="['gold', 'silver', 'bronze'][i] || ''"
+                            >{{ i + 1 }}</span
+                          >
                         </td>
-                        <td>
+                        <td data-label="Vendedor">
                           <div class="user-cell">
-                            <div class="mini-av" :class="'sc-av-'+s.avColor">{{ s.initials }}</div>
+                            <div class="mini-av" :class="'sc-av-' + s.avColor">
+                              {{ s.initials }}
+                            </div>
                             <div>
                               <div class="cell-name">{{ s.name }}</div>
                               <div class="cell-sub">{{ s.role }}</div>
                             </div>
                           </div>
                         </td>
-                        <td><span class="cell-name">{{ s.company }}</span></td>
-                        <td><span class="mono-bold">{{ s.qtdVendas }}</span></td>
-                        <td>{{ s.cotacoesParticipadas }}</td>
-                        <td>
+                        <td data-label="Empresa">
+                          <span class="cell-name">{{ s.company }}</span>
+                        </td>
+                        <td data-label="Vendas">
+                          <span class="mono-bold">{{ s.qtdVendas }}</span>
+                        </td>
+                        <td data-label="Cotações">
+                          {{ s.cotacoesParticipadas }}
+                        </td>
+                        <td data-label="Taxa de aceite">
                           <div class="inline-bar">
-                            <div class="ib-fill" :style="{ width: s.taxaAceite+'%', background: s.taxaAceite >= 60 ? 'var(--green)' : 'var(--accent)' }"></div>
+                            <div
+                              class="ib-fill"
+                              :style="{
+                                width: s.taxaAceite + '%',
+                                background:
+                                  s.taxaAceite >= 60
+                                    ? 'var(--green)'
+                                    : 'var(--accent)',
+                              }"
+                            ></div>
                             <span class="ib-val">{{ s.taxaAceite }}%</span>
                           </div>
                         </td>
-                        <td><span class="tag-r tag-green">{{ s.respMin }}h</span></td>
-                        <td><span class="tag-r tag-red">{{ s.respMax }}h</span></td>
-                        <td>{{ s.tempoMedio }}h</td>
-                        <td><span class="mono-bold accent-text">R$ {{ s.totalVendido }}</span></td>
-                        <td>
-                          <span class="tag-r" :class="s.tempoMedio <= 4 ? 'tag-green' : s.tempoMedio <= 12 ? 'tag-orange' : 'tag-red'">
-                            {{ s.tempoMedio <= 4 ? 'Ágil' : s.tempoMedio <= 12 ? 'Regular' : 'Lento' }}
+                        <td data-label="Resposta mais rápida">
+                          <span class="tag-r tag-green">{{ s.respMin }}h</span>
+                        </td>
+                        <td data-label="Resposta mais lenta">
+                          <span class="tag-r tag-red">{{ s.respMax }}h</span>
+                        </td>
+                        <td data-label="Tempo médio">{{ s.tempoMedio }}h</td>
+                        <td data-label="Total vendido">
+                          <span class="mono-bold accent-text"
+                            >R$ {{ s.totalVendido }}</span
+                          >
+                        </td>
+                        <td data-label="Status">
+                          <span
+                            class="tag-r"
+                            :class="
+                              s.tempoMedio <= 4
+                                ? 'tag-green'
+                                : s.tempoMedio <= 12
+                                ? 'tag-orange'
+                                : 'tag-red'
+                            "
+                          >
+                            {{
+                              s.tempoMedio <= 4
+                                ? "Ágil"
+                                : s.tempoMedio <= 12
+                                ? "Regular"
+                                : "Lento"
+                            }}
                           </span>
                         </td>
                       </tr>
@@ -350,70 +619,120 @@
 
               <!-- Cards: Mais rápido e mais lento -->
               <div class="chart-section-grid">
-                <div class="card highlight-card highlight-green" v-if="fastestSeller.name !== '—'">
+                <div
+                  class="card highlight-card highlight-green"
+                  v-if="fastestSeller.name !== '—'"
+                >
                   <div class="card-head">
-                    <div class="card-icon c-green"><span class="material-symbols-outlined">speed</span></div>
+                    <div class="card-icon c-green">
+                      <span class="material-symbols-outlined">speed</span>
+                    </div>
                     <div>
-                      <div class="card-title poppins-semibold">Vendedor Mais Rápido</div>
+                      <div class="card-title poppins-semibold">
+                        Vendedor Mais Rápido
+                      </div>
                       <div class="card-sub">Menor tempo médio de resposta</div>
                     </div>
                   </div>
                   <div class="highlight-body">
-                    <div class="hb-avatar" :class="'sc-av-'+fastestSeller.avColor">{{ fastestSeller.initials }}</div>
+                    <div
+                      class="hb-avatar"
+                      :class="'sc-av-' + fastestSeller.avColor"
+                    >
+                      {{ fastestSeller.initials }}
+                    </div>
                     <div class="hb-info">
-                      <div class="hb-name poppins-semibold">{{ fastestSeller.name }}</div>
+                      <div class="hb-name poppins-semibold">
+                        {{ fastestSeller.name }}
+                      </div>
                       <div class="hb-company">{{ fastestSeller.company }}</div>
                       <div class="hb-metric green-text">
-                        <span class="material-symbols-outlined" style="font-size:18px">timer</span>
+                        <span
+                          class="material-symbols-outlined"
+                          style="font-size: 18px"
+                          >timer</span
+                        >
                         {{ fastestSeller.tempoMedio }}h tempo médio
                       </div>
                     </div>
                     <div class="hb-stats">
                       <div class="hb-stat">
-                        <div class="hb-stat-val green poppins-semibold">{{ fastestSeller.cotacoesParticipadas }}</div>
+                        <div class="hb-stat-val green poppins-semibold">
+                          {{ fastestSeller.cotacoesParticipadas }}
+                        </div>
                         <div class="hb-stat-lbl">Cotações</div>
                       </div>
                       <div class="hb-stat">
-                        <div class="hb-stat-val poppins-semibold">{{ fastestSeller.taxaAceite }}%</div>
+                        <div class="hb-stat-val poppins-semibold">
+                          {{ fastestSeller.taxaAceite }}%
+                        </div>
                         <div class="hb-stat-lbl">Aceite</div>
                       </div>
                       <div class="hb-stat">
-                        <div class="hb-stat-val poppins-semibold">{{ fastestSeller.qtdVendas }}</div>
+                        <div class="hb-stat-val poppins-semibold">
+                          {{ fastestSeller.qtdVendas }}
+                        </div>
                         <div class="hb-stat-lbl">Vendas</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="card highlight-card highlight-red" v-if="slowestSeller.name !== '—'">
+                <div
+                  class="card highlight-card highlight-red"
+                  v-if="slowestSeller.name !== '—'"
+                >
                   <div class="card-head">
-                    <div class="card-icon c-red"><span class="material-symbols-outlined">hourglass_bottom</span></div>
+                    <div class="card-icon c-red">
+                      <span class="material-symbols-outlined"
+                        >hourglass_bottom</span
+                      >
+                    </div>
                     <div>
-                      <div class="card-title poppins-semibold">Vendedor Mais Lento</div>
+                      <div class="card-title poppins-semibold">
+                        Vendedor Mais Lento
+                      </div>
                       <div class="card-sub">Maior tempo médio de resposta</div>
                     </div>
                   </div>
                   <div class="highlight-body">
-                    <div class="hb-avatar" :class="'sc-av-'+slowestSeller.avColor">{{ slowestSeller.initials }}</div>
+                    <div
+                      class="hb-avatar"
+                      :class="'sc-av-' + slowestSeller.avColor"
+                    >
+                      {{ slowestSeller.initials }}
+                    </div>
                     <div class="hb-info">
-                      <div class="hb-name poppins-semibold">{{ slowestSeller.name }}</div>
+                      <div class="hb-name poppins-semibold">
+                        {{ slowestSeller.name }}
+                      </div>
                       <div class="hb-company">{{ slowestSeller.company }}</div>
                       <div class="hb-metric red-text">
-                        <span class="material-symbols-outlined" style="font-size:18px">timer_off</span>
+                        <span
+                          class="material-symbols-outlined"
+                          style="font-size: 18px"
+                          >timer_off</span
+                        >
                         {{ slowestSeller.tempoMedio }}h tempo médio
                       </div>
                     </div>
                     <div class="hb-stats">
                       <div class="hb-stat">
-                        <div class="hb-stat-val red poppins-semibold">{{ slowestSeller.cotacoesParticipadas }}</div>
+                        <div class="hb-stat-val red poppins-semibold">
+                          {{ slowestSeller.cotacoesParticipadas }}
+                        </div>
                         <div class="hb-stat-lbl">Cotações</div>
                       </div>
                       <div class="hb-stat">
-                        <div class="hb-stat-val poppins-semibold">{{ slowestSeller.taxaAceite }}%</div>
+                        <div class="hb-stat-val poppins-semibold">
+                          {{ slowestSeller.taxaAceite }}%
+                        </div>
                         <div class="hb-stat-lbl">Aceite</div>
                       </div>
                       <div class="hb-stat">
-                        <div class="hb-stat-val poppins-semibold">{{ slowestSeller.qtdVendas }}</div>
+                        <div class="hb-stat-val poppins-semibold">
+                          {{ slowestSeller.qtdVendas }}
+                        </div>
                         <div class="hb-stat-lbl">Vendas</div>
                       </div>
                     </div>
@@ -429,8 +748,12 @@
                   <span class="material-symbols-outlined">inventory_2</span>
                 </div>
                 <div>
-                  <div class="section-title poppins-semibold">Produtos e Métricas de Cotação</div>
-                  <div class="section-sub poppins-regular">Principal produto, top vendedor e última cotação</div>
+                  <div class="section-title poppins-semibold">
+                    Produtos e Métricas de Cotação
+                  </div>
+                  <div class="section-sub poppins-regular">
+                    Principal produto, top vendedor e última cotação
+                  </div>
                 </div>
               </div>
 
@@ -438,56 +761,91 @@
                 <!-- Principal produto mais comprado -->
                 <div class="card">
                   <div class="card-head">
-                    <div class="card-icon c-yellow"><span class="material-symbols-outlined">star</span></div>
+                    <div class="card-icon c-yellow">
+                      <span class="material-symbols-outlined">star</span>
+                    </div>
                     <div>
-                      <div class="card-title poppins-semibold">Produto Mais Comprado</div>
+                      <div class="card-title poppins-semibold">
+                        Produto Mais Comprado
+                      </div>
                       <div class="card-sub">Maior volume no período</div>
                     </div>
                   </div>
                   <div class="top-product-body" v-if="topProduct.name !== '—'">
                     <div class="tpb-rank">#1</div>
                     <div class="tpb-info">
-                      <div class="tpb-name poppins-semibold">{{ topProduct.name }}</div>
+                      <div class="tpb-name poppins-semibold">
+                        {{ topProduct.name }}
+                      </div>
                       <div class="tpb-code">
-                        <span class="material-symbols-outlined" style="font-size:13px">barcode_scanner</span>
+                        <span
+                          class="material-symbols-outlined"
+                          style="font-size: 13px"
+                          >barcode_scanner</span
+                        >
                         {{ topProduct.barcode }}
                       </div>
-                      <div class="tpb-category"><span class="tag-r tag-blue-soft">{{ topProduct.category }}</span></div>
+                      <div class="tpb-category">
+                        <span class="tag-r tag-blue-soft">{{
+                          topProduct.category
+                        }}</span>
+                      </div>
                     </div>
                     <div class="tpb-metrics">
                       <div class="tpb-metric">
-                        <div class="tpbm-val accent poppins-semibold">{{ topProduct.totalUnits }}</div>
+                        <div class="tpbm-val accent poppins-semibold">
+                          {{ topProduct.totalUnits }}
+                        </div>
                         <div class="tpbm-lbl">Unidades</div>
                       </div>
                       <div class="tpb-metric">
-                        <div class="tpbm-val poppins-semibold">{{ topProduct.cotacoes }}</div>
+                        <div class="tpbm-val poppins-semibold">
+                          {{ topProduct.cotacoes }}
+                        </div>
                         <div class="tpbm-lbl">Cotações</div>
                       </div>
                       <div class="tpb-metric">
-                        <div class="tpbm-val green poppins-semibold">R$ {{ topProduct.avgPrice }}</div>
+                        <div class="tpbm-val green poppins-semibold">
+                          R$ {{ topProduct.avgPrice }}
+                        </div>
                         <div class="tpbm-lbl">Preço Médio</div>
                       </div>
                     </div>
                     <div class="tpb-bar-wrap">
-                      <div class="tpb-bar-fill" :style="{ width: '100%' }"></div>
+                      <div
+                        class="tpb-bar-fill"
+                        :style="{ width: '100%' }"
+                      ></div>
                     </div>
                   </div>
                   <div v-else class="empty-chart-state">
                     <span class="material-symbols-outlined">inventory_2</span>
-                    <p class="poppins-regular">Sem dados de produtos no período</p>
+                    <p class="poppins-regular">
+                      Sem dados de produtos no período
+                    </p>
                   </div>
 
                   <!-- Outros produtos top -->
-                  <div class="top-products-list" v-if="otherTopProducts.length > 0">
+                  <div
+                    class="top-products-list"
+                    v-if="otherTopProducts.length > 0"
+                  >
                     <div class="tpl-header">Outros mais comprados</div>
-                    <div v-for="(p, i) in otherTopProducts" :key="p.barcode" class="tpl-row">
+                    <div
+                      v-for="(p, i) in otherTopProducts"
+                      :key="p.barcode"
+                      class="tpl-row"
+                    >
                       <div class="tpl-rank">{{ i + 2 }}</div>
                       <div class="tpl-info">
                         <div class="tpl-name">{{ p.name }}</div>
                         <div class="tpl-code">{{ p.barcode }}</div>
                       </div>
                       <div class="tpl-bar-wrap">
-                        <div class="tpl-bar" :style="{ width: p.pct+'%' }"></div>
+                        <div
+                          class="tpl-bar"
+                          :style="{ width: p.pct + '%' }"
+                        ></div>
                       </div>
                       <div class="tpl-qty">{{ p.totalUnits }} un.</div>
                     </div>
@@ -497,39 +855,64 @@
                 <!-- Vendedor que mais vende na loja -->
                 <div class="card">
                   <div class="card-head">
-                    <div class="card-icon c-orange"><span class="material-symbols-outlined">emoji_events</span></div>
+                    <div class="card-icon c-orange">
+                      <span class="material-symbols-outlined"
+                        >emoji_events</span
+                      >
+                    </div>
                     <div>
-                      <div class="card-title poppins-semibold">Vendedor que Mais Vende</div>
+                      <div class="card-title poppins-semibold">
+                        Vendedor que Mais Vende
+                      </div>
                       <div class="card-sub">Maior quantidade vendida</div>
                     </div>
                   </div>
                   <div class="top-seller-body" v-if="topSeller.name !== '—'">
                     <div class="tsb-crown">👑</div>
-                    <div class="sc-avatar large" :class="'sc-av-'+topSeller.avColor">{{ topSeller.initials }}</div>
-                    <div class="tsb-name poppins-semibold">{{ topSeller.name }}</div>
+                    <div
+                      class="sc-avatar large"
+                      :class="'sc-av-' + topSeller.avColor"
+                    >
+                      {{ topSeller.initials }}
+                    </div>
+                    <div class="tsb-name poppins-semibold">
+                      {{ topSeller.name }}
+                    </div>
                     <div class="tsb-company">{{ topSeller.company }}</div>
                     <div class="tsb-metrics">
                       <div class="tsb-metric">
-                        <div class="tsb-val accent poppins-semibold">{{ topSeller.qtdVendas }}</div>
+                        <div class="tsb-val accent poppins-semibold">
+                          {{ topSeller.qtdVendas }}
+                        </div>
                         <div class="tsb-lbl">Qtd. Vendas</div>
                       </div>
                       <div class="tsb-metric">
-                        <div class="tsb-val poppins-semibold">{{ topSeller.cotacoesParticipadas }}</div>
+                        <div class="tsb-val poppins-semibold">
+                          {{ topSeller.cotacoesParticipadas }}
+                        </div>
                         <div class="tsb-lbl">Cotações</div>
                       </div>
                       <div class="tsb-metric">
-                        <div class="tsb-val green poppins-semibold">{{ topSeller.taxaAceite }}%</div>
+                        <div class="tsb-val green poppins-semibold">
+                          {{ topSeller.taxaAceite }}%
+                        </div>
                         <div class="tsb-lbl">Aceite</div>
                       </div>
                     </div>
                     <div class="tsb-total">
-                      <span class="tsb-total-lbl">Total vendido no período</span>
-                      <span class="tsb-total-val poppins-semibold">R$ {{ topSeller.totalVendido }}</span>
+                      <span class="tsb-total-lbl"
+                        >Total vendido no período</span
+                      >
+                      <span class="tsb-total-val poppins-semibold"
+                        >R$ {{ topSeller.totalVendido }}</span
+                      >
                     </div>
                   </div>
                   <div v-else class="empty-chart-state">
                     <span class="material-symbols-outlined">emoji_events</span>
-                    <p class="poppins-regular">Sem dados de vendedores no período</p>
+                    <p class="poppins-regular">
+                      Sem dados de vendedores no período
+                    </p>
                   </div>
 
                   <div class="chart-wrap h160" v-if="sellersSummary.length > 0">
@@ -540,52 +923,94 @@
                 <!-- Última cotação + valor médio -->
                 <div class="card">
                   <div class="card-head">
-                    <div class="card-icon c-blue"><span class="material-symbols-outlined">receipt_long</span></div>
+                    <div class="card-icon c-blue">
+                      <span class="material-symbols-outlined"
+                        >receipt_long</span
+                      >
+                    </div>
                     <div>
-                      <div class="card-title poppins-semibold">Última Cotação & Métricas</div>
+                      <div class="card-title poppins-semibold">
+                        Última Cotação & Métricas
+                      </div>
                       <div class="card-sub">Cotação mais recente</div>
                     </div>
                   </div>
                   <div class="last-quote-body">
                     <div class="lqb-badge">
-                      <span class="material-symbols-outlined" style="font-size:28px;color:var(--blue)">description</span>
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 28px; color: var(--blue)"
+                        >description</span
+                      >
                       <div>
-                        <div class="lqb-name poppins-semibold">{{ lastCotacao.name }}</div>
+                        <div class="lqb-name poppins-semibold">
+                          {{ lastCotacao.name }}
+                        </div>
                         <div class="lqb-date">
-                          <span class="material-symbols-outlined" style="font-size:12px">calendar_today</span>
+                          <span
+                            class="material-symbols-outlined"
+                            style="font-size: 12px"
+                            >calendar_today</span
+                          >
                           {{ lastCotacao.date }}
                         </div>
                       </div>
-                      <span class="tag-r tag-blue-soft lqb-status">{{ lastCotacao.status }}</span>
+                      <span class="tag-r tag-blue-soft lqb-status">{{
+                        lastCotacao.status
+                      }}</span>
                     </div>
                     <div class="lqb-details">
                       <div class="lqb-detail-row">
                         <span class="lqb-detail-lbl">
-                          <span class="material-symbols-outlined" style="font-size:13px">person</span>
+                          <span
+                            class="material-symbols-outlined"
+                            style="font-size: 13px"
+                            >person</span
+                          >
                           Criada por
                         </span>
-                        <span class="lqb-detail-val">{{ lastCotacao.createdBy }}</span>
+                        <span class="lqb-detail-val">{{
+                          lastCotacao.createdBy
+                        }}</span>
                       </div>
                       <div class="lqb-detail-row">
                         <span class="lqb-detail-lbl">
-                          <span class="material-symbols-outlined" style="font-size:13px">inventory</span>
+                          <span
+                            class="material-symbols-outlined"
+                            style="font-size: 13px"
+                            >inventory</span
+                          >
                           Itens
                         </span>
-                        <span class="lqb-detail-val">{{ lastCotacao.items }} produtos</span>
+                        <span class="lqb-detail-val"
+                          >{{ lastCotacao.items }} produtos</span
+                        >
                       </div>
                       <div class="lqb-detail-row">
                         <span class="lqb-detail-lbl">
-                          <span class="material-symbols-outlined" style="font-size:13px">local_offer</span>
+                          <span
+                            class="material-symbols-outlined"
+                            style="font-size: 13px"
+                            >local_offer</span
+                          >
                           Fornecedores
                         </span>
-                        <span class="lqb-detail-val">{{ lastCotacao.suppliers }} participantes</span>
+                        <span class="lqb-detail-val"
+                          >{{ lastCotacao.suppliers }} participantes</span
+                        >
                       </div>
                       <div class="lqb-detail-row">
                         <span class="lqb-detail-lbl">
-                          <span class="material-symbols-outlined" style="font-size:13px">attach_money</span>
+                          <span
+                            class="material-symbols-outlined"
+                            style="font-size: 13px"
+                            >attach_money</span
+                          >
                           Valor total
                         </span>
-                        <span class="lqb-detail-val accent-text">R$ {{ lastCotacao.total }}</span>
+                        <span class="lqb-detail-val accent-text"
+                          >R$ {{ lastCotacao.total }}</span
+                        >
                       </div>
                     </div>
                   </div>
@@ -593,29 +1018,45 @@
                   <!-- Valor médio por cotação -->
                   <div class="avg-quote-box">
                     <div class="aqb-header">
-                      <span class="material-symbols-outlined" style="font-size:16px;color:var(--accent)">calculate</span>
+                      <span
+                        class="material-symbols-outlined"
+                        style="font-size: 16px; color: var(--accent)"
+                        >calculate</span
+                      >
                       Valor Médio por Cotação
                     </div>
-                    <div class="aqb-value poppins-semibold">R$ {{ valorMedioCotacao }}</div>
+                    <div class="aqb-value poppins-semibold">
+                      R$ {{ valorMedioCotacao }}
+                    </div>
                     <div class="aqb-sub">
-                      <span :style="{ color: avgUp ? 'var(--green)' : 'var(--red)' }">
-                        {{ avgUp ? '▲' : '▼' }} {{ avgDelta }}%
+                      <span
+                        :style="{
+                          color: avgUp ? 'var(--green)' : 'var(--red)',
+                        }"
+                      >
+                        {{ avgUp ? "▲" : "▼" }} {{ avgDelta }}%
                       </span>
                       vs período anterior
                     </div>
                     <div class="aqb-breakdown">
                       <div class="aqb-b-item">
-                        <div class="aqb-b-val poppins-semibold">R$ {{ avgMin }}</div>
+                        <div class="aqb-b-val poppins-semibold">
+                          R$ {{ avgMin }}
+                        </div>
                         <div class="aqb-b-lbl">Mínimo</div>
                       </div>
                       <div class="aqb-b-sep"></div>
                       <div class="aqb-b-item">
-                        <div class="aqb-b-val accent-text poppins-semibold">R$ {{ valorMedioCotacao }}</div>
+                        <div class="aqb-b-val accent-text poppins-semibold">
+                          R$ {{ valorMedioCotacao }}
+                        </div>
                         <div class="aqb-b-lbl">Médio</div>
                       </div>
                       <div class="aqb-b-sep"></div>
                       <div class="aqb-b-item">
-                        <div class="aqb-b-val poppins-semibold">R$ {{ avgMax }}</div>
+                        <div class="aqb-b-val poppins-semibold">
+                          R$ {{ avgMax }}
+                        </div>
                         <div class="aqb-b-lbl">Máximo</div>
                       </div>
                     </div>
@@ -623,25 +1064,93 @@
                 </div>
               </div>
             </div>
-
           </div>
 
           <!-- ══ FOOTER ══ -->
+          <section
+            class="learn-section"
+            aria-label="Mais recursos para sua loja"
+            aria-roledescription="carrossel"
+          >
+            <div class="discover-heading">
+              <div>
+                <span class="eyebrow">SEU PRÓXIMO PASSO</span>
+                <h2>Uma plataforma. Toda a sua operação.</h2>
+              </div>
+              <div class="carousel-arrows">
+                <button
+                  aria-label="Recurso anterior"
+                  @click="moveCarousel('learnTrack', -1)"
+                >
+                  <span class="material-symbols-outlined">west</span></button
+                ><button
+                  aria-label="Próximo recurso"
+                  @click="moveCarousel('learnTrack', 1)"
+                >
+                  <span class="material-symbols-outlined">east</span>
+                </button>
+              </div>
+            </div>
+            <div
+              ref="learnTrack"
+              class="learn-track"
+              tabindex="0"
+              aria-label="Recursos: use as setas ou deslize"
+              @keydown.left.prevent="moveCarousel('learnTrack', -1)"
+              @keydown.right.prevent="moveCarousel('learnTrack', 1)"
+            >
+              <article
+                v-for="item in learnCards"
+                :key="item.title"
+                class="learn-card"
+              >
+                <span
+                  class="quick-icon material-symbols-outlined"
+                  :class="item.tone"
+                  >{{ item.icon }}</span
+                ><span class="eyebrow">{{ item.badge }}</span>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.text }}</p>
+                <ul>
+                  <li v-for="point in item.points" :key="point">
+                    <span class="material-symbols-outlined">check_circle</span
+                    >{{ point }}
+                  </li>
+                </ul>
+                <button @click="$router.push({ name: item.route })">
+                  {{ item.cta
+                  }}<span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+              </article>
+            </div>
+          </section>
           <div class="reports-footer">
-            <span class="poppins-regular">Dashboard de Cotações</span>
-            <span class="poppins-regular">Última atualização: {{ lastUpdate }}</span>
+            <span class="poppins-regular">Sua central de compras</span>
+            <span class="poppins-regular"
+              >Última atualização: {{ lastUpdate }}</span
+            >
           </div>
-
         </template>
-
       </div>
-
     </ion-content>
   </ion-page>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { IonPage, IonContent, IonSpinner, IonRefresher, IonRefresherContent } from '@ionic/vue';
+import { defineComponent } from "vue";
+
+function localDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+import {
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonRefresher,
+  IonRefresherContent,
+} from "@ionic/vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -657,11 +1166,10 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
-import { api } from '@/services/api';
-import { useAuthStore } from '@/stores/auth';
-import RefresherIonic from '@/components/refresherIonic.vue';
-import BannerSite from '@/components/BannerSite.vue';
+} from "chart.js";
+import { api } from "@/services/api";
+import { useAuthStore } from "@/stores/auth";
+import RefresherIonic from "@/components/refresherIonic.vue";
 
 ChartJS.register(
   CategoryScale,
@@ -676,11 +1184,11 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 );
 
 export default defineComponent({
-  name: 'DashboardCotacao',
+  name: "DashboardCotacao",
 
   components: {
     IonPage,
@@ -689,7 +1197,6 @@ export default defineComponent({
     IonRefresher,
     IonRefresherContent,
     RefresherIonic,
-    BannerSite
   },
 
   data() {
@@ -697,6 +1204,150 @@ export default defineComponent({
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 
     return {
+      heroIndex: 0,
+      dateError: "",
+      quickActions: [
+        {
+          title: "Cotações",
+          text: "Compare e economize",
+          icon: "request_quote",
+          tone: "orange",
+          route: "MinhasCotacoes",
+        },
+        {
+          title: "Pedido direto",
+          text: "Compre sem cotar",
+          icon: "bolt",
+          tone: "purple",
+          route: "CriarPedidoDireto",
+        },
+        {
+          title: "Marviz Trends",
+          text: "Descubra oportunidades",
+          icon: "auto_awesome",
+          tone: "green",
+          route: "TrendsVarejor",
+        },
+        {
+          title: "Meus pedidos",
+          text: "Acompanhe cada etapa",
+          icon: "inventory_2",
+          tone: "blue",
+          route: "ConsPedidosDiretos",
+        },
+      ],
+      featureSlides: [
+        {
+          badge: "COMPRE DO SEU JEITO",
+          title: "Um jeito mais inteligente de comprar.",
+          description:
+            "Do pedido direto à cotação em massa, o Marviz se adapta ao ritmo da sua operação, não o contrário.",
+          icon: "shopping_bag",
+          tone: "hero-orange",
+          cta: "Começar uma cotação",
+          route: "registrarCotacao",
+          detailIcon: "all_inclusive",
+          detail: "Cotações ilimitadas",
+          caption: "Mais ofertas. Mais possibilidades.",
+        },
+        {
+          badge: "SEM ETAPAS DESNECESSÁRIAS",
+          title: "Já sabe com quem comprar? Vá direto.",
+          description:
+            "Envie seu pedido ao fornecedor sem passar por uma cotação. Produto em falta na loja? Resolva a reposição na hora.",
+          icon: "bolt",
+          tone: "hero-purple",
+          cta: "Criar pedido direto",
+          route: "CriarPedidoDireto",
+          detailIcon: "shopping_cart_checkout",
+          detail: "Da sua loja ao fornecedor",
+          caption: "Seu próximo pedido começa aqui.",
+        },
+        {
+          badge: "INOVAÇÃO MARVIZ",
+          title: "O que está em alta, antes de todo mundo.",
+          description:
+            "Conheça o Marviz Trends: descubra produtos, lançamentos e oportunidades para renovar seu sortimento e comprar o que vai vender.",
+          icon: "auto_awesome",
+          tone: "hero-green",
+          cta: "Explorar Marviz Trends",
+          route: "TrendsVarejor",
+          detailIcon: "trending_up",
+          detail: "Novidades para o seu segmento",
+          caption: "Descubra. Inspire-se. Abasteça.",
+        },
+        {
+          badge: "UMA REDE, NÃO UMA FILA DE E-MAILS",
+          title: "Seus vendedores. E toda a rede Marviz.",
+          description:
+            "Compre com quem você já conhece ou amplie sua cotação para novos vendedores. Quanto mais ofertas, mais chances de fechar um preço melhor.",
+          icon: "groups",
+          tone: "hero-blue",
+          cta: "Explorar vendedores",
+          route: "ExplorarVendedores",
+          detailIcon: "handshake",
+          detail: "Conexões que viram negócios",
+          caption: "Sua próxima parceria está na rede.",
+        },
+      ],
+      learnCards: [
+        {
+          icon: "auto_awesome",
+          tone: "orange",
+          badge: "MAIS INTELIGÊNCIA",
+          title: "A melhor oferta, na hora.",
+          text: "Deixe o mercado disputar por você e use as automações para comparar as respostas recebidas.",
+          points: [
+            "Cotações para vários vendedores ao mesmo tempo",
+            "Compare as ofertas em um só lugar",
+            "Selecione e conclua seu pedido com praticidade",
+          ],
+          route: "MinhasCotacoes",
+          cta: "Ver minhas cotações",
+        },
+        {
+          icon: "monitoring",
+          tone: "purple",
+          badge: "CONTROLE TOTAL",
+          title: "Sua equipe e seus pedidos, sempre à vista.",
+          text: "Acompanhe a operação com mais transparência, do primeiro contato ao pedido fechado.",
+          points: [
+            "Consulte os colaboradores da sua loja",
+            "Acompanhe cotações e negociações",
+            "Mantenha o histórico dos pedidos à mão",
+          ],
+          route: "ConsultarColaborador",
+          cta: "Consultar minha equipe",
+        },
+        {
+          icon: "insights",
+          tone: "green",
+          badge: "MARVIZ TRENDS",
+          title: "Seu sortimento não fica para trás.",
+          text: "Encontre novidades relevantes para o seu segmento, direto na plataforma onde você já compra.",
+          points: [
+            "Descubra produtos e lançamentos",
+            "Explore oportunidades de fornecedores",
+            "Leve as novidades para suas próximas compras",
+          ],
+          route: "TrendsVarejor",
+          cta: "Descobrir novidades",
+        },
+        {
+          icon: "touch_app",
+          tone: "blue",
+          badge: "PRONTO PARA O DIA A DIA",
+          title: "Simples de aprender. Rápido de usar.",
+          text: "Uma experiência pensada para quem trabalha no ritmo da loja, no computador e no celular.",
+          points: [
+            "Comece a cotar com poucos passos",
+            "Acesse as funções pelos atalhos",
+            "Faça pedidos sem sair da plataforma",
+          ],
+          route: "registrarCotacao",
+          cta: "Começar agora",
+        },
+      ],
       // Auth
       auth: null as any,
 
@@ -705,22 +1356,22 @@ export default defineComponent({
       error: false,
 
       // Filtros
-      activePeriod: 'mes' as string,
-      dateFrom: firstDay.toISOString().slice(0, 10),
-      dateTo: today.toISOString().slice(0, 10),
-      sellerRankFilter: 'Vendas' as string,
-      barcodeSearch: '' as string,
+      activePeriod: "mes" as string,
+      dateFrom: localDate(firstDay),
+      dateTo: localDate(today),
+      sellerRankFilter: "Vendas" as string,
+      barcodeSearch: "" as string,
       _searchTimeout: null as any,
 
       // Charts
       _charts: {} as Record<string, any>,
 
       periodPresets: [
-        { key: 'hoje',      label: 'Hoje' },
-        { key: 'semana',    label: 'Semana' },
-        { key: 'mes',       label: 'Mês' },
-        { key: 'trimestre', label: 'Trimestre' },
-        { key: 'ano',       label: 'Ano' },
+        { key: "hoje", label: "Hoje" },
+        { key: "semana", label: "Semana" },
+        { key: "mes", label: "Mês" },
+        { key: "trimestre", label: "Trimestre" },
+        { key: "ano", label: "Ano" },
       ],
 
       // ── KPIs da API ──
@@ -737,9 +1388,9 @@ export default defineComponent({
 
       // ── Mini KPIs ──
       taxaConclusaoApi: 0 as number,
-      valorMedioCotacao: '0,00' as string,
-      avgMin: '0,00' as string,
-      avgMax: '0,00' as string,
+      valorMedioCotacao: "0,00" as string,
+      avgMin: "0,00" as string,
+      avgMax: "0,00" as string,
       deltaValorMedioPct: null as number | null,
       avgUp: null as boolean | null,
       fornecedoresAtivos: 0 as number,
@@ -764,106 +1415,113 @@ export default defineComponent({
       // ── Dados do gráfico de volume ──
       volumeChartData: null as any,
 
-      lastUpdate: new Date().toLocaleString('pt-BR'),
+      lastUpdate: new Date().toLocaleString("pt-BR"),
     };
   },
 
   computed: {
     taxaConclusao(): number {
-      if (this.taxaConclusaoApi && this.taxaConclusaoApi !== 0) return this.taxaConclusaoApi;
+      if (this.taxaConclusaoApi && this.taxaConclusaoApi !== 0)
+        return this.taxaConclusaoApi;
       if (!this.totalCotacoes) return 0;
       return Math.round((this.cotacoesConcluidas / this.totalCotacoes) * 100);
     },
 
     periodLabel(): string {
       const labels: Record<string, string> = {
-        hoje: 'Hoje',
-        semana: 'Esta Semana',
-        mes: 'Este Mês',
-        trimestre: 'Último Trimestre',
-        ano: 'Este Ano',
-        custom: `${this.dateFrom} até ${this.dateTo}`,
+        hoje: "Hoje",
+        semana: "Esta Semana",
+        mes: "Este Mês",
+        trimestre: "Último Trimestre",
+        ano: "Este Ano",
+        custom: `${this.dateFrom
+          .split("-")
+          .reverse()
+          .join("/")} até ${this.dateTo.split("-").reverse().join("/")}`,
       };
-      return labels[this.activePeriod] || 'Período Personalizado';
+      return labels[this.activePeriod] || "Período Personalizado";
     },
 
     mainKpis(): any[] {
-      const deltaCotacoesStr = this.deltaCotacoes != null
-        ? `${this.cotacoesUp ? '+' : ''}${this.deltaCotacoes}`
-        : '—';
-      const deltaValorStr = this.deltaValorPct != null
-        ? `${this.deltaValorPct > 0 ? '+' : ''}${this.deltaValorPct}%`
-        : '—';
+      const deltaCotacoesStr =
+        this.deltaCotacoes != null
+          ? `${this.cotacoesUp ? "+" : ""}${this.deltaCotacoes}`
+          : "—";
+      const deltaValorStr =
+        this.deltaValorPct != null
+          ? `${this.deltaValorPct > 0 ? "+" : ""}${this.deltaValorPct}%`
+          : "—";
 
       return [
         {
-          label: 'Cotações Criadas',
+          label: "Cotações Criadas",
           value: this.totalCotacoes.toString(),
-          icon: 'request_quote',
-          cls: 'k-orange',
+          icon: "request_quote",
+          cls: "k-orange",
           delta: deltaCotacoesStr,
           up: this.cotacoesUp,
         },
         {
-          label: 'Cotações Concluídas',
+          label: "Cotações Concluídas",
           value: this.cotacoesConcluidas.toString(),
-          icon: 'task_alt',
-          cls: 'k-green',
+          icon: "task_alt",
+          cls: "k-green",
           delta: deltaCotacoesStr,
           up: this.cotacoesUp,
         },
         {
-          label: 'Valor Total Comprado',
+          label: "Valor Total Comprado",
           value: `R$ ${this.formatVal(this.valorTotalComprado)}`,
-          icon: 'payments',
-          cls: 'k-blue',
+          icon: "payments",
+          cls: "k-blue",
           delta: deltaValorStr,
           up: this.valorUp,
         },
         {
-          label: 'Economia Gerada',
+          label: "Economia Gerada",
           value: `R$ ${this.formatVal(this.economiaGerada)}`,
-          icon: 'savings',
-          cls: 'k-yellow',
-          delta: '—',
+          icon: "savings",
+          cls: "k-yellow",
+          delta: "—",
           up: null,
         },
       ];
     },
 
     miniKpis(): any[] {
-      const deltaValorMedioStr = this.deltaValorMedioPct != null
-        ? `${Math.abs(this.deltaValorMedioPct)}%`
-        : null;
+      const deltaValorMedioStr =
+        this.deltaValorMedioPct != null
+          ? `${Math.abs(this.deltaValorMedioPct)}%`
+          : null;
 
       return [
         {
-          label: 'Taxa de Conclusão',
+          label: "Taxa de Conclusão",
           value: `${this.taxaConclusao}%`,
           trend: null,
           up: null,
-          sub: 'do período',
+          sub: "do período",
         },
         {
-          label: 'Cotações Pendentes',
+          label: "Cotações Pendentes",
           value: this.cotacoesPendentes.toString(),
           trend: null,
           up: null,
-          sub: 'aguardando resposta',
+          sub: "aguardando resposta",
         },
         {
-          label: 'Valor Médio/Cotação',
+          label: "Valor Médio/Cotação",
           value: `R$ ${this.valorMedioCotacao}`,
           trend: deltaValorMedioStr,
           up: this.avgUp,
-          sub: 'vs período ant.',
+          sub: "vs período ant.",
         },
         {
-          label: 'Fornecedores Ativos',
+          label: "Fornecedores Ativos",
           value: this.fornecedoresAtivos.toString(),
           trend: null,
           up: null,
-          sub: 'no período',
+          sub: "no período",
         },
       ];
     },
@@ -874,50 +1532,97 @@ export default defineComponent({
 
     sellersDetailed(): any[] {
       const sorted = [...this.sellersSummary];
-      if (this.sellerRankFilter === 'Vendas') sorted.sort((a, b) => b.qtdVendas - a.qtdVendas);
-      else if (this.sellerRankFilter === 'Cotações') sorted.sort((a, b) => b.cotacoesParticipadas - a.cotacoesParticipadas);
-      else if (this.sellerRankFilter === 'Resposta') sorted.sort((a, b) => a.tempoMedio - b.tempoMedio);
-      else if (this.sellerRankFilter === 'Aceite') sorted.sort((a, b) => b.taxaAceite - a.taxaAceite);
+      if (this.sellerRankFilter === "Vendas")
+        sorted.sort((a, b) => b.qtdVendas - a.qtdVendas);
+      else if (this.sellerRankFilter === "Cotações")
+        sorted.sort((a, b) => b.cotacoesParticipadas - a.cotacoesParticipadas);
+      else if (this.sellerRankFilter === "Resposta")
+        sorted.sort((a, b) => a.tempoMedio - b.tempoMedio);
+      else if (this.sellerRankFilter === "Aceite")
+        sorted.sort((a, b) => b.taxaAceite - a.taxaAceite);
       return sorted;
     },
 
     fastestSeller(): any {
       if (this.fastestSellerApi) return this.fastestSellerApi;
-      if (!this.sellersSummary.length) return { name: '—', company: '—', initials: '—', avColor: 'orange', tempoMedio: 0, cotacoesParticipadas: 0, taxaAceite: 0, qtdVendas: 0 };
-      return [...this.sellersSummary].sort((a, b) => a.tempoMedio - b.tempoMedio)[0];
+      if (!this.sellersSummary.length)
+        return {
+          name: "—",
+          company: "—",
+          initials: "—",
+          avColor: "orange",
+          tempoMedio: 0,
+          cotacoesParticipadas: 0,
+          taxaAceite: 0,
+          qtdVendas: 0,
+        };
+      return [...this.sellersSummary].sort(
+        (a, b) => a.tempoMedio - b.tempoMedio
+      )[0];
     },
 
     slowestSeller(): any {
       if (this.slowestSellerApi) return this.slowestSellerApi;
-      if (!this.sellersSummary.length) return { name: '—', company: '—', initials: '—', avColor: 'orange', tempoMedio: 0, cotacoesParticipadas: 0, taxaAceite: 0, qtdVendas: 0 };
-      return [...this.sellersSummary].sort((a, b) => b.tempoMedio - a.tempoMedio)[0];
+      if (!this.sellersSummary.length)
+        return {
+          name: "—",
+          company: "—",
+          initials: "—",
+          avColor: "orange",
+          tempoMedio: 0,
+          cotacoesParticipadas: 0,
+          taxaAceite: 0,
+          qtdVendas: 0,
+        };
+      return [...this.sellersSummary].sort(
+        (a, b) => b.tempoMedio - a.tempoMedio
+      )[0];
     },
 
     topSeller(): any {
       if (this.topSellerApi) return this.topSellerApi;
-      if (!this.sellersSummary.length) return { name: '—', company: '—', initials: '—', avColor: 'orange', qtdVendas: 0, cotacoesParticipadas: 0, taxaAceite: 0, totalVendido: '0,00' };
-      return [...this.sellersSummary].sort((a, b) => b.qtdVendas - a.qtdVendas)[0];
+      if (!this.sellersSummary.length)
+        return {
+          name: "—",
+          company: "—",
+          initials: "—",
+          avColor: "orange",
+          qtdVendas: 0,
+          cotacoesParticipadas: 0,
+          taxaAceite: 0,
+          totalVendido: "0,00",
+        };
+      return [...this.sellersSummary].sort(
+        (a, b) => b.qtdVendas - a.qtdVendas
+      )[0];
     },
 
     topProduct(): any {
       if (this.topProductApi) {
         return {
           name: this.topProductApi.nome,
-          barcode: this.topProductApi.codigo_barra || '—',
-          category: this.topProductApi.categoria || 'Sem categoria',
+          barcode: this.topProductApi.codigo_barra || "—",
+          category: this.topProductApi.categoria || "Sem categoria",
           totalUnits: this.topProductApi.totalUnits,
           cotacoes: this.topProductApi.cotacoes,
           avgPrice: this.formatVal(this.topProductApi.avgPrice),
         };
       }
-      return { name: '—', barcode: '—', category: '—', totalUnits: 0, cotacoes: 0, avgPrice: '0,00' };
+      return {
+        name: "—",
+        barcode: "—",
+        category: "—",
+        totalUnits: 0,
+        cotacoes: 0,
+        avgPrice: "0,00",
+      };
     },
 
     otherTopProducts(): any[] {
       if (this.otherTopProductsApi?.length > 0) {
         return this.otherTopProductsApi.map((p: any) => ({
           name: p.nome,
-          barcode: p.codigo_barra || '—',
+          barcode: p.codigo_barra || "—",
           totalUnits: p.totalUnits,
           pct: p.pct || 0,
         }));
@@ -928,30 +1633,114 @@ export default defineComponent({
     lastCotacao(): any {
       if (this.lastCotacaoApi) {
         return {
-          name: this.lastCotacaoApi.name || '—',
-          date: this.lastCotacaoApi.date || '—',
-          status: this.lastCotacaoApi.status || '—',
-          createdBy: this.lastCotacaoApi.createdBy || '—',
+          name: this.lastCotacaoApi.name || "—",
+          date: this.lastCotacaoApi.date || "—",
+          status: this.lastCotacaoApi.status || "—",
+          createdBy: this.lastCotacaoApi.createdBy || "—",
           items: this.lastCotacaoApi.items ?? 0,
           suppliers: this.lastCotacaoApi.suppliers ?? 0,
-          total: this.lastCotacaoApi.total || '0,00',
+          total: this.lastCotacaoApi.total || "0,00",
         };
       }
-      return { name: '—', date: '—', status: '—', createdBy: '—', items: 0, suppliers: 0, total: '0,00' };
+      return {
+        name: "—",
+        date: "—",
+        status: "—",
+        createdBy: "—",
+        items: 0,
+        suppliers: 0,
+        total: "0,00",
+      };
     },
 
     avgDelta(): number {
-      return this.deltaValorMedioPct != null ? Math.abs(this.deltaValorMedioPct) : 0;
+      return this.deltaValorMedioPct != null
+        ? Math.abs(this.deltaValorMedioPct)
+        : 0;
     },
   },
 
   methods: {
+    moveCarousel(refName: string, direction: number) {
+      const track = this.$refs[refName] as HTMLElement | undefined;
+      if (!track) return;
+      const cards = Array.from(track.children) as HTMLElement[];
+      const positions = cards.map(
+        (card) => card.offsetLeft - cards[0].offsetLeft
+      );
+      const current = positions.reduce(
+        (best, value, index) =>
+          Math.abs(value - track.scrollLeft) <
+          Math.abs(positions[best] - track.scrollLeft)
+            ? index
+            : best,
+        0
+      );
+      const next = Math.max(0, Math.min(cards.length - 1, current + direction));
+      track.scrollTo({
+        left: positions[next],
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+
+      console.log(next, 'next')
+      console.log(current, 'current')
+      console.log(direction)
+
+      return {
+        length: cards.length - 1,
+        current: current,
+        direction: direction
+      }
+    },
+    goHero(index: number) {
+      const track = this.$refs.heroTrack as HTMLElement | undefined;
+      if (!track) return;
+      const card = track.children[index] as HTMLElement;
+      track.scrollTo({
+        left: card.offsetLeft - (track.children[0] as HTMLElement).offsetLeft,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+    },
+    syncHero() {
+      const track = this.$refs.heroTrack as HTMLElement | undefined;
+      if (!track) return;
+      const first = (track.children[0] as HTMLElement).offsetLeft;
+      let nearest = 0;
+      Array.from(track.children).forEach((card, index) => {
+        if (
+          Math.abs(
+            (card as HTMLElement).offsetLeft - first - track.scrollLeft
+          ) <
+          Math.abs(
+            (track.children[nearest] as HTMLElement).offsetLeft -
+              first -
+              track.scrollLeft
+          )
+        )
+          nearest = index;
+      });
+      this.heroIndex = nearest;
+    },
     formatVal(v: any): string {
-      if (v == null) return '0,00';
-      return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (v == null) return "0,00";
+      return Number(v).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     },
 
     async carregarDashboard() {
+      if (!this.dateFrom || !this.dateTo || this.dateFrom > this.dateTo) {
+        this.dateError =
+          "Informe um período válido. A data final deve ser igual ou posterior à inicial.";
+        return;
+      }
+      this.dateError = "";
+      if (this.loadingDashboard) return;
       this.loadingDashboard = true;
       this.error = false;
 
@@ -960,8 +1749,8 @@ export default defineComponent({
         this.auth = authStore;
 
         const payload = {
-          timestamp_inicio: new Date(this.dateFrom).getTime(),
-          timestamp_fim: new Date(this.dateTo + 'T23:59:59').getTime(),
+          timestamp_inicio: new Date(this.dateFrom + "T00:00:00").getTime(),
+          timestamp_fim: new Date(this.dateTo + "T23:59:59").getTime(),
         };
 
         const res = await api.post(
@@ -970,42 +1759,45 @@ export default defineComponent({
         );
 
         const d = res.data?.data;
-        if (!d) return;
+        if (!d) throw new Error("Dashboard sem dados na resposta");
 
         // KPIs principais
         const k = d.kpis || {};
-        this.totalCotacoes       = k.totalCotacoes       ?? 0;
-        this.cotacoesConcluidas  = k.cotacoesConcluidas  ?? 0;
-        this.cotacoesPendentes   = k.cotacoesPendentes   ?? 0;
-        this.cotacoesCanceladas  = k.cotacoesCanceladas  ?? 0;
-        this.valorTotalComprado  = k.valorTotalComprado  ?? 0;
-        this.deltaValorPct       = k.deltaValorPct       ?? null;
-        this.economiaGerada      = k.economiaGerada      ?? 0;
-        this.deltaCotacoes       = k.deltaCotacoes       ?? 0;
-        this.cotacoesUp          = k.cotacoesUp          ?? true;
-        this.valorUp             = k.valorUp             ?? null;
+        this.totalCotacoes = k.totalCotacoes ?? 0;
+        this.cotacoesConcluidas = k.cotacoesConcluidas ?? 0;
+        this.cotacoesPendentes = k.cotacoesPendentes ?? 0;
+        this.cotacoesCanceladas = k.cotacoesCanceladas ?? 0;
+        this.valorTotalComprado = k.valorTotalComprado ?? 0;
+        this.deltaValorPct = k.deltaValorPct ?? null;
+        this.economiaGerada = k.economiaGerada ?? 0;
+        this.deltaCotacoes = k.deltaCotacoes ?? 0;
+        this.cotacoesUp = k.cotacoesUp ?? true;
+        this.valorUp = k.valorUp ?? null;
 
         // Mini KPIs
         const mk = d.miniKpis || {};
-        this.taxaConclusaoApi   = mk.taxaConclusao      ?? 0;
-        this.cotacoesPendentes  = mk.cotacoesPendentes  ?? this.cotacoesPendentes;
-        this.valorMedioCotacao  = mk.valorMedioCotacao != null ? this.formatVal(mk.valorMedioCotacao) : '0,00';
-        this.avgMin             = mk.avgMin != null ? this.formatVal(mk.avgMin) : '0,00';
-        this.avgMax             = mk.avgMax != null ? this.formatVal(mk.avgMax) : '0,00';
+        this.taxaConclusaoApi = mk.taxaConclusao ?? 0;
+        this.cotacoesPendentes = mk.cotacoesPendentes ?? this.cotacoesPendentes;
+        this.valorMedioCotacao =
+          mk.valorMedioCotacao != null
+            ? this.formatVal(mk.valorMedioCotacao)
+            : "0,00";
+        this.avgMin = mk.avgMin != null ? this.formatVal(mk.avgMin) : "0,00";
+        this.avgMax = mk.avgMax != null ? this.formatVal(mk.avgMax) : "0,00";
         this.deltaValorMedioPct = mk.deltaValorMedioPct ?? null;
-        this.avgUp              = mk.avgUp              ?? null;
+        this.avgUp = mk.avgUp ?? null;
         this.fornecedoresAtivos = mk.fornecedoresAtivos ?? 0;
 
         // Vendedores
         const sellers = d.sellers || {};
-        this.sellersDetalhadosApi = sellers.detalhados    || [];
-        this.fastestSellerApi     = sellers.fastestSeller || null;
-        this.slowestSellerApi     = sellers.slowestSeller || null;
-        this.topSellerApi         = sellers.topSeller     || null;
+        this.sellersDetalhadosApi = sellers.detalhados || [];
+        this.fastestSellerApi = sellers.fastestSeller || null;
+        this.slowestSellerApi = sellers.slowestSeller || null;
+        this.topSellerApi = sellers.topSeller || null;
 
         // Produtos
         const produtos = d.produtos || {};
-        this.topProductApi       = produtos.topProduct       || null;
+        this.topProductApi = produtos.topProduct || null;
         this.otherTopProductsApi = produtos.otherTopProducts || [];
 
         // Volume chart
@@ -1014,13 +1806,12 @@ export default defineComponent({
         // Última cotação
         this.lastCotacaoApi = d.lastCotacao || null;
 
-        this.lastUpdate = new Date().toLocaleString('pt-BR');
+        this.lastUpdate = new Date().toLocaleString("pt-BR");
 
         this.$nextTick(() => {
           this.refreshVolumeChart();
           this.refreshTopSellerChart();
         });
-
       } catch (err) {
         this.error = true;
       } finally {
@@ -1037,34 +1828,41 @@ export default defineComponent({
 
     setPreset(key: string) {
       this.activePeriod = key;
-      this.barcodeSearch = '';
+      this.barcodeSearch = "";
       this.selectedProduct = null;
       this.priceEvoData = null;
 
       const today = new Date();
-      this.dateTo = today.toISOString().slice(0, 10);
+      this.dateTo = localDate(today);
 
-      if (key === 'hoje') {
-        this.dateFrom = today.toISOString().slice(0, 10);
-      } else if (key === 'semana') {
+      if (key === "hoje") {
+        this.dateFrom = localDate(today);
+      } else if (key === "semana") {
         const d = new Date(today);
         d.setDate(d.getDate() - 7);
-        this.dateFrom = d.toISOString().slice(0, 10);
-      } else if (key === 'mes') {
-        this.dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
-      } else if (key === 'trimestre') {
+        this.dateFrom = localDate(d);
+      } else if (key === "mes") {
+        this.dateFrom = localDate(
+          new Date(today.getFullYear(), today.getMonth(), 1)
+        );
+      } else if (key === "trimestre") {
         const d = new Date(today);
         d.setMonth(d.getMonth() - 3);
-        this.dateFrom = d.toISOString().slice(0, 10);
-      } else if (key === 'ano') {
-        this.dateFrom = new Date(today.getFullYear(), 0, 1).toISOString().slice(0, 10);
+        this.dateFrom = localDate(d);
+      } else if (key === "ano") {
+        this.dateFrom = localDate(new Date(today.getFullYear(), 0, 1));
       }
 
       this.refreshData();
     },
 
     applyCustomRange() {
-      this.activePeriod = 'custom';
+      if (!this.dateFrom || !this.dateTo || this.dateFrom > this.dateTo) {
+        this.dateError =
+          "Informe um período válido. A data final deve ser igual ou posterior à inicial.";
+        return;
+      }
+      this.activePeriod = "custom";
       this.refreshData();
     },
 
@@ -1093,8 +1891,8 @@ export default defineComponent({
 
         const payload = {
           codigo_barra: q,
-          timestamp_inicio: new Date(this.dateFrom).getTime(),
-          timestamp_fim: new Date(this.dateTo + 'T23:59:59').getTime(),
+          timestamp_inicio: new Date(this.dateFrom + "T00:00:00").getTime(),
+          timestamp_fim: new Date(this.dateTo + "T23:59:59").getTime(),
         };
 
         const res = await api.post(
@@ -1114,8 +1912,8 @@ export default defineComponent({
         this.selectedProduct = {
           barcode: prod.barcode || q,
           name: prod.name || q,
-          category: prod.category || 'Sem categoria',
-          lastPrice: prod.lastPrice || '0,00',
+          category: prod.category || "Sem categoria",
+          lastPrice: prod.lastPrice || "0,00",
           priceChange: prod.priceChange ?? 0,
           totalQuotes: prod.totalQuotes ?? 0,
         };
@@ -1123,7 +1921,6 @@ export default defineComponent({
         this.priceEvoData = d.priceEvoChart || null;
 
         this.$nextTick(() => this.refreshPriceEvoChart());
-
       } catch (e) {
         // silencioso
       }
@@ -1132,20 +1929,20 @@ export default defineComponent({
     // ── Charts (Chart.js) ────────────────────────────────────────────────
     getChartColors() {
       return {
-        ACCENT: '#FF8049',
-        GREEN: '#16a34a',
-        BLUE: '#2563eb',
-        TEXT: '#64748b',
-        GRID: 'rgba(226,232,240,0.8)',
+        ACCENT: "#FF8049",
+        GREEN: "#16a34a",
+        BLUE: "#2563eb",
+        TEXT: "#64748b",
+        GRID: "rgba(226,232,240,0.8)",
       };
     },
 
     getBaseTooltip() {
       return {
-        backgroundColor: '#1e293b',
-        titleColor: '#f8fafc',
-        bodyColor: '#94a3b8',
-        borderColor: '#334155',
+        backgroundColor: "#1e293b",
+        titleColor: "#f8fafc",
+        bodyColor: "#94a3b8",
+        borderColor: "#334155",
         borderWidth: 1,
         padding: 10,
         cornerRadius: 8,
@@ -1158,8 +1955,14 @@ export default defineComponent({
       const tooltip = this.getBaseTooltip();
 
       const labels = this.volumeChartData?.labels || [];
-      const criadas = this.volumeChartData?.datasets?.[0]?.data || this.volumeChartData?.criadas || [];
-      const concluid = this.volumeChartData?.datasets?.[1]?.data || this.volumeChartData?.concluidas || [];
+      const criadas =
+        this.volumeChartData?.datasets?.[0]?.data ||
+        this.volumeChartData?.criadas ||
+        [];
+      const concluid =
+        this.volumeChartData?.datasets?.[1]?.data ||
+        this.volumeChartData?.concluidas ||
+        [];
 
       const ctx = this.$refs.volumeChart as HTMLCanvasElement;
       if (!ctx) return;
@@ -1167,19 +1970,39 @@ export default defineComponent({
       if (this._charts.volume) this._charts.volume.destroy();
 
       this._charts.volume = new ChartJS(ctx, {
-        type: 'bar',
+        type: "bar",
         data: {
           labels,
           datasets: [
-            { label: 'Criadas', data: criadas, backgroundColor: ACCENT + 'CC', borderRadius: 4, borderSkipped: false },
-            { label: 'Concluídas', data: concluid, backgroundColor: GREEN + 'CC', borderRadius: 4, borderSkipped: false },
+            {
+              label: "Criadas",
+              data: criadas,
+              backgroundColor: ACCENT + "CC",
+              borderRadius: 4,
+              borderSkipped: false,
+            },
+            {
+              label: "Concluídas",
+              data: concluid,
+              backgroundColor: GREEN + "CC",
+              borderRadius: 4,
+              borderSkipped: false,
+            },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'top', labels: { color: TEXT, font: { size: 11 }, boxWidth: 10, padding: 16 } },
+            legend: {
+              position: "top",
+              labels: {
+                color: TEXT,
+                font: { size: 11 },
+                boxWidth: 10,
+                padding: 16,
+              },
+            },
             tooltip,
           },
           scales: {
@@ -1190,8 +2013,8 @@ export default defineComponent({
                 font: { size: 10 },
                 callback: function (value: any) {
                   const label = (this as any).getLabelForValue(value);
-                  if (label?.includes('-')) {
-                    const [, mes, dia] = label.split('-');
+                  if (label?.includes("-")) {
+                    const [, mes, dia] = label.split("-");
                     return `${dia}/${mes}`;
                   }
                   return label;
@@ -1220,7 +2043,8 @@ export default defineComponent({
         labels = this.priceEvoData.labels || [];
         data = this.priceEvoData.precos || [];
         const mediaPeriodo = this.priceEvoData.mediaPeriodo ?? null;
-        mediaArray = this.priceEvoData.mediaArray || labels.map(() => mediaPeriodo);
+        mediaArray =
+          this.priceEvoData.mediaArray || labels.map(() => mediaPeriodo);
       }
 
       const ctx = this.$refs.priceEvoChart as HTMLCanvasElement;
@@ -1229,15 +2053,15 @@ export default defineComponent({
       if (this._charts.priceEvo) this._charts.priceEvo.destroy();
 
       this._charts.priceEvo = new ChartJS(ctx, {
-        type: 'line',
+        type: "line",
         data: {
           labels,
           datasets: [
             {
-              label: this.selectedProduct?.name || 'Evolução de Preço',
+              label: this.selectedProduct?.name || "Evolução de Preço",
               data,
               borderColor: ACCENT,
-              backgroundColor: 'rgba(255,128,73,0.10)',
+              backgroundColor: "rgba(255,128,73,0.10)",
               borderWidth: 2.5,
               pointBackgroundColor: ACCENT,
               pointRadius: 4,
@@ -1246,9 +2070,9 @@ export default defineComponent({
               tension: 0.35,
             },
             {
-              label: 'Média do período',
+              label: "Média do período",
               data: mediaArray,
-              borderColor: BLUE + '88',
+              borderColor: BLUE + "88",
               borderWidth: 1.5,
               borderDash: [6, 4],
               pointRadius: 0,
@@ -1260,14 +2084,29 @@ export default defineComponent({
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'top', labels: { color: TEXT, font: { size: 11 }, boxWidth: 10 } },
-            tooltip: { ...tooltip, callbacks: { label: (ctx: any) => `R$ ${Number(ctx.parsed.y).toFixed(2)}` } },
+            legend: {
+              position: "top",
+              labels: { color: TEXT, font: { size: 11 }, boxWidth: 10 },
+            },
+            tooltip: {
+              ...tooltip,
+              callbacks: {
+                label: (ctx: any) => `R$ ${Number(ctx.parsed.y).toFixed(2)}`,
+              },
+            },
           },
           scales: {
-            x: { grid: { display: false }, ticks: { color: TEXT, font: { size: 10 } } },
+            x: {
+              grid: { display: false },
+              ticks: { color: TEXT, font: { size: 10 } },
+            },
             y: {
               grid: { color: GRID },
-              ticks: { color: TEXT, font: { size: 10 }, callback: (v: any) => `R$ ${Number(v).toFixed(2)}` },
+              ticks: {
+                color: TEXT,
+                font: { size: 10 },
+                callback: (v: any) => `R$ ${Number(v).toFixed(2)}`,
+              },
             },
           },
         },
@@ -1283,47 +2122,85 @@ export default defineComponent({
 
       if (this._charts.topSeller) this._charts.topSeller.destroy();
 
-      const sellersData = this.sellersSummary.length > 0
-        ? this.sellersSummary
-        : [{ name: 'Sem dados', qtdVendas: 1 }];
+      const sellersData =
+        this.sellersSummary.length > 0
+          ? this.sellersSummary
+          : [{ name: "Sem dados", qtdVendas: 1 }];
 
       this._charts.topSeller = new ChartJS(ctx, {
-        type: 'doughnut',
+        type: "doughnut",
         data: {
-          labels: sellersData.map((s: any) => (s.name ? s.name.split(' ')[0] : '—')),
-          datasets: [{
-            data: sellersData.map((s: any) => s.qtdVendas || 0),
-            backgroundColor: ['#FF8049CC', '#2563ebCC', '#16a34aCC', '#dc2626CC', '#ca8a04CC'],
-            borderWidth: 2,
-            borderColor: '#ffffff',
-            hoverOffset: 6,
-          }],
+          labels: sellersData.map((s: any) =>
+            s.name ? s.name.split(" ")[0] : "—"
+          ),
+          datasets: [
+            {
+              data: sellersData.map((s: any) => s.qtdVendas || 0),
+              backgroundColor: [
+                "#FF8049CC",
+                "#2563ebCC",
+                "#16a34aCC",
+                "#dc2626CC",
+                "#ca8a04CC",
+              ],
+              borderWidth: 2,
+              borderColor: "#ffffff",
+              hoverOffset: 6,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '65%',
+          cutout: "65%",
           plugins: {
-            legend: { position: 'bottom', labels: { color: TEXT, font: { size: 10 }, padding: 8, boxWidth: 8 } },
+            legend: {
+              position: "bottom",
+              labels: {
+                color: TEXT,
+                font: { size: 10 },
+                padding: 8,
+                boxWidth: 8,
+              },
+            },
             tooltip,
           },
         },
       });
     },
+
+
+    passarAutomatioCarrossel(){
+      setInterval(()=>{
+        const objInfoSlider = this.moveCarousel('heroTrack', 1)
+        let tamanhoNegativo = objInfoSlider?.length * (-1)
+
+        if(objInfoSlider?.current == objInfoSlider?.length){
+          const objInfoSlider = this.moveCarousel('heroTrack', tamanhoNegativo)
+        }
+
+
+      }, 3000)
+    }
+
   },
 
   mounted() {
     const authStore = useAuthStore();
-    if (!authStore.token && !localStorage.getItem('token')) {
-      this.$router.replace({ name: 'Login' });
+    if (!authStore.token && !localStorage.getItem("token")) {
+      this.$router.replace({ name: "Login" });
       return;
     }
 
     this.carregarDashboard();
+    this.passarAutomatioCarrossel()
   },
 
   beforeUnmount() {
-    Object.values(this._charts).forEach((c: any) => c && c.destroy && c.destroy());
+    clearTimeout(this._searchTimeout);
+    Object.values(this._charts).forEach(
+      (c: any) => c && c.destroy && c.destroy()
+    );
   },
 });
 </script>
@@ -1346,32 +2223,34 @@ export default defineComponent({
    TOKENS — Design System Market Vizium
 ══════════════════════════════════════ */
 .cotacao-root {
-  --accent:    #FF8049;
-  --accent2:   #FF804915;
-  --acc-h:     #E65D26;
-  --green:     #16a34a;
-  --green2:    #dcfce7;
-  --blue:      #2563eb;
-  --blue2:     #dbeafe;
-  --yellow:    #ca8a04;
-  --yellow2:   #fef9c3;
-  --red:       #dc2626;
-  --red2:      #fee2e2;
-  --bg:        #f8f9fa;
-  --bg-card:   #ffffff;
-  --bg-el:     #f1f3f5;
-  --bg-el2:    #e9ecef;
-  --border:    #e2e8f0;
-  --border2:   #cbd5e1;
-  --text1:     #1e293b;
-  --text2:     #64748b;
-  --muted:     #94a3b8;
-  --radius:    13px;
-  --radius-s:  8px;
-  --shadow:    0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.03);
+  --accent: #ff8049;
+  --accent2: #ff804915;
+  --acc-h: #e65d26;
+  --green: #16a34a;
+  --green2: #dcfce7;
+  --blue: #2563eb;
+  --blue2: #dbeafe;
+  --yellow: #ca8a04;
+  --yellow2: #fef9c3;
+  --red: #dc2626;
+  --red2: #fee2e2;
+  --bg: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-el: #f1f3f5;
+  --bg-el2: #e9ecef;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --text1: #1e293b;
+  --text2: #64748b;
+  --muted: #94a3b8;
+  --radius: 13px;
+  --radius-s: 8px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.06),
+    0 4px 6px -2px rgba(0, 0, 0, 0.03);
 
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   background: var(--bg);
   color: var(--text1);
   min-height: 100%;
@@ -1380,7 +2259,8 @@ export default defineComponent({
 }
 
 /* ══ LOADING / ERROR ══ */
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1390,9 +2270,20 @@ export default defineComponent({
   gap: 10px;
   padding: 0 20px;
 }
-.loading-state p, .error-state p { font-size: 14px; color: var(--muted); }
-.error-icon { font-size: 52px; color: var(--red); }
-.error-state h3 { font-size: 16px; color: var(--text1); margin: 0; }
+.loading-state p,
+.error-state p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.error-icon {
+  font-size: 52px;
+  color: var(--red);
+}
+.error-state h3 {
+  font-size: 16px;
+  color: var(--text1);
+  margin: 0;
+}
 .retry-btn {
   margin-top: 10px;
   padding: 10px 24px;
@@ -1404,244 +2295,652 @@ export default defineComponent({
   cursor: pointer;
   font-family: inherit;
 }
-.retry-btn:hover { background: var(--acc-h); }
+.retry-btn:hover {
+  background: var(--acc-h);
+}
 
 /* ══ HEADER ══ */
 .reports-header {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   padding: 16px 28px;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; position: sticky; top: 0; z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   box-shadow: var(--shadow);
 }
-.rh-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.rh-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rh-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+.rh-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 .rh-brand-icon {
-  width: 40px; height: 40px; background: var(--accent);
+  width: 40px;
+  height: 40px;
+  background: var(--accent);
   border-radius: var(--radius-s);
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-size: 20px; flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
 }
-.rh-title { font-size: 17px; font-weight: 800; color: var(--text1); letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rh-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rh-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.rh-sync { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.rh-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text1);
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.rh-sync {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
 .rh-refresh-btn {
-  width: 34px; height: 34px; border-radius: var(--radius-s);
-  background: var(--bg-el); border: 1px solid var(--border);
-  color: var(--text2); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-s);
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
 }
-.rh-refresh-btn:hover { background: var(--bg-el2); }
-.rh-refresh-btn.spinning span { animation: rh-spin 0.9s linear infinite; }
-@keyframes rh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.rh-refresh-btn:hover {
+  background: var(--bg-el2);
+}
+.rh-refresh-btn.spinning span {
+  animation: rh-spin 0.9s linear infinite;
+}
+@keyframes rh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* ══ FILTER BAR ══ */
 .filter-bar {
-  background: var(--bg-card); border-bottom: 1px solid var(--border);
-  padding: 12px 28px; display: flex; align-items: center;
-  gap: 12px; flex-wrap: wrap;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.filter-section { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
 .filter-label {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 700; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
 }
-.period-chips { display: flex; gap: 4px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-.period-chips::-webkit-scrollbar { display: none; }
+.period-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.period-chips::-webkit-scrollbar {
+  display: none;
+}
 .pchip {
-  display: flex; align-items: center; gap: 4px;
-  padding: 5px 11px; border-radius: 20px;
-  background: var(--bg-el); border: 1px solid var(--border);
-  color: var(--text2); font-size: 11.5px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s; font-family: inherit;
-  white-space: nowrap; flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.pchip.active { background: var(--accent2); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-.pchip:hover:not(.active) { background: var(--bg-el2); }
+.pchip.active {
+  background: var(--accent2);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.pchip:hover:not(.active) {
+  background: var(--bg-el2);
+}
 .date-range {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  background: var(--bg-el); border: 1px solid var(--border);
-  border-radius: var(--radius-s); padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 4px 10px;
 }
-.dr-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
-.dr-input { border: none; background: transparent; font-size: 12px; color: var(--text1); font-family: inherit; outline: none; min-width: 0; }
+.dr-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.dr-input {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text1);
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
 .btn-apply {
-  display: flex; align-items: center; gap: 4px;
-  padding: 5px 12px; border-radius: var(--radius-s);
-  background: var(--accent); color: white; border: none;
-  font-size: 12px; font-weight: 600; cursor: pointer;
-  font-family: inherit; transition: all 0.15s; white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: var(--radius-s);
+  background: var(--accent);
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
 }
-.btn-apply:hover { background: var(--acc-h); }
+.btn-apply:hover {
+  background: var(--acc-h);
+}
 
 /* ══ PERIOD BADGE ══ */
 .period-badge-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 28px; border-bottom: 1px solid var(--border);
-  background: var(--accent2); flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--accent2);
+  flex-wrap: wrap;
 }
-.period-badge, .pb-location {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 12.5px; font-weight: 600; color: var(--accent);
-  background: white; border: 1px solid var(--accent);
-  padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+.period-badge,
+.pb-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent);
+  background: white;
+  border: 1px solid var(--accent);
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
 }
-.pb-stats-wrap { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.pb-stats-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
 .pb-stat {
-  display: flex; flex-direction: column; align-items: flex-end;
-  background: white; border: 1px solid var(--border);
-  padding: 4px 12px; border-radius: var(--radius-s);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: var(--radius-s);
 }
-.pb-stat-val { font-size: 13px; font-weight: 800; color: var(--text1); }
-.pb-stat-val.accent { color: var(--accent); }
-.pb-stat-val.green { color: var(--green); }
-.pb-stat-lbl { font-size: 10px; color: var(--muted); }
-.accent-text { color: var(--accent); }
-.green-text { color: var(--green); }
-.red-text { color: var(--red); }
+.pb-stat-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text1);
+}
+.pb-stat-val.accent {
+  color: var(--accent);
+}
+.pb-stat-val.green {
+  color: var(--green);
+}
+.pb-stat-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
+.accent-text {
+  color: var(--accent);
+}
+.green-text {
+  color: var(--green);
+}
+.red-text {
+  color: var(--red);
+}
 
 /* ══ CONTENT ══ */
-.reports-content { padding: 24px 28px; flex: 1; display: flex; flex-direction: column; gap: 32px; }
+.reports-content {
+  padding: 24px 28px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
 
 /* ══ SECTION BLOCK ══ */
-.section-block { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
 .section-header {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px 20px; background: var(--bg-card);
-  border-radius: var(--radius); border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow);
 }
 .section-icon {
-  width: 38px; height: 38px; border-radius: var(--radius-s);
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-size: 18px; flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-s);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
 }
-.section-title { font-size: 15px; font-weight: 800; color: var(--text1); letter-spacing: -0.3px; }
-.section-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text1);
+  letter-spacing: -0.3px;
+}
+.section-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
 
 /* ══ CARDS ══ */
 .card {
-  background: var(--bg-card); border-radius: var(--radius);
-  border: 1px solid var(--border); box-shadow: var(--shadow);
-  overflow: hidden; min-width: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-width: 0;
 }
 .card-head {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
 }
 .card-icon {
-  width: 34px; height: 34px; border-radius: var(--radius-s);
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-size: 17px; flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-s);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 17px;
+  flex-shrink: 0;
 }
-.card-title { font-size: 13.5px; font-weight: 700; color: var(--text1); }
-.card-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.card-actions-row { padding: 10px 18px; border-bottom: 1px solid var(--border); }
-.chip-filter-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text1);
+}
+.card-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.card-actions-row {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.chip-filter-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
 .chip {
-  padding: 4px 10px; border-radius: 20px;
-  background: var(--bg-el); border: 1px solid var(--border);
-  color: var(--text2); font-size: 11px; font-weight: 500;
-  cursor: pointer; transition: all 0.15s; font-family: inherit;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
   white-space: nowrap;
 }
-.chip.active { background: var(--accent2); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-.chip:hover:not(.active) { background: var(--bg-el2); }
+.chip.active {
+  background: var(--accent2);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.chip:hover:not(.active) {
+  background: var(--bg-el2);
+}
 
 /* ══ COLOR HELPERS ══ */
-.c-orange { background: var(--accent); }
-.c-green  { background: var(--green);  }
-.c-blue   { background: var(--blue);   }
-.c-yellow { background: var(--yellow); }
-.c-red    { background: var(--red);    }
+.c-orange {
+  background: var(--accent);
+}
+.c-green {
+  background: var(--green);
+}
+.c-blue {
+  background: var(--blue);
+}
+.c-yellow {
+  background: var(--yellow);
+}
+.c-red {
+  background: var(--red);
+}
 
 /* ══ KPI GRID ══ */
-.kpi-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
 .kpi-report {
-  position: relative; overflow: hidden;
-  background: var(--bg-card); border-radius: var(--radius);
-  border: 1px solid var(--border); padding: 18px 18px 14px;
-  display: flex; gap: 12px; align-items: flex-start;
-  box-shadow: var(--shadow); min-width: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 18px 18px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  box-shadow: var(--shadow);
+  min-width: 0;
 }
 .kr-icon {
-  width: 40px; height: 40px; border-radius: var(--radius-s);
-  display: flex; align-items: center; justify-content: center;
-  color: white; font-size: 20px; flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-s);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  flex-shrink: 0;
 }
-.kr-body { flex: 1; min-width: 0; }
-.kr-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.kr-value { font-size: 22px; font-weight: 900; letter-spacing: -0.8px; color: var(--text1); margin: 4px 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kr-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.kr-delta { display: flex; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; }
-.kr-delta.up      { color: var(--green); }
-.kr-delta.down    { color: var(--red);   }
-.kr-delta.neutral { color: var(--muted); }
-.kr-sub { font-size: 11px; color: var(--muted); }
+.kr-body {
+  flex: 1;
+  min-width: 0;
+}
+.kr-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.kr-value {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  color: var(--text1);
+  margin: 4px 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kr-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.kr-delta {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.kr-delta.up {
+  color: var(--green);
+}
+.kr-delta.down {
+  color: var(--red);
+}
+.kr-delta.neutral {
+  color: var(--muted);
+}
+.kr-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
 .kr-bg {
-  position: absolute; right: -10px; bottom: -10px;
-  font-size: 72px !important; opacity: 0.04; pointer-events: none;
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+  font-size: 72px !important;
+  opacity: 0.04;
+  pointer-events: none;
 }
-.k-orange .kr-icon { background: var(--accent); }
-.k-green  .kr-icon { background: var(--green);  }
-.k-blue   .kr-icon { background: var(--blue);   }
-.k-yellow .kr-icon { background: var(--yellow); }
-.k-red    .kr-icon { background: var(--red);    }
+.k-orange .kr-icon {
+  background: var(--accent);
+}
+.k-green .kr-icon {
+  background: var(--green);
+}
+.k-blue .kr-icon {
+  background: var(--blue);
+}
+.k-yellow .kr-icon {
+  background: var(--yellow);
+}
+.k-red .kr-icon {
+  background: var(--red);
+}
 
 /* ══ MINI KPI ══ */
 .kpi-mini {
-  background: var(--bg-card); border-radius: var(--radius);
-  border: 1px solid var(--border); padding: 14px 16px;
-  box-shadow: var(--shadow); min-width: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  min-width: 0;
 }
-.kmr-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
-.kmr-value { font-size: 19px; font-weight: 900; color: var(--text1); letter-spacing: -0.5px; }
-.kmr-sub { font-size: 11px; margin-top: 4px; color: var(--muted); }
+.kmr-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.kmr-value {
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--text1);
+  letter-spacing: -0.5px;
+}
+.kmr-sub {
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--muted);
+}
 
 /* ══ CHART GRID ══ */
-.chart-section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.chart-wrap { padding: 14px 18px; position: relative; }
-.chart-wrap.h260 { height: 260px; }
-.chart-wrap.h160 { height: 160px; }
-.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+.chart-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.chart-wrap {
+  padding: 14px 18px;
+  position: relative;
+}
+.chart-wrap.h260 {
+  height: 260px;
+}
+.chart-wrap.h160 {
+  height: 160px;
+}
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
 
 /* ══ BARCODE SEARCH ══ */
 .barcode-search {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--bg-el); border: 1px solid var(--border);
-  border-radius: var(--radius-s); padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-el);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 5px 10px;
 }
 .barcode-input {
-  border: none; background: transparent; font-size: 12px;
-  color: var(--text1); font-family: inherit; outline: none;
-  width: 100%; min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text1);
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  min-width: 0;
 }
-.barcode-input::placeholder { color: var(--muted); }
+.barcode-input::placeholder {
+  color: var(--muted);
+}
 .btn-barcode {
-  background: var(--accent); color: white;
-  border: none; border-radius: 6px;
-  padding: 3px 8px; cursor: pointer;
-  display: flex; align-items: center;
-  transition: all 0.15s; flex-shrink: 0;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
 }
-.btn-barcode:hover { background: var(--acc-h); }
+.btn-barcode:hover {
+  background: var(--acc-h);
+}
 
 /* ══ SELECTED PRODUCT BAR ══ */
 .selected-product-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 18px; background: var(--accent2);
-  border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--accent2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.spb-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
-.spb-code { font-size: 11px; font-weight: 700; color: var(--muted); font-family: monospace; }
-.spb-name { font-size: 13px; font-weight: 700; color: var(--text1); }
-.spb-stats { display: flex; gap: 16px; flex-wrap: wrap; }
-.spb-stat { text-align: right; }
-.spb-stat-val { font-size: 13px; font-weight: 800; color: var(--text1); }
-.spb-stat-lbl { font-size: 10px; color: var(--muted); }
+.spb-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.spb-code {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  font-family: monospace;
+}
+.spb-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text1);
+}
+.spb-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.spb-stat {
+  text-align: right;
+}
+.spb-stat-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text1);
+}
+.spb-stat-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
 
 /* ══ EMPTY CHART STATE ══ */
 .empty-chart-state {
@@ -1653,8 +2952,16 @@ export default defineComponent({
   gap: 8px;
   padding: 20px;
 }
-.empty-chart-state span { font-size: 36px; color: var(--border); }
-.empty-chart-state p { font-size: 12px; color: var(--muted); text-align: center; margin: 0; }
+.empty-chart-state span {
+  font-size: 36px;
+  color: var(--border);
+}
+.empty-chart-state p {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin: 0;
+}
 
 /* ══ REPORT TABLE ══ */
 .table-wrapper {
@@ -1664,196 +2971,618 @@ export default defineComponent({
   -webkit-overflow-scrolling: touch;
 }
 .report-table {
-  width: 100%; border-collapse: collapse;
-  font-size: 12px; min-width: 760px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 760px;
 }
 .report-table thead tr {
-  background: var(--bg-el); border-bottom: 1px solid var(--border);
+  background: var(--bg-el);
+  border-bottom: 1px solid var(--border);
 }
 .report-table th {
   padding: 10px 12px;
-  text-align: left; font-size: 10.5px;
-  font-weight: 700; color: var(--muted); white-space: nowrap;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
 }
 .report-table tbody tr {
-  border-bottom: 1px solid var(--border); transition: background 0.1s;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
 }
-.report-table tbody tr:hover { background: var(--accent2); }
-.report-table td { padding: 10px 12px; vertical-align: middle; white-space: nowrap; }
-.user-cell { display: flex; align-items: center; gap: 8px; }
+.report-table tbody tr:hover {
+  background: var(--accent2);
+}
+.report-table td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .mini-av {
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 800; color: white; flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
 }
-.cell-name { font-size: 12.5px; font-weight: 600; color: var(--text1); }
-.cell-sub { font-size: 11px; color: var(--muted); }
-.mono-bold { font-weight: 700; font-family: 'Inter', monospace; }
+.cell-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text1);
+}
+.cell-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+.mono-bold {
+  font-weight: 700;
+  font-family: "Inter", monospace;
+}
 .rank-num {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 6px;
-  font-size: 11px; font-weight: 800;
-  background: var(--bg-el); color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--bg-el);
+  color: var(--muted);
 }
-.rank-num.gold   { background: #fef9c3; color: #b45309; }
-.rank-num.silver { background: #f1f5f9; color: #475569; }
-.rank-num.bronze { background: #fef3c7; color: #92400e; }
+.rank-num.gold {
+  background: #fef9c3;
+  color: #b45309;
+}
+.rank-num.silver {
+  background: #f1f5f9;
+  color: #475569;
+}
+.rank-num.bronze {
+  background: #fef3c7;
+  color: #92400e;
+}
 .inline-bar {
-  display: flex; align-items: center; gap: 6px;
-  height: 18px; background: var(--bg-el2);
-  border-radius: 4px; overflow: hidden; position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  background: var(--bg-el2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
   min-width: 80px;
 }
-.ib-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
-.ib-val { position: absolute; right: 6px; font-size: 10px; font-weight: 700; color: var(--text1); }
-.tag-r {
-  display: inline-block; padding: 2px 8px; border-radius: 8px;
-  font-size: 11px; font-weight: 700; white-space: nowrap;
+.ib-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s;
 }
-.tag-green  { background: var(--green2); color: var(--green); }
-.tag-orange { background: var(--yellow2); color: var(--yellow); }
-.tag-red    { background: var(--red2); color: var(--red); }
-.tag-blue   { background: var(--blue2); color: var(--blue); }
-.tag-blue-soft { background: var(--blue2); color: var(--blue); }
+.ib-val {
+  position: absolute;
+  right: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text1);
+}
+.tag-r {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tag-green {
+  background: var(--green2);
+  color: var(--green);
+}
+.tag-orange {
+  background: var(--yellow2);
+  color: var(--yellow);
+}
+.tag-red {
+  background: var(--red2);
+  color: var(--red);
+}
+.tag-blue {
+  background: var(--blue2);
+  color: var(--blue);
+}
+.tag-blue-soft {
+  background: var(--blue2);
+  color: var(--blue);
+}
 
 /* ══ HIGHLIGHT CARD ══ */
-.highlight-card.highlight-green { border-top: 3px solid var(--green); }
-.highlight-card.highlight-red   { border-top: 3px solid var(--red); }
+.highlight-card.highlight-green {
+  border-top: 3px solid var(--green);
+}
+.highlight-card.highlight-red {
+  border-top: 3px solid var(--red);
+}
 .highlight-body {
-  display: flex; align-items: center; gap: 16px;
-  padding: 16px 18px; flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
 }
 .hb-avatar {
-  width: 48px; height: 48px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; font-weight: 800; color: white; flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
 }
-.hb-info { flex: 1; min-width: 120px; }
-.hb-name { font-size: 14px; font-weight: 800; color: var(--text1); }
-.hb-company { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+.hb-info {
+  flex: 1;
+  min-width: 120px;
+}
+.hb-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text1);
+}
+.hb-company {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
 .hb-metric {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 12.5px; font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
 }
-.hb-stats { display: flex; flex-direction: column; gap: 6px; }
-.hb-stat { text-align: right; }
-.hb-stat-val { font-size: 14px; font-weight: 900; color: var(--text1); }
-.hb-stat-val.green { color: var(--green); }
-.hb-stat-val.red   { color: var(--red); }
-.hb-stat-lbl { font-size: 10px; color: var(--muted); }
+.hb-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hb-stat {
+  text-align: right;
+}
+.hb-stat-val {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text1);
+}
+.hb-stat-val.green {
+  color: var(--green);
+}
+.hb-stat-val.red {
+  color: var(--red);
+}
+.hb-stat-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
 
 /* ══ GRID ══ */
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
 
 /* ══ TOP PRODUCT ══ */
-.top-product-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
-.tpb-rank { font-size: 36px; font-weight: 900; color: var(--accent); opacity: 0.25; line-height: 1; }
-.tpb-info { display: flex; flex-direction: column; gap: 4px; }
-.tpb-name { font-size: 14px; font-weight: 800; color: var(--text1); }
-.tpb-code { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); font-family: monospace; }
-.tpb-category { margin-top: 2px; }
-.tpb-metrics { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.tpb-metric { text-align: center; }
-.tpbm-val { font-size: 16px; font-weight: 900; color: var(--text1); }
-.tpbm-val.accent { color: var(--accent); }
-.tpbm-val.green  { color: var(--green); }
-.tpbm-lbl { font-size: 10px; color: var(--muted); }
-.tpb-bar-wrap { height: 5px; background: var(--bg-el2); border-radius: 3px; overflow: hidden; }
-.tpb-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s; }
-.top-products-list { border-top: 1px solid var(--border); padding: 12px 18px 14px; }
-.tpl-header { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
-.tpl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.tpl-rank { font-size: 11px; font-weight: 700; color: var(--muted); width: 14px; text-align: center; flex-shrink: 0; }
-.tpl-info { min-width: 0; width: 110px; flex-shrink: 0; }
-.tpl-name { font-size: 11.5px; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tpl-code { font-size: 10px; color: var(--muted); font-family: monospace; }
-.tpl-bar-wrap { flex: 1; height: 6px; background: var(--bg-el2); border-radius: 3px; overflow: hidden; min-width: 30px; }
-.tpl-bar { height: 100%; background: var(--accent); border-radius: 3px; opacity: 0.55; }
-.tpl-qty { font-size: 11px; color: var(--muted); width: 52px; text-align: right; white-space: nowrap; flex-shrink: 0; }
+.top-product-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tpb-rank {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--accent);
+  opacity: 0.25;
+  line-height: 1;
+}
+.tpb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tpb-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text1);
+}
+.tpb-code {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+}
+.tpb-category {
+  margin-top: 2px;
+}
+.tpb-metrics {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tpb-metric {
+  text-align: center;
+}
+.tpbm-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text1);
+}
+.tpbm-val.accent {
+  color: var(--accent);
+}
+.tpbm-val.green {
+  color: var(--green);
+}
+.tpbm-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
+.tpb-bar-wrap {
+  height: 5px;
+  background: var(--bg-el2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.tpb-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.5s;
+}
+.top-products-list {
+  border-top: 1px solid var(--border);
+  padding: 12px 18px 14px;
+}
+.tpl-header {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tpl-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.tpl-info {
+  min-width: 0;
+  width: 110px;
+  flex-shrink: 0;
+}
+.tpl-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tpl-code {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: monospace;
+}
+.tpl-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-el2);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 30px;
+}
+.tpl-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  opacity: 0.55;
+}
+.tpl-qty {
+  font-size: 11px;
+  color: var(--muted);
+  width: 52px;
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 /* ══ TOP SELLER ══ */
 .top-seller-body {
-  padding: 16px 18px; display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
-.tsb-crown { font-size: 24px; line-height: 1; }
+.tsb-crown {
+  font-size: 24px;
+  line-height: 1;
+}
 .sc-avatar {
-  width: 36px; height: 36px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
 }
-.sc-avatar.large { width: 52px; height: 52px; font-size: 18px; }
-.sc-av-orange { background: var(--accent); }
-.sc-av-blue   { background: var(--blue); }
-.sc-av-green  { background: var(--green); }
-.sc-av-red    { background: var(--red); }
-.sc-av-yellow { background: var(--yellow); }
-.sc-av-purple { background: #7c3aed; }
-.tsb-name { font-size: 15px; font-weight: 800; color: var(--text1); text-align: center; }
-.tsb-company { font-size: 11.5px; color: var(--muted); text-align: center; margin-bottom: 4px; }
-.tsb-metrics { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-.tsb-metric { text-align: center; }
-.tsb-val { font-size: 16px; font-weight: 900; color: var(--text1); }
-.tsb-val.accent { color: var(--accent); }
-.tsb-val.green  { color: var(--green); }
-.tsb-lbl { font-size: 10px; color: var(--muted); }
+.sc-avatar.large {
+  width: 52px;
+  height: 52px;
+  font-size: 18px;
+}
+.sc-av-orange {
+  background: var(--accent);
+}
+.sc-av-blue {
+  background: var(--blue);
+}
+.sc-av-green {
+  background: var(--green);
+}
+.sc-av-red {
+  background: var(--red);
+}
+.sc-av-yellow {
+  background: var(--yellow);
+}
+.sc-av-purple {
+  background: #7c3aed;
+}
+.tsb-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text1);
+  text-align: center;
+}
+.tsb-company {
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.tsb-metrics {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tsb-metric {
+  text-align: center;
+}
+.tsb-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text1);
+}
+.tsb-val.accent {
+  color: var(--accent);
+}
+.tsb-val.green {
+  color: var(--green);
+}
+.tsb-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
 .tsb-total {
-  display: flex; flex-direction: column; align-items: center;
-  border-top: 1px solid var(--border); padding-top: 10px; width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  width: 100%;
 }
-.tsb-total-lbl { font-size: 11px; color: var(--muted); }
-.tsb-total-val { font-size: 18px; font-weight: 900; color: var(--accent); letter-spacing: -0.5px; }
+.tsb-total-lbl {
+  font-size: 11px;
+  color: var(--muted);
+}
+.tsb-total-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
 
 /* ══ LAST QUOTE ══ */
-.last-quote-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
-.lqb-badge {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px; background: var(--blue2);
-  border-radius: var(--radius-s); flex-wrap: wrap;
+.last-quote-body {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.lqb-name { font-size: 14px; font-weight: 800; color: var(--blue); }
-.lqb-date { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); margin-top: 2px; }
-.lqb-status { margin-left: auto; }
-.lqb-details { display: flex; flex-direction: column; gap: 8px; }
-.lqb-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.lqb-detail-lbl { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); }
-.lqb-detail-val { font-size: 12px; font-weight: 700; color: var(--text1); }
+.lqb-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--blue2);
+  border-radius: var(--radius-s);
+  flex-wrap: wrap;
+}
+.lqb-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--blue);
+}
+.lqb-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.lqb-status {
+  margin-left: auto;
+}
+.lqb-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lqb-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lqb-detail-lbl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.lqb-detail-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text1);
+}
 
 /* ══ AVG QUOTE BOX ══ */
 .avg-quote-box {
   border-top: 1px solid var(--border);
-  padding: 14px 18px; background: var(--accent2);
+  padding: 14px 18px;
+  background: var(--accent2);
 }
 .aqb-header {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 700; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
 }
-.aqb-value { font-size: 24px; font-weight: 900; color: var(--accent); letter-spacing: -0.8px; }
-.aqb-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; margin-bottom: 12px; }
-.aqb-breakdown { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
-.aqb-b-item { text-align: center; flex: 1; min-width: 0; }
-.aqb-b-val { font-size: 13px; font-weight: 800; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.aqb-b-lbl { font-size: 10px; color: var(--muted); }
-.aqb-b-sep { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+.aqb-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.8px;
+}
+.aqb-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+  margin-bottom: 12px;
+}
+.aqb-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+.aqb-b-item {
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+.aqb-b-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aqb-b-lbl {
+  font-size: 10px;
+  color: var(--muted);
+}
+.aqb-b-sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
 
 /* ══ STOCK SUMMARY ══ */
 .stock-summary {
-  display: flex; justify-content: space-around;
-  padding: 12px 18px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.ss-item { text-align: center; min-width: 60px; }
-.ss-val  { font-size: 17px; font-weight: 800; letter-spacing: -0.4px; }
-.ss-val.accent { color: var(--accent); }
-.ss-val.green  { color: var(--green);  }
-.ss-val.red    { color: var(--red);    }
-.ss-lbl  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.ss-item {
+  text-align: center;
+  min-width: 60px;
+}
+.ss-val {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.ss-val.accent {
+  color: var(--accent);
+}
+.ss-val.green {
+  color: var(--green);
+}
+.ss-val.red {
+  color: var(--red);
+}
+.ss-lbl {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
 
 /* ══ FOOTER ══ */
 .reports-footer {
-  padding: 14px 28px; border-top: 1px solid var(--border);
-  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
-  font-size: 11px; color: var(--muted);
+  padding: 14px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
   background: var(--bg-card);
 }
 
@@ -1861,102 +3590,1284 @@ export default defineComponent({
    RESPONSIVE — comprimido até 320px
 ══════════════════════════════════════ */
 @media (max-width: 1280px) {
-  .kpi-grid-4        { grid-template-columns: repeat(2, 1fr); }
-  .chart-section-grid { grid-template-columns: 1fr; }
+  .kpi-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-section-grid {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 900px) {
-  .reports-header { padding: 14px 18px; }
-  .filter-bar { padding: 10px 18px; }
-  .period-badge-row { padding: 10px 18px; flex-direction: column; align-items: flex-start; }
-  .pb-stats-wrap { margin-left: 0; width: 100%; }
-  .reports-content { padding: 16px; gap: 24px; }
-  .kpi-grid-4 { grid-template-columns: 1fr 1fr; }
-  .grid-3 { grid-template-columns: 1fr; }
-  .chart-section-grid { grid-template-columns: 1fr; }
-  .reports-footer { padding: 14px 18px; flex-direction: column; text-align: center; }
+  .reports-header {
+    padding: 14px 18px;
+  }
+  .filter-bar {
+    padding: 10px 18px;
+  }
+  .period-badge-row {
+    padding: 10px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pb-stats-wrap {
+    margin-left: 0;
+    width: 100%;
+  }
+  .reports-content {
+    padding: 16px;
+    gap: 24px;
+  }
+  .kpi-grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .chart-section-grid {
+    grid-template-columns: 1fr;
+  }
+  .reports-footer {
+    padding: 14px 18px;
+    flex-direction: column;
+    text-align: center;
+  }
 }
 @media (max-width: 640px) {
-  .rh-title { font-size: 15px; }
-  .rh-sub { font-size: 10.5px; }
-  .rh-sync-text { display: none; }
-  .filter-section { width: 100%; }
-  .period-chips { width: 100%; }
-  .date-range { width: 100%; }
-  .dr-input { flex: 1; }
-  .btn-apply-text { display: none; }
-  .section-header { padding: 12px 14px; }
-  .section-title { font-size: 13.5px; }
-  .section-sub { font-size: 11px; }
-  .kpi-report { padding: 14px 14px 12px; }
-  .kr-value { font-size: 19px; }
-  .card-head { padding: 12px 14px; }
-  .card-actions-row { padding: 10px 14px; }
-  .chart-wrap.h260 { height: 220px; }
-  .table-wrapper { max-height: 280px; }
+  .rh-title {
+    font-size: 15px;
+  }
+  .rh-sub {
+    font-size: 10.5px;
+  }
+  .rh-sync-text {
+    display: none;
+  }
+  .filter-section {
+    width: 100%;
+  }
+  .period-chips {
+    width: 100%;
+  }
+  .date-range {
+    width: 100%;
+  }
+  .dr-input {
+    flex: 1;
+  }
+  .btn-apply-text {
+    display: none;
+  }
+  .section-header {
+    padding: 12px 14px;
+  }
+  .section-title {
+    font-size: 13.5px;
+  }
+  .section-sub {
+    font-size: 11px;
+  }
+  .kpi-report {
+    padding: 14px 14px 12px;
+  }
+  .kr-value {
+    font-size: 19px;
+  }
+  .card-head {
+    padding: 12px 14px;
+  }
+  .card-actions-row {
+    padding: 10px 14px;
+  }
+  .chart-wrap.h260 {
+    height: 220px;
+  }
+  .table-wrapper {
+    max-height: 280px;
+  }
 }
 @media (max-width: 480px) {
-  .kpi-grid-4 { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .reports-content { padding: 12px; gap: 20px; }
-  .section-block { gap: 12px; }
-  .kpi-report { flex-direction: row; gap: 10px; }
-  .kr-icon { width: 34px; height: 34px; font-size: 17px; }
-  .kr-value { font-size: 17px; margin: 3px 0 5px; }
-  .kpi-mini { padding: 12px; }
-  .kmr-value { font-size: 17px; }
-  .grid-3 { gap: 12px; }
-  .chart-section-grid { gap: 12px; }
-  .highlight-body { padding: 14px; gap: 12px; }
-  .hb-avatar { width: 40px; height: 40px; font-size: 14px; }
-  .hb-stats { flex-direction: row; gap: 12px; width: 100%; justify-content: space-between; }
-  .hb-stat { text-align: left; }
-  .tpb-metrics { justify-content: space-between; }
-  .tsb-metrics { gap: 14px; }
-  .aqb-value { font-size: 20px; }
-  .period-badge, .pb-location { font-size: 11.5px; padding: 4px 10px; }
-  .pb-stat { padding: 4px 9px; }
+  .kpi-grid-4 {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .reports-content {
+    padding: 12px;
+    gap: 20px;
+  }
+  .section-block {
+    gap: 12px;
+  }
+  .kpi-report {
+    flex-direction: row;
+    gap: 10px;
+  }
+  .kr-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+  .kr-value {
+    font-size: 17px;
+    margin: 3px 0 5px;
+  }
+  .kpi-mini {
+    padding: 12px;
+  }
+  .kmr-value {
+    font-size: 17px;
+  }
+  .grid-3 {
+    gap: 12px;
+  }
+  .chart-section-grid {
+    gap: 12px;
+  }
+  .highlight-body {
+    padding: 14px;
+    gap: 12px;
+  }
+  .hb-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+  .hb-stats {
+    flex-direction: row;
+    gap: 12px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .hb-stat {
+    text-align: left;
+  }
+  .tpb-metrics {
+    justify-content: space-between;
+  }
+  .tsb-metrics {
+    gap: 14px;
+  }
+  .aqb-value {
+    font-size: 20px;
+  }
+  .period-badge,
+  .pb-location {
+    font-size: 11.5px;
+    padding: 4px 10px;
+  }
+  .pb-stat {
+    padding: 4px 9px;
+  }
 }
 @media (max-width: 360px) {
-  .kpi-grid-4 { grid-template-columns: 1fr; }
-  .reports-header { padding: 12px 14px; }
-  .rh-brand-icon { width: 34px; height: 34px; font-size: 17px; }
-  .rh-title { font-size: 14px; }
-  .filter-bar { padding: 10px 14px; }
-  .pchip { padding: 5px 9px; font-size: 11px; }
-  .period-badge-row { padding: 8px 14px; }
-  .reports-content { padding: 10px; gap: 18px; }
-  .kr-value { font-size: 16px; }
-  .kpi-report { padding: 12px; }
-  .kr-icon { width: 30px; height: 30px; font-size: 15px; }
-  .barcode-input { font-size: 11px; }
-  .empty-chart-state { min-height: 130px; }
-  .chart-wrap.h260 { height: 200px; }
-  .aqb-breakdown { flex-wrap: wrap; gap: 10px; }
-  .aqb-b-sep { display: none; }
-  .aqb-b-item { min-width: 30%; }
-  .tsb-metrics { gap: 10px; }
-  .grid-3, .chart-section-grid { gap: 10px; }
+  .kpi-grid-4 {
+    grid-template-columns: 1fr;
+  }
+  .reports-header {
+    padding: 12px 14px;
+  }
+  .rh-brand-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+  .rh-title {
+    font-size: 14px;
+  }
+  .filter-bar {
+    padding: 10px 14px;
+  }
+  .pchip {
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+  .period-badge-row {
+    padding: 8px 14px;
+  }
+  .reports-content {
+    padding: 10px;
+    gap: 18px;
+  }
+  .kr-value {
+    font-size: 16px;
+  }
+  .kpi-report {
+    padding: 12px;
+  }
+  .kr-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+  .barcode-input {
+    font-size: 11px;
+  }
+  .empty-chart-state {
+    min-height: 130px;
+  }
+  .chart-wrap.h260 {
+    height: 200px;
+  }
+  .aqb-breakdown {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .aqb-b-sep {
+    display: none;
+  }
+  .aqb-b-item {
+    min-width: 30%;
+  }
+  .tsb-metrics {
+    gap: 10px;
+  }
+  .grid-3,
+  .chart-section-grid {
+    gap: 10px;
+  }
 }
 @media (max-width: 320px) {
-  .reports-header { padding: 10px 12px; }
-  .rh-title { font-size: 13px; }
-  .rh-sub { display: none; }
-  .filter-bar { padding: 8px 12px; }
-  .period-badge-row { padding: 8px 12px; }
-  .pb-stat { padding: 3px 7px; }
-  .pb-stat-val { font-size: 12px; }
-  .reports-content { padding: 8px; }
-  .section-header { padding: 10px 12px; gap: 8px; }
-  .section-icon { width: 32px; height: 32px; font-size: 16px; }
-  .section-title { font-size: 12.5px; }
-  .kpi-report { padding: 10px; gap: 8px; }
-  .kr-value { font-size: 15px; }
-  .card-head { padding: 10px 12px; gap: 8px; }
-  .card-icon { width: 30px; height: 30px; font-size: 15px; }
-  .card-title { font-size: 12.5px; }
-  .top-seller-body, .last-quote-body, .top-product-body { padding: 12px; }
+  .reports-header {
+    padding: 10px 12px;
+  }
+  .rh-title {
+    font-size: 13px;
+  }
+  .rh-sub {
+    display: none;
+  }
+  .filter-bar {
+    padding: 8px 12px;
+  }
+  .period-badge-row {
+    padding: 8px 12px;
+  }
+  .pb-stat {
+    padding: 3px 7px;
+  }
+  .pb-stat-val {
+    font-size: 12px;
+  }
+  .reports-content {
+    padding: 8px;
+  }
+  .section-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .section-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .section-title {
+    font-size: 12.5px;
+  }
+  .kpi-report {
+    padding: 10px;
+    gap: 8px;
+  }
+  .kr-value {
+    font-size: 15px;
+  }
+  .card-head {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .card-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+  .card-title {
+    font-size: 12.5px;
+  }
+  .top-seller-body,
+  .last-quote-body,
+  .top-product-body {
+    padding: 12px;
+  }
 }
 
 /* ══ MISC ══ */
-.mt-20 { margin-top: 20px; }
+.mt-20 {
+  margin-top: 20px;
+}
+
+/* Marviz: superfícies leves, contraste e controles confortáveis para toque. */
+.dash-content {
+  --background: #f5f6fa;
+  --padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.cotacao-root {
+  --bg: #f5f6fa;
+  --accent: #d95321;
+  --accent2: #fff0e7;
+  --muted: #68748a;
+  --text1: #22263d;
+  --radius: 22px;
+  --shadow: 0 8px 30px -18px rgba(35, 38, 70, 0.24);
+  width: 100%;
+  margin: 0 auto;
+}
+.cotacao-root *,
+.cotacao-root *::before,
+.cotacao-root *::after {
+  box-sizing: border-box;
+}
+.reports-header {
+  background: #FFF;
+  padding: 24px 32px 16px;
+  border-bottom: 0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.rh-brand-icon {
+  background: #fff0e7;
+  color: #d95321;
+  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+}
+.rh-title {
+  font-size: 17px;
+  letter-spacing: -0.5px;
+}
+.rh-sub {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  margin-top: 4px;
+}
+.rh-refresh-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: white;
+  box-shadow: var(--shadow);
+}
+.welcome-row,
+.quick-actions,
+.discover-section,
+.analytics-heading,
+.learn-section {
+  margin: 16px 32px 24px;
+  min-width: 0;
+}
+.welcome-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+.eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 1.6px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.welcome-row h1 {
+  font-size: clamp(27px, 2.8vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  margin: 9px 0 12px;
+  font-weight: 750;
+}
+.welcome-row h1 > span {
+  color: #e86b37;
+}
+.welcome-row p {
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #27243e;
+  color: white;
+  border: 0;
+  border-radius: 14px;
+  min-height: 48px;
+  padding: 12px 20px;
+  white-space: nowrap;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -12px #29203f;
+}
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.quick-actions button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  border: 1px solid #fff;
+  border-radius: 18px;
+  background: white;
+  padding: 16px;
+  color: var(--text1);
+  box-shadow: var(--shadow);
+  font: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+.quick-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+.orange {
+  background: #fff0e5;
+  color: #b84717;
+}
+.purple {
+  background: #efebff;
+  color: #6750ba;
+}
+.green {
+  background: #e6f5ef;
+  color: #20785d;
+}
+.blue {
+  background: #eaf0ff;
+  color: #436bc7;
+}
+.quick-actions strong {
+  display: block;
+  font-size: 13px;
+}
+.quick-actions small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.quick-arrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: #8b93a7;
+}
+.discover-heading,
+.analytics-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+.discover-heading {
+  margin-bottom: 18px;
+}
+.discover-heading h2,
+.analytics-heading h2 {
+  font-size: 21px;
+  letter-spacing: -0.6px;
+  margin: 5px 0 0;
+  line-height: 1.3;
+}
+.carousel-arrows {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.carousel-arrows button {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e2e4ec;
+  border-radius: 50%;
+  background: white;
+  color: #48445f;
+  cursor: pointer;
+}
+.carousel-arrows span {
+  font-size: 19px;
+}
+.hero-track,
+.learn-track {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  position: relative;
+  overscroll-behavior-x: contain;
+  border-radius: 24px;
+}
+.hero-track::-webkit-scrollbar,
+.learn-track::-webkit-scrollbar {
+  display: none;
+}
+.feature-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  align-items: center;
+  gap: 20px;
+  min-height: 310px;
+  padding: 34px 40px;
+  border-radius: 24px;
+  overflow: hidden;
+  color: white;
+}
+.hero-orange {
+  background: linear-gradient(115deg, #a73d23 0%, #cd5227 50%, #ed8953 100%);
+}
+.hero-purple {
+  background: linear-gradient(115deg, #28213f, #5a428d 70%, #8c70be);
+}
+.hero-green {
+  background: linear-gradient(115deg, #143f3b, #256657 70%, #4d9579);
+}
+.hero-blue {
+  background: linear-gradient(115deg, #202e58, #3f5898 70%, #748bc6);
+}
+.feature-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 580px;
+}
+.feature-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+.feature-badge span {
+  font-size: 18px;
+}
+.feature-copy h2 {
+  font-size: clamp(26px, 2.8vw, 39px);
+  letter-spacing: -1.2px;
+  line-height: 1.13;
+  margin: 17px 0 14px;
+  color: white;
+}
+.feature-copy p {
+  color: #fff;
+  opacity: 0.94;
+  font-size: 13px;
+  line-height: 1.7;
+  max-width: 480px;
+  margin: 0 0 22px;
+}
+.feature-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  background: #fff;
+  color: #332d41;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 650;
+  font-size: 12px;
+  cursor: pointer;
+}
+.feature-cta span {
+  font-size: 18px;
+}
+.feature-art {
+  position: relative;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.art-orbit {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border: 1px solid #ffffff30;
+  border-radius: 50%;
+  box-shadow: 0 0 0 32px #ffffff08, 0 0 0 64px #ffffff05;
+}
+.art-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 118px;
+  height: 118px;
+  font-size: 68px;
+  border: 1px solid #ffffff60;
+  border-radius: 32px;
+  background: #ffffff20;
+  transform: rotate(-9deg);
+  box-shadow: 0 16px 40px #00000015;
+}
+.art-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 12px 18px;
+  font-size: 12px;
+  border-radius: 13px;
+  background: #fff;
+  color: #383149;
+  box-shadow: 0 15px 30px #00000015;
+  transform: rotate(3deg);
+}
+.art-caption {
+  position: relative;
+  margin-top: 15px;
+  font-size: 10px;
+}
+.carousel-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.carousel-pagination > div {
+  display: flex;
+}
+.carousel-pagination button {
+  width: 28px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.carousel-pagination button::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 8px;
+  background: #bfc2d1;
+}
+.carousel-pagination button.selected::after {
+  width: 22px;
+  background: #d95321;
+}
+.mobile-swipe {
+  display: none;
+}
+.analytics-heading {
+  margin-top: 8px;
+  margin-bottom: 14px;
+}
+.update-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+.filter-bar {
+  margin: 0 32px;
+  padding: 16px;
+  border: 1px solid #e9eaf1;
+  border-radius: 18px;
+  background: #fff;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.filter-section,
+.date-range,
+.period-chips {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pchip,
+.chip {
+  min-height: 40px;
+  padding: 8px 13px;
+}
+.dr-input {
+  min-width: 0;
+  width: 140px;
+  min-height: 40px;
+}
+.btn-apply {
+  min-height: 40px;
+}
+.btn-apply-text {
+  display: inline;
+}
+.date-error {
+  color: #b42318;
+  margin: 12px 32px;
+  font-size: 13px;
+}
+.period-badge-row {
+  background: transparent;
+  border: 0;
+  padding: 14px 32px 0;
+  flex-wrap: wrap;
+}
+.pb-stats-wrap {
+  display: none;
+}
+.reports-content {
+  padding: 22px 32px 30px;
+  gap: 30px;
+}
+.section-header {
+  background: #FFF;
+  border: 0;
+  padding: 20px;
+}
+.section-title {
+  font-size: 17px;
+}
+.section-sub {
+  font-size: 12px;
+}
+.section-icon {
+  border-radius: 13px;
+}
+.kpi-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.kpi-report {
+  padding: 20px;
+  flex-direction: column;
+  border: 1px solid #fff;
+  gap: 16px;
+}
+.k-orange {
+  background: linear-gradient(145deg, #fff, #fff4e9);
+}
+.k-green {
+  background: linear-gradient(145deg, #fff, #edf9f3);
+}
+.k-blue {
+  background: linear-gradient(145deg, #fff, #f0edff);
+}
+.k-yellow {
+  background: linear-gradient(145deg, #fff, #fff8e5);
+}
+.kr-value {
+  font-size: clamp(22px, 2vw, 30px);
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  letter-spacing: -1px;
+}
+.kr-label {
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.kr-icon {
+  border-radius: 13px;
+}
+.kr-bg {
+  font-size: 110px !important;
+  right: -8px;
+  bottom: -15px;
+  opacity: 0.035;
+}
+.kpi-mini {
+  box-shadow: none;
+  background: #ffffff80;
+  border-color: #e9eaf1;
+}
+.kmr-value,
+.aqb-b-val {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.card {
+  border: 1px solid #e9eaf1;
+}
+.card-head {
+  padding: 19px 20px;
+}
+.card-title {
+  font-size: 14px;
+}
+.card-sub {
+  line-height: 1.6;
+}
+.chart-section-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.table-wrapper {
+  max-height: 430px;
+}
+.report-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.report-table th {
+  padding: 14px 12px;
+}
+.report-table td {
+  padding: 15px 12px;
+}
+.mini-av {
+  width: 36px;
+  height: 36px;
+}
+.cell-name,
+.hb-name,
+.tpb-name,
+.tsb-name,
+.lqb-name {
+  overflow-wrap: anywhere;
+}
+.learn-section {
+  margin-top: 0;
+}
+.learn-track {
+  padding-bottom: 12px;
+  border-radius: 0;
+}
+.learn-card {
+  flex: 0 0 calc((100% - 36px) / 3);
+  scroll-snap-align: start;
+  min-width: 0;
+  padding: 25px;
+  border: 1px solid #e8e8f0;
+  background: #fff;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.learn-card .quick-icon {
+  margin-bottom: 20px;
+}
+.learn-card h3 {
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.6px;
+  margin: 10px 0;
+}
+.learn-card p,
+.learn-card li {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+.learn-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 20px;
+}
+.learn-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0;
+}
+.learn-card li span {
+  font-size: 17px;
+  margin-top: 2px;
+  color: #31836c;
+}
+.learn-card button {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #4c416b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.reports-footer {
+  background: transparent;
+  padding: 20px 32px 28px;
+}
+.cotacao-root button:focus-visible,
+.hero-track:focus-visible,
+.learn-track:focus-visible {
+  outline: 3px solid #7757bd;
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .quick-actions button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -18px #51406580;
+  }
+  .feature-cta:hover {
+    background: #fff3e9;
+  }
+  .carousel-arrows button:hover {
+    background: #f0ebfa;
+  }
+}
+@media (max-width: 1100px) {
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kpi-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .learn-card {
+    flex-basis: calc((100% - 18px) / 2);
+  }
+  .feature-slide {
+    padding: 30px;
+  }
+  .feature-art {
+    transform: scale(0.85);
+  }
+  .feature-copy h2 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 700px) {
+  .reports-header {
+    padding: 18px 18px 8px;
+  }
+  .rh-brand-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .rh-title {
+    font-size: 15px;
+  }
+  .rh-sync {
+    display: none;
+  }
+  .welcome-row,
+  .quick-actions,
+  .discover-section,
+  .analytics-heading,
+  .learn-section {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+  .welcome-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  .welcome-row h1 {
+    font-size: 30px;
+    max-width: 350px;
+  }
+  .welcome-row p {
+    font-size: 12px;
+  }
+  .primary-action {
+    min-height: 44px;
+  }
+  .quick-actions {
+    gap: 10px;
+  }
+  .quick-actions button {
+    padding: 13px 10px;
+    gap: 9px;
+    border-radius: 16px;
+  }
+  .quick-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 21px;
+    border-radius: 12px;
+  }
+  .quick-arrow {
+    display: none;
+  }
+  .quick-actions strong {
+    font-size: 12px;
+  }
+  .quick-actions small {
+    font-size: 10px;
+  }
+  .discover-heading h2,
+  .analytics-heading h2 {
+    font-size: 19px;
+  }
+  .eyebrow {
+    font-size: 9px;
+    letter-spacing: 1.1px;
+  }
+  .carousel-arrows {
+    gap: 4px;
+  }
+  .carousel-arrows button {
+    width: 40px;
+    height: 40px;
+  }
+  .feature-slide {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 25px;
+    min-height: 340px;
+    align-items: start;
+  }
+  .feature-copy h2 {
+    font-size: 29px;
+    max-width: 340px;
+  }
+  .feature-copy p {
+    font-size: 12px;
+  }
+  .feature-art {
+    display: none;
+  }
+  .feature-slide::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 32px solid #ffffff08;
+    bottom: -90px;
+    right: -90px;
+    pointer-events: none;
+  }
+  .carousel-pagination {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .mobile-swipe {
+    display: inline;
+  }
+  .carousel-pagination > span:last-child {
+    display: none;
+  }
+  .analytics-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .filter-bar {
+    margin: 0 18px;
+    padding: 13px;
+  }
+  .period-chips {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .filter-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pchip {
+    padding: 8px 4px;
+    font-size: 11px;
+    display: flex;
+    justify-content: center;
+  }
+  .date-range {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    width: 100%;
+  }
+  .dr-input {
+    width: 100%;
+    font-size: 16px;
+  }
+  .btn-apply {
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .period-badge-row {
+    padding: 12px 18px 0;
+    flex-direction: row;
+    gap: 8px;
+  }
+  .reports-content {
+    padding: 22px 18px;
+  }
+  .section-title {
+    font-size: 16px;
+  }
+  .kpi-grid-4 {
+    gap: 10px;
+  }
+  .kpi-report {
+    padding: 16px 13px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kr-value {
+    font-size: 23px;
+  }
+  .kr-sub,
+  .kr-delta {
+    font-size: 10px;
+  }
+  .kmr-label {
+    font-size: 10px;
+    text-transform: none;
+  }
+  .kmr-value {
+    font-size: 18px;
+  }
+  .chart-section-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .learn-card {
+    flex-basis: 88%;
+    padding: 22px;
+  }
+  .learn-card h3 {
+    font-size: 22px;
+  }
+  .learn-track {
+    gap: 12px;
+  }
+  .date-error {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+  .table-wrapper {
+    overflow: visible;
+    max-height: none;
+    padding: 12px;
+  }
+  .report-table {
+    display: block;
+    min-width: 0;
+  }
+  .report-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .report-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+  .report-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid #e8e9f0;
+    border-radius: 16px;
+    padding: 12px;
+    background: #fafafd;
+    gap: 12px;
+  }
+  .report-table td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    white-space: normal;
+    padding: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    gap: 5px;
+  }
+  .report-table td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .report-table td:nth-child(2),
+  .report-table td:nth-child(3),
+  .report-table td:nth-child(10) {
+    grid-column: 1 / -1;
+  }
+  .report-table td:first-child {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+  }
+  .user-cell {
+    min-width: 0;
+  }
+  .inline-bar {
+    width: 100%;
+  }
+  .card-head {
+    padding: 16px;
+  }
+  .reports-footer {
+    padding: 18px;
+  }
+  .tpl-info {
+    width: auto;
+    flex: 1;
+  }
+  .tpl-name {
+    white-space: normal;
+  }
+  .tpl-bar-wrap {
+    display: none;
+  }
+}
+@media (max-width: 360px) {
+  .welcome-row h1 {
+    font-size: 27px;
+  }
+  .quick-actions button {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .feature-slide {
+    padding: 21px;
+  }
+  .feature-copy h2 {
+    font-size: 26px;
+  }
+  .carousel-pagination > span {
+    max-width: 145px;
+  }
+  .kr-value {
+    font-size: 21px;
+  }
+  .carousel-arrows {
+    flex-direction: column;
+  }
+  .kpi-grid-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cotacao-root *,
+  .cotacao-root *::before,
+  .cotacao-root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media(max-width: 521px){
+  .period-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 </style>

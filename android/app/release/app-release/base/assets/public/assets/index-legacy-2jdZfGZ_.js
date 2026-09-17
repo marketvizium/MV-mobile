@@ -1,0 +1,1 @@
+System.register(["./index-legacy-BCC-vvTN.js"],function(e,n){"use strict";var t;return{setters:[function(e){t=e.s}],execute:function(){e("s",{name:"Dropdown",extends:t,mounted:function(){console.warn("Deprecated since v4. Use Select component instead.")}})}}});

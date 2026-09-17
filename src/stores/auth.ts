@@ -18,7 +18,6 @@ export const useAuthStore = defineStore('auth', {
     conectado: localStorage.getItem('conectado') || null,
     user     : localStorage.getItem('token') ? jwtDecode<User>(localStorage.getItem('token')!) : null as User | null,
     loj: JSON.parse(localStorage.getItem('loj') || '{}'),
-    dispositivo: (localStorage.getItem('dispositivo') as 'celular' | 'coletor' | null) || null,
 
   }),
 
@@ -27,7 +26,6 @@ export const useAuthStore = defineStore('auth', {
     usuario: (state) => state.user,
     id_usuario: (state) => state.user ? state.user.id_usuario : null,
     loja: (state) => state.loj,
-    tipoDispositivo: (state) => state.dispositivo,
 
     // Getter para menus adaptado para Ionicons
     menuPermitido: (state) => {
@@ -87,7 +85,7 @@ export const useAuthStore = defineStore('auth', {
         },
 
         // =========================================
-        // ADMIN
+        // DONO DA LOJA
         // =========================================
 
         {
@@ -112,7 +110,7 @@ export const useAuthStore = defineStore('auth', {
           name: "ConsPedidosDiretos",
           icon: "move_group",
           route: "/minhas-cotacoes",
-          roles: [1, 6],
+          roles: [1, 6, 7],
         },
 
         {
@@ -124,6 +122,23 @@ export const useAuthStore = defineStore('auth', {
         },
 
         {
+          name_front: 'Colaboradores',
+          name: "ColaboradorHome",
+          icon: "person_book",
+          route: "/colaboradores-home",
+          roles: [1, 6],
+        },
+
+        {
+          name_front: 'Vendedores',
+          name: "VendedoresHome",
+          icon: "sell",
+          route: "/vendedores-home",
+          roles: [1, 6],
+        },
+
+
+        {
           name_front: 'Cadastro produtos',
           name: "CadastroProdutoDono",
           icon: "list_alt_add",
@@ -131,12 +146,25 @@ export const useAuthStore = defineStore('auth', {
           roles: [1, 6],
         },
 
+
         {
           name_front: 'Meu perfil',
           name: "MeuPerfil",
           icon: "person",
           route: "/meu-perfil",
           roles: [1, 6, 7],
+        },
+
+        // =========================================
+        // ADMIN MARVIZ
+        // =========================================
+
+        {
+          name_front: 'Cadastro Cliente',
+          name: "AberturaCliente",
+          icon: "person",
+          route: "/abertura-cliente",
+          roles: [8],
         },
       ]
 
@@ -235,11 +263,11 @@ export const useAuthStore = defineStore('auth', {
 
         this.decodeToken()
 
-        // =========================================
-        // REDIRECIONAMENTO
-        // =========================================
+        console.log(this.user)
 
-        if (this.user?.nivel == 5 && this.token) {
+        ////////////////////////////////////////////////////////////////////////////
+        //REDIRECIONAMENTOS USUÁRIOS////////////////////////////////////////////////
+        if (this.user?.nivel == 5 && this.token) {////////VENDEDOR//////////////////
 
           localStorage.setItem('conectado', payload.manter_conectado)
 
@@ -249,7 +277,7 @@ export const useAuthStore = defineStore('auth', {
 
           return
 
-        } else if (this.user?.nivel == 1 && this.token) {
+        }else if (this.user?.nivel == 1 && this.token) {//COMERCIENTE///////////////
 
           const responseSis = await api.get(
             '/mvpu/usuario/consultarLojas',
@@ -284,7 +312,7 @@ export const useAuthStore = defineStore('auth', {
             return
           }
 
-        } else if (this.user?.nivel == 6 && this.token) {
+        }else if (this.user?.nivel == 6 && this.token) {//SUPERVISOR////////////////
           const responseSis = await api.get(
             '/mvpu/usuario/consultarLojas',
             {
@@ -318,7 +346,7 @@ export const useAuthStore = defineStore('auth', {
             await router.replace({ name: 'DashboardAdmin' })
             return
           }
-        }else if (this.user?.nivel == 7 && this.token) {
+        }else if (this.user?.nivel == 7 && this.token) {//OPERADOR//////////////////
           const responseSis = await api.get(
             '/mvpu/usuario/consultarLojas',
             {
@@ -348,18 +376,24 @@ export const useAuthStore = defineStore('auth', {
             this.loj = responseSis.data.data[0]
 
             localStorage.setItem('conectado', payload.manter_conectado)
-            await router.replace({ name: 'SelecionarDispositivo' })
+            await router.replace({ name: 'MinhasCotacoes' })
             return
           }
-        }else {
+        }else if (this.user?.nivel == 8 && this.token) {//ADMIN MARKET VIZIUM///////
+
+          console.log("CHEGOU AQUI")
+          localStorage.setItem('conectado', payload.manter_conectado)
+          await router.replace({ name: 'AberturaCliente' })
+          console.log("REDIRECT")
+          return
+          
+        }else {/////////////////////////////////////////////////////////////////////
 
           throw new Error('Usuário inexistente')
-        }
+        }///////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////
 
       } catch (error: any) {
-
-        
-
         throw new Error('Usuário inexistente')
       }
     },
@@ -371,14 +405,6 @@ export const useAuthStore = defineStore('auth', {
       )
 
       this.loj = payload
-
-      return true
-    },
-
-    setDispositivo(payload: 'celular' | 'coletor'){
-      localStorage.setItem('dispositivo', payload)
-
-      this.dispositivo = payload
 
       return true
     },
@@ -404,13 +430,11 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('loj')
       localStorage.removeItem('conectado')
       localStorage.removeItem('auth')
-      localStorage.removeItem('dispositivo')
 
       this.token      = null
       this.loj        = null
       this.conectado  = null
       this.user       = null
-      this.dispositivo = null
 
       window.location.replace('/login')
       

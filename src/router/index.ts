@@ -57,6 +57,10 @@ router.beforeEach((to, from, next) => {
       return next({ name: 'MinhasCotacoes' })
     }
 
+    if (authStore.user?.nivel == 8) {
+      return next({ name: 'AberturaCliente' })
+    }
+
     if (authStore.user?.nivel == 5) {
       return next({ name: 'Dashboard' })
     }
@@ -91,6 +95,15 @@ router.beforeEach((to, from, next) => {
     if (userNivel === 7) {
 
       if (to.name !== 'MinhasCotacoes') {
+        //return next({ name: 'MinhasCotacoes' })
+      }
+
+      return next()
+    }
+
+    if (userNivel === 8) {
+
+      if (to.name !== 'AberturaCliente') {
         //return next({ name: 'MinhasCotacoes' })
       }
 

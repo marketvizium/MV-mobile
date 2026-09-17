@@ -280,16 +280,6 @@ const privateRoutes: RouteRecordRaw = {
     },
 
     {
-      path: 'cotacao-console-c',
-      name: 'cotacaoConsoleColetor',
-      component: () => import('@/views/TelasColetor/CotacaoConsole.vue'),
-      meta: {
-          title: 'Pedido direto',
-          subtitle: 'Consulte seu faturamento no pedido direto'
-      }
-    },
-
-    {
       path: 'console-cotacao-d',
       name: 'ConsoleCotacaoDesktop',
       component: () => import('@/views/Dono/ConsoleCotacaoDesktop.vue'),
@@ -298,6 +288,68 @@ const privateRoutes: RouteRecordRaw = {
           subtitle: 'Aqui você pode monitorar responder os itens da cotação'
       }
     },
+
+    {
+      path: 'colaboradores-home',
+      name: 'ColaboradorHome',
+      component: () => import('@/views/Dono/ColaboradorHome.vue'),
+      meta: {
+          title: 'Colaboradores',
+          subtitle: 'Registre e consulte colaboradores nessa loja.'
+      }
+    },
+
+    {
+      path: '/colaboradores-cadastro',
+      name: 'CadastrarColaborador',
+      component: () => import('../views/Dono/CadastrarColaborador.vue'),
+      meta: {
+        title: 'Colaboradores',
+        subtitle: 'Cadastre um novo colaborador nessa loja.'
+      }
+    },
+
+    {
+      path: '/colaboradores-consulta',
+      name: 'ConsultarColaborador',
+      component: () => import('../views/Dono/ConsultarColaborador.vue'),
+      meta: {
+        title: 'Colaboradores',
+        subtitle: 'Consulte seus colaboradores nessa loja.'
+      }
+    },
+
+
+    {
+        path: '/vendedores-home',
+        name: 'VendedoresHome',
+        component: () =>
+          import('../views/Dono/VendedoresHome.vue'),
+        meta: {
+          title: 'Vendedores',
+          subtitle: 'Gestão de vendedores'
+        }
+      },
+      {
+        path: '/meus-vendedores',
+        name: 'MeusVendedores',
+        component: () =>
+          import('../views/Dono/ConsultarMeusVendedores.vue'),
+        meta: {
+          title: 'Consultar Vendedores',
+          subtitle: 'Consulte os vendedores que estão associados a sua loja'
+        }
+      },
+      {
+        path: '/consultar-vendedores',
+        name: 'VendedoresConsulta',
+        component: () =>
+          import('../views/Dono/RedeVendedores.vue'),
+        meta: {
+          title: 'Descubra novos vendedores!',
+          subtitle: 'Descubra os vendedores que estão usando utilizando o Marviz'
+        }
+      },
 
   ]
 };

@@ -17,102 +17,104 @@
       </div>
     </ion-header>
 
-    <ion-content :fullscreen="true" :scroll-y="false" class="console-content">
-      <div class="form-container" style="padding-bottom: 0;">
-        <div class="title-section" style="flex-shrink: 0;">
-          <h2 class="poppins-semibold">Criar pedido direto</h2>
-          <p class="poppins-regular muted">Crie novos pedidos diretos. Selecione o vendedor e crie um novo pedido direto.</p>
-        </div>
-
-        <!-- SEÇÃO: Vendedores -->
-        <div class="vendedores-section margin-top-20" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
-          <div class="vendedores-header" style="flex-shrink: 0;">
-            <div>
-              <p class="section-title poppins-semibold">Vendedores participantes</p>
-              <p class="section-subtitle poppins-regular">
-                {{ vendedoresSelecionados.length }} de {{ vendedoresFiltrados.length }} selecionado(s)
-              </p>
+    <ion-content :fullscreen="true" :scroll-y="false" class="console-content" style="overflow-y: auto;">
+      <div>
+        <div class="form-container" style="padding-bottom: 0;">
+          <div class="title-section" style="flex-shrink: 0;">
+            <h2 class="poppins-semibold">Criar pedido direto</h2>
+            <p class="poppins-regular muted">Crie novos pedidos diretos. Selecione o vendedor e crie um novo pedido direto.</p>
+          </div>
+  
+          <!-- SEÇÃO: Vendedores -->
+          <div class="vendedores-section margin-top-20" style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="vendedores-header" style="flex-shrink: 0;">
+              <div>
+                <p class="section-title poppins-semibold">Vendedores participantes</p>
+                <p class="section-subtitle poppins-regular">
+                  {{ vendedoresSelecionados.length }} de {{ vendedoresFiltrados.length }} selecionado(s)
+                </p>
+              </div>
+  
+              <button class="btn-sel-todos poppins-medium" @click="toggleSelecionarTodos">
+                {{ todosSelecionados ? 'Desmarcar todos' : 'Selecionar todos' }}
+              </button>
             </div>
-
-            <button class="btn-sel-todos poppins-medium" @click="toggleSelecionarTodos">
-              {{ todosSelecionados ? 'Desmarcar todos' : 'Selecionar todos' }}
+  
+            <div class="search-box" style="flex-shrink: 0;">
+              <span class="material-symbols-outlined search-icon">search</span>
+              <input
+                v-model="busca"
+                class="search-input poppins-regular"
+                placeholder="Buscar por nome, empresa, CNPJ..."
+              />
+            </div>
+  
+            <!-- Loading -->
+            <div v-if="loadingVendedores" class="loading-vendedores poppins-regular">
+              Carregando vendedores...
+            </div>
+  
+            <!-- Lista -->
+            <div v-else class="vendedores-list">
+              <div
+                v-for="vendedor in vendedoresPaginados"
+                :key="vendedor.id_vendedor"
+                class="vendedor-card"
+                :class="{ selecionado: vendedoresSelecionados.includes(vendedor.id_vendedor), desabilitado: (vendedoresSelecionados.length>0 && vendedoresSelecionados[0] !== vendedor.id_vendedor) }"
+                @click="toggleVendedor(vendedor.id_vendedor)"
+              >
+                <div class="check-circle" :class="{ checked: vendedoresSelecionados.includes(vendedor.id_vendedor) }">
+                  <span v-if="vendedoresSelecionados.includes(vendedor.id_vendedor)" class="material-symbols-outlined check-icon">check</span>
+                </div>
+  
+                <div class="vendedor-info">
+                  <div class="vendedor-top">
+                    <span class="vendedor-nome poppins-medium">{{ vendedor.nome }}</span>
+                    <span class="vendedor-empresa poppins-medium">{{ vendedor.nome_empresa }}</span>
+                  </div>
+                  <div class="vendedor-bottom">
+                    <span class="vendedor-cnpj poppins-regular">CNPJ: {{ formatarCNPJ(vendedor.cnpj) }}</span>
+                    <span v-if="vendedor.cidade" class="vendedor-cidade poppins-regular">{{ vendedor.cidade }}{{ vendedor.estado ? ` / ${vendedor.estado}` : '' }}</span>
+                  </div>
+                </div>
+  
+                <div class="vendedor-taxa">
+                  <span class="taxa-valor poppins-semibold">{{ vendedor.taxa_resposta ?? 0 }}%</span>
+                  <span class="taxa-label poppins-regular">resposta</span>
+                </div>
+              </div>
+  
+              <div v-if="vendedoresFiltrados.length === 0" class="sem-vendedores poppins-regular">
+                Nenhum vendedor encontrado.
+              </div>
+            </div>
+  
+            <!-- Paginação -->
+            <div v-if="totalPaginas > 1" class="paginacao" style="flex-shrink: 0;">
+              <button class="btn-pag" :disabled="paginaAtual === 1" @click="paginaAtual--">‹</button>
+              <span class="pag-info poppins-regular">{{ paginaAtual }} / {{ totalPaginas }}</span>
+              <button class="btn-pag" :disabled="paginaAtual === totalPaginas" @click="paginaAtual++">›</button>
+            </div>
+          </div>
+  
+          <div class="form-actions-row margin-top-30" style="flex-shrink: 0;">
+            <button
+              @click="limparTudo"
+              class="action-btn btn-outline-gray poppins-medium full-w height-50"
+              :disabled="loading"
+            >
+              Limpar tudo
+            </button>
+  
+            <button
+              @click="cadastrarCotacao"
+              class="action-btn btn-primary poppins-medium full-w height-50"
+              :disabled="loading || vendedoresSelecionados.length === 0"
+            >
+              <ion-spinner name="crescent" v-if="loading" class="spinner-button"></ion-spinner>
+              <span v-else>Criar pedido direto</span>
             </button>
           </div>
-
-          <div class="search-box" style="flex-shrink: 0;">
-            <span class="material-symbols-outlined search-icon">search</span>
-            <input
-              v-model="busca"
-              class="search-input poppins-regular"
-              placeholder="Buscar por nome, empresa, CNPJ..."
-            />
-          </div>
-
-          <!-- Loading -->
-          <div v-if="loadingVendedores" class="loading-vendedores poppins-regular">
-            Carregando vendedores...
-          </div>
-
-          <!-- Lista -->
-          <div v-else class="vendedores-list">
-            <div
-              v-for="vendedor in vendedoresPaginados"
-              :key="vendedor.id_vendedor"
-              class="vendedor-card"
-              :class="{ selecionado: vendedoresSelecionados.includes(vendedor.id_vendedor), desabilitado: (vendedoresSelecionados.length>0 && vendedoresSelecionados[0] !== vendedor.id_vendedor) }"
-              @click="toggleVendedor(vendedor.id_vendedor)"
-            >
-              <div class="check-circle" :class="{ checked: vendedoresSelecionados.includes(vendedor.id_vendedor) }">
-                <span v-if="vendedoresSelecionados.includes(vendedor.id_vendedor)" class="material-symbols-outlined check-icon">check</span>
-              </div>
-
-              <div class="vendedor-info">
-                <div class="vendedor-top">
-                  <span class="vendedor-nome poppins-medium">{{ vendedor.nome }}</span>
-                  <span class="vendedor-empresa poppins-medium">{{ vendedor.nome_empresa }}</span>
-                </div>
-                <div class="vendedor-bottom">
-                  <span class="vendedor-cnpj poppins-regular">CNPJ: {{ formatarCNPJ(vendedor.cnpj) }}</span>
-                  <span v-if="vendedor.cidade" class="vendedor-cidade poppins-regular">{{ vendedor.cidade }}{{ vendedor.estado ? ` / ${vendedor.estado}` : '' }}</span>
-                </div>
-              </div>
-
-              <div class="vendedor-taxa">
-                <span class="taxa-valor poppins-semibold">{{ vendedor.taxa_resposta ?? 0 }}%</span>
-                <span class="taxa-label poppins-regular">resposta</span>
-              </div>
-            </div>
-
-            <div v-if="vendedoresFiltrados.length === 0" class="sem-vendedores poppins-regular">
-              Nenhum vendedor encontrado.
-            </div>
-          </div>
-
-          <!-- Paginação -->
-          <div v-if="totalPaginas > 1" class="paginacao" style="flex-shrink: 0;">
-            <button class="btn-pag" :disabled="paginaAtual === 1" @click="paginaAtual--">‹</button>
-            <span class="pag-info poppins-regular">{{ paginaAtual }} / {{ totalPaginas }}</span>
-            <button class="btn-pag" :disabled="paginaAtual === totalPaginas" @click="paginaAtual++">›</button>
-          </div>
-        </div>
-
-        <div class="form-actions-row margin-top-30" style="flex-shrink: 0;">
-          <button
-            @click="limparTudo"
-            class="action-btn btn-outline-gray poppins-medium full-w height-50"
-            :disabled="loading"
-          >
-            Limpar tudo
-          </button>
-
-          <button
-            @click="cadastrarCotacao"
-            class="action-btn btn-primary poppins-medium full-w height-50"
-            :disabled="loading || vendedoresSelecionados.length === 0"
-          >
-            <ion-spinner name="crescent" v-if="loading" class="spinner-button"></ion-spinner>
-            <span v-else>Criar pedido direto</span>
-          </button>
         </div>
       </div>
     </ion-content>
@@ -304,14 +306,13 @@ export default defineComponent({
 .console-page {
   --background: #FFF !important;
   background-color: #FFF !important;
-  height: 100%;
+  height: 1000px;
 }
 
 .console-content {
   --background: #FFF !important;
   background-color: #FFF !important;
   color: #000;
-  height: 100%;
 }
 
 .form-container {

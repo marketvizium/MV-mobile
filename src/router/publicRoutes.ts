@@ -30,16 +30,16 @@ const noPlataformRoutes: RouteRecordRaw = {
       name: 'SelecionarLoja',
       component: () => import('@/views/Dono/SelecionarLoja.vue')
     },
-    { 
-      path: '/esqueci-senha', 
+    { path: '/esqueci-senha', 
       name: 'EsqueciSenha', 
       component: () => import('@/views/EsqueciSenha.vue') 
     },
-    { 
-      path: '/selecionar-dispositivo', 
-      name: 'SelecionarDispositivo', 
-      component: () => import('@/views/TelasColetor/SelecionarDispositivo.vue') 
-    }
+    {
+      path: '/conv/:hash_convite',
+      name: 'AceitarConvite',
+      component: () => import('@/views/ConviteVendedor.vue'),
+      meta: { requiresAuth: false },
+    },
   ]
 };
 

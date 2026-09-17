@@ -112,7 +112,7 @@
 
   <!-- ══ MOBILE (<992px): Footer tab-bar ══ -->
   <ion-footer v-else class="ion-no-border">
-    <div class="footer-container" style="padding-bottom: 25px;">
+    <div class="footer-container">
 
       <!-- Sempre 3 itens no mobile, nessa ordem: Menu | Explorar (FAB) | Perfil -->
       <div class="tab-bar-custom tab-bar-compact">
@@ -121,7 +121,7 @@
           <span class="material-symbols-outlined">menu</span>
         </button>
 
-        <div class="fab-wrapper" v-if="user.nivel == 5 || user.nivel == 1">
+        <div class="fab-wrapper" v-if="user.nivel == 5 || user.nivel == 1 || user.nivel == 6">
           <button class="fab-button" @click="navegar(user.nivel == 5 ? 'Explorar' : 'ExplorarVendedores')">
             <span class="material-symbols-outlined">search</span>
           </button>
@@ -162,7 +162,7 @@
 
             <div class="menu-lateral-itens">
               <button
-                v-for="menu in menuPermitido"
+                v-for="menu in menuLateralItens"
                 :key="menu.name"
                 class="menu-lateral-item"
                 :class="{ active: abaAtiva === menu.name, 'item-bloqueado': itemBloqueado(menu) }"
@@ -241,6 +241,19 @@ export default defineComponent({
 
     primeiroNome() {
       return this.user?.nome?.split(' ')[0] || 'Usuário';
+    },
+
+    // Menu lateral (drawer mobile): esconde o item "Vendedores" quando a
+    // largura da tela for menor que 992px (isDesktop já reflete esse breakpoint,
+    // via matchMedia('(min-width: 992px)') controlado em mounted/onMediaChange).
+    menuLateralItens() {
+      const menus = this.menuPermitido || [];
+
+      if (this.isDesktop) return menus;
+
+      return menus.filter(
+        (item: any) => item.name_front !== 'Vendedores' && item.route !== '/vendedores-home'
+      );
     }
   },
   props :{

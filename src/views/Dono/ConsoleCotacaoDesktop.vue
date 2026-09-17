@@ -165,6 +165,7 @@
         <button
           class="action-btn btn-export btn-header"
           @click="abrirModalImportar"
+          v-if="cabecalho && (cabecalho.status_cotacao === 'fechada')"
           title="Ver Tutorial"
         >
           <span class="material-symbols-outlined">add_notes</span>
@@ -500,32 +501,51 @@
           <i class="pi pi-users" style="font-size:2.5rem;opacity:.3"></i>
           <span>Nenhum vendedor encontrado.</span>
         </div>
-        <div v-else class="vendedores-grid">
-          <div v-for="v in vendedores" :key="v.id_vendedor" class="vendedor-card">
-            <div class="vc-avatar">
-              <img v-if="v.foto_perfil" :src="v.foto_perfil" :alt="v.nome" />
-              <span v-else class="vc-initials">{{ initials(v.nome) }}</span>
-              <span :class="['vc-status', v.status_conta]"></span>
-            </div>
-            <div class="vc-info">
-              <span class="vc-name">{{ v.nome }}</span>
-              <span class="vc-name">{{ v.nome_empresa }}</span>
-              <span class="vc-user muted">CNPJ: {{ v.cnpj }}</span>
-              <span class="vc-user muted">@{{ v.nome_usuario }}</span>
-              <span class="vc-email muted">{{ v.email }}</span>
-            </div>
-            <div class="vc-stats">
-              <div class="vc-stat"><b>{{ v.num_cotacoes }}</b><span>Cotações</span></div>
-              <div class="vc-stat"><b>{{ v.taxa_resposta }}</b><span>Resp. Média</span></div>
-              <div class="vc-stat"><b>{{ v.num_vendas }}</b><span>Vendas</span></div>
-            </div>
-            <button
-              style="height: 40px; border: solid 1px #ff8049; background-color: #fff; color: #ff8049; font-family: 'Poppins'; border-radius: 10px; cursor: pointer;"
-              @click="abrirHistoricoVendedor(v)"
-            >
-              Ver histórico
+        <div v-else>
+
+          <div style="width: 100%; height: 50px; margin-bottom: 25px" v-if="cabecalho && (cabecalho.status_cotacao == 'fechada' || cabecalho.status_cotacao == 'aberta')">
+            <button style="width: 100%; height: 50px; border: none; border-radius: 8px; background-color: #ff8049;
+              display: flex; align-items: center; color: #FFF; font-size: 16px; font-family: 'Poppins'; justify-content: center;
+              font-weight: 600; gap: 10px; cursor: pointer"
+              @click="abrirModalNovosVendedores"
+              >
+              <span class="material-symbols-outlined">
+                add
+              </span>
+              <div>
+                Incluir novos vendedores
+              </div>
             </button>
           </div>
+
+          <div class="vendedores-grid">
+            <div v-for="v in vendedores" :key="v.id_vendedor" class="vendedor-card">
+              <div class="vc-avatar">
+                <img v-if="v.foto_perfil" :src="v.foto_perfil" :alt="v.nome" />
+                <span v-else class="vc-initials">{{ initials(v.nome) }}</span>
+                <span :class="['vc-status', v.status_conta]"></span>
+              </div>
+              <div class="vc-info">
+                <span class="vc-name">{{ v.nome }}</span>
+                <span class="vc-name">{{ v.nome_empresa }}</span>
+                <span class="vc-user muted">CNPJ: {{ v.cnpj }}</span>
+                <span class="vc-user muted">@{{ v.nome_usuario }}</span>
+                <span class="vc-email muted">{{ v.email }}</span>
+              </div>
+              <div class="vc-stats">
+                <div class="vc-stat"><b>{{ v.num_cotacoes }}</b><span>Cotações</span></div>
+                <div class="vc-stat"><b>{{ v.taxa_resposta }}</b><span>Resp. Média</span></div>
+                <div class="vc-stat"><b>{{ v.num_vendas }}</b><span>Vendas</span></div>
+              </div>
+              <button
+                style="height: 40px; border: solid 1px #ff8049; background-color: #fff; color: #ff8049; font-family: 'Poppins'; border-radius: 10px; cursor: pointer;"
+                @click="abrirHistoricoVendedor(v)"
+              >
+                Ver histórico
+              </button>
+            </div>
+          </div>
+          
         </div>
       </div>
 
@@ -2141,6 +2161,15 @@
       @importado="aoImportarProdutos"
     />
 
+    <ModalIncluirVendedores
+      :modelValue="incluirVendedoresVisivel"
+      :idCotacao="idCotacaoLocal"
+      @vendedores-incluidos="onVendedoresIncluidos"
+      @close="fecharIncluirVendedores"
+    />
+
+    <div style="height: 120px; width: 100%;" ></div>
+
     </ion-content>
   </ion-page>
 </template>
@@ -2156,6 +2185,7 @@ import * as XLSX from 'xlsx'
 import Calendar from 'primevue/calendar'
 import BrDateTimePicker from '@/components/brDateTimePicker.vue';
 import MarvizImportarProdutosTxt from '@/components/MarvizImportarTxt.vue';
+import ModalIncluirVendedores from '@/components/ModalIncluirVendedores.vue';
 
 
 // ─── Helpers de estilo Excel ────────────────────────────────────────────────
@@ -2245,7 +2275,8 @@ export default {
     ProgressSpinner,
     Calendar,
     BrDateTimePicker,
-    MarvizImportarProdutosTxt
+    MarvizImportarProdutosTxt,
+    ModalIncluirVendedores
    },
   props: { id_cotacao: Number },
 
@@ -2392,7 +2423,8 @@ export default {
       historicoDetalheAberto: null, // id_cotacao expandida (drill-down)
 
       modalStatusVisivel: false, //Modal tutorial
-      playDisable : false //play modal
+      playDisable : false, //play modal
+      incluirVendedoresVisivel: false,
     }
   },
 
@@ -2430,13 +2462,13 @@ export default {
           if (!map[key]) {
             // busca foto no array vendedores
 
-            console.log(oferta.email)
-            console.log(oferta)
+            
+            
             const vInfo = this.vendedores.find(v => v.email === oferta.email)
 
-            console.log(oferta)
+            
 
-            console.log(vInfo, "JOM")
+            
 
             map[key] = {
               email: oferta.email,
@@ -2451,7 +2483,7 @@ export default {
             }
           }
 
-          console.log(this.ofertas, "OFERTAS")
+          
 
           const isOp1 = !!oferta.opcao_1
           const preco = isOp1 ? Number(oferta.primeiro_preco || 0) : Number(oferta.segundo_preco || 0)
@@ -2545,11 +2577,11 @@ export default {
 
     onInicioChange(value) {
       this.periodoEdicaoInicial = value; // value já vem em ms
-      console.log('início:', this.periodoEdicaoInicial);
+      
     },
     onFinalChange(value) {
       this.periodoEdicaoFinal = value;
-      console.log('final:', this.periodoEdicaoFinal);
+      
     }
   },
 
@@ -2596,6 +2628,13 @@ export default {
       }
     },
 
+    abrirModalNovosVendedores(){
+      this.incluirVendedoresVisivel=true
+    },
+
+    fecharIncluirVendedores(){
+      this.incluirVendedoresVisivel=false
+    },
 
     fecharDetalhesProduto(){
       this.showDetalhesProduto = false
@@ -2650,7 +2689,9 @@ export default {
         this.$refs.video.requestFullscreen();
     },
 
-
+    onVendedoresIncluidos(){
+      this.carregarVendedores()
+    },
     // ── CARREGAMENTO ──
     async carregarProdutos() {
       try {
@@ -2699,7 +2740,7 @@ export default {
         const res = await api.get(`/mvpu/usuario/consultarVendedores/${this.auth.loja.id_loja}`, {headers: {somenteparticipantes: true, idcotacao: this.cabecalho.id_cotacao}})
 
         this.vendedores = res.data.data || []
-        console.log(this.vendedores)
+        
 
 
       } catch (e) { exibeErro(e, this.$toast) }
@@ -3283,8 +3324,8 @@ export default {
         this.periodoEdit.final = new Date(this.periodoEdit.final).getTime()
       }
 
-      console.log(this.periodoEdit.inicio)
-      console.log(this.periodoEdit.final)
+      
+      
       try {
         if (!this.periodoEdit.inicio || !this.periodoEdit.final) {
           this.$toast && this.$toast.warn ? this.$toast.warn('Preencha data e hora de início e término.') : this.toast('Preencha data e hora de início e término.', 'error')
@@ -3296,7 +3337,7 @@ export default {
           final_cotacao: this.periodoEdit.final,
         }
 
-        console.log(payload, "AA")
+        
         if (isNaN(payload.inicio_cotacao) || isNaN(payload.final_cotacao)) {
           this.toast('Data inválida. Verifique os campos.', 'error'); return
         }
@@ -3696,11 +3737,11 @@ export default {
     // Faturamento extra no contexto verificar pedido
     abrirFatExtraVerificar(vendedorEmail) {
 
-      console.log(vendedorEmail, "AAAAA")
+      
 
       const vend = this.itensPorVendedor.find(v => v.email === vendedorEmail)
 
-      console.log(vend.id_vendedor, "OEOEOEOEOE")
+      
 
       this.fatExtraVerificar = {
         id_vendedor: vend.id_vendedor,
@@ -3741,7 +3782,7 @@ export default {
         }
 
 
-        console.log(payloadRequisicao, "OLHA O PRODUTO AEEE")
+        
 
         await api.post(`/mvpu/cotacao/adicionarFaturamento/${this.auth.loja.id_loja}`, payloadRequisicao)
         this.toast('Produto adicionado!')

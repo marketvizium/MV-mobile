@@ -1,47 +1,53 @@
 <template>
   <ion-page class="console-page">
     <ion-content :fullscreen="true" class="console-content">
-
       <RefresherIonic />
 
       <!-- ══ HEADER ══ -->
       <div class="cc-header">
         <div class="cc-header-left">
-          <button class="back-btn" @click="$router.back()">
+          <button class="back-btn" aria-label="Voltar" @click="$router.back()">
             <span class="material-symbols-outlined">arrow_back_ios_new</span>
           </button>
           <div class="cotacao-identity">
             <span class="cotacao-label">COTAÇÃO</span>
-            <span class="cotacao-name">{{ cabecalho?.nome_cotacao || nomeCotacao || '—' }}</span>
+            <span class="cotacao-name">{{
+              cabecalho?.nome_cotacao || nomeCotacao || "—"
+            }}</span>
           </div>
         </div>
         <div class="cc-header-right" v-if="cabecalho">
           <span class="meta-id">#{{ cabecalho.id_cotacao }}</span>
           <div :class="['status-pill', 'status-' + cabecalho.status_cotacao]">
             <span class="status-dot"></span>
-            {{ statusLabel(cabecalho.status_cotacao, cabecalho.status_fechamento) }}
+            {{
+              statusLabel(cabecalho.status_cotacao, cabecalho.status_fechamento)
+            }}
           </div>
         </div>
       </div>
 
       <!-- ══ PERÍODO ══ -->
       <div class="periodo-bar" v-if="cabecalho" v-show="user?.nivel != 7">
-        <span class="material-symbols-outlined periodo-icon">calendar_today</span>
+        <span class="material-symbols-outlined periodo-icon"
+          >calendar_today</span
+        >
         <span class="periodo-text poppins-regular">
-          {{ formatarData(cabecalho.inicio_cotacao) }} → {{ formatarData(cabecalho.final_cotacao) }}
+          <strong>Período da cotação:</strong>
+          Início: {{ formatarData(cabecalho.inicio_cotacao) }} · Término:
+          {{ formatarData(cabecalho.final_cotacao) }}
         </span>
       </div>
-
-     
 
       <!-- ══ AÇÕES DO HEADER (baseadas no status) ══ -->
       <div class="header-actions" v-if="cabecalho" v-show="user?.nivel != 7">
         <button
           class="action-btn btn-outline poppins-medium"
-          @click="showPeriodoModal = true"
-          :disabled="cabecalho.status_cotacao !== 'fechada'"
+          @click="abrirPeriodoModal"
+          :disabled="estaConcluido"
         >
-          <span class="material-symbols-outlined">schedule</span> Período
+          <span class="material-symbols-outlined">schedule</span> Ajustar
+          período
         </button>
 
         <button
@@ -77,7 +83,11 @@
         <button
           v-for="tab in tabs"
           :key="tab.key"
-          :class="['tab-btn', 'poppins-medium', { active: activeTab === tab.key, 'tab-disable': tab.disabled }]"
+          :class="[
+            'tab-btn',
+            'poppins-medium',
+            { active: activeTab === tab.key, 'tab-disable': tab.disabled },
+          ]"
           :disabled="tab.disabled"
           @click="activeTab = tab.key"
         >
@@ -91,6 +101,13 @@
            TAB: PRODUTOS
       ══════════════════════════════════ -->
       <div v-if="activeTab === 'produtos'" class="tab-pane">
+        <div class="section-intro">
+          <h2 class="poppins-semibold">Produtos da cotação</h2>
+          <p class="poppins-regular">
+            Consulte os itens e suas quantidades. Enquanto a cotação estiver
+            indisponível, use os botões abaixo para adicionar produtos.
+          </p>
+        </div>
 
         <!-- Search + Ações -->
         <div class="pane-header">
@@ -102,23 +119,43 @@
               placeholder="Buscar produto, cód. barras..."
               class="sb-input poppins-regular"
             />
-            <button v-if="searchProdutos" class="sb-clear" @click="searchProdutos = ''">
+            <button
+              v-if="searchProdutos"
+              class="sb-clear"
+              @click="searchProdutos = ''"
+            >
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
 
-          <div class="pane-btn-group" v-if="cabecalho && cabecalho.status_cotacao === 'fechada'">
+          <div
+            class="pane-btn-group"
+            v-if="cabecalho && cabecalho.status_cotacao === 'fechada'"
+          >
             <!-- Adicionar produto cadastrado via câmera (NOVO) -->
-            <button class="fab-scan-btn poppins-medium" @click="abrirScannerCatalogo">
+            <button
+              class="fab-scan-btn poppins-medium"
+              aria-label="Adicionar produto pelo código de barras"
+              title="Ler código de barras"
+              @click="abrirScannerCatalogo"
+            >
               <span class="material-symbols-outlined">barcode_scanner</span>
             </button>
 
-            <button class="action-btn btn-outline poppins-medium" @click="showAddProdutoModal = true">
-              <span class="material-symbols-outlined">add</span> Produto
+            <button
+              class="action-btn btn-outline poppins-medium"
+              @click="showAddProdutoModal = true"
+            >
+              <span class="material-symbols-outlined">add</span> Adicionar
+              produto
             </button>
 
-            <button class="action-btn btn-outline-gray poppins-medium" @click="showAddProdutoModalInexistente = true">
-              <span class="material-symbols-outlined">add_circle</span> Produto não cadastrado
+            <button
+              class="action-btn btn-outline-gray poppins-medium"
+              @click="showAddProdutoModalInexistente = true"
+            >
+              <span class="material-symbols-outlined">add_circle</span> Produto
+              não cadastrado
             </button>
           </div>
         </div>
@@ -135,7 +172,9 @@
             <span class="material-symbols-outlined">inventory_2</span>
           </div>
           <h3 class="poppins-semibold">Nenhum produto</h3>
-          <p class="poppins-regular">Adicione produtos à cotação usando os botões acima.</p>
+          <p class="poppins-regular">
+            Adicione produtos à cotação usando os botões acima.
+          </p>
         </div>
 
         <!-- Lista de produtos (mobile cards) -->
@@ -148,11 +187,18 @@
             <div class="pc-top">
               <div class="pc-info">
                 <span class="pc-name poppins-semibold">{{ p.nome }}</span>
-                <span class="pc-barcode poppins-regular mono" v-if="p.codigo_barra">
+                <span
+                  class="pc-barcode poppins-regular mono"
+                  v-if="p.codigo_barra"
+                >
                   {{ p.codigo_barra }}
                 </span>
-                <span class="pc-barcode poppins-regular muted" v-else>Não cadastrado</span>
-                <span class="pc-cat poppins-regular" v-if="p.categoria">{{ p.categoria }}</span>
+                <span class="pc-barcode poppins-regular muted" v-else
+                  >Não cadastrado</span
+                >
+                <span class="pc-cat poppins-regular" v-if="p.categoria">{{
+                  p.categoria
+                }}</span>
               </div>
               <div class="pc-actions" v-if="podeEditarProduto">
                 <button class="icon-btn edit" @click="abrirDetalhes(p)">
@@ -165,43 +211,67 @@
                   <span class="material-symbols-outlined">delete</span>
                 </button>
               </div>
-              <span class="material-symbols-outlined locked-hint" v-else>lock</span>
+              <span class="material-symbols-outlined locked-hint" v-else
+                >lock</span
+              >
             </div>
 
             <div class="pc-details">
               <div class="pc-detail-item">
-                <span class="pc-detail-label poppins-regular">Qtd</span>
-                <span class="pc-detail-val poppins-semibold">{{ p.quantidade || '—' }}</span>
+                <span class="pc-detail-label poppins-regular">Quantidade</span>
+                <span class="pc-detail-val poppins-semibold">{{
+                  p.quantidade || "—"
+                }}</span>
               </div>
               <div class="pc-detail-item" v-if="p.tipo">
                 <span class="pc-detail-label poppins-regular">Tipo</span>
                 <span class="type-tag poppins-medium">{{ p.tipo }}</span>
               </div>
               <div class="pc-detail-item" v-if="p.qtd_unitaria_composicao">
-                <span class="pc-detail-label poppins-regular">Comp.</span>
-                <span class="pc-detail-val poppins-medium">{{ p.qtd_unitaria_composicao }} un</span>
+                <span class="pc-detail-label poppins-regular">Composição</span>
+                <span class="pc-detail-val poppins-medium"
+                  >{{ p.qtd_unitaria_composicao }} un</span
+                >
               </div>
               <div class="pc-detail-item">
                 <span class="pc-detail-label poppins-regular">Custo</span>
-                <span class="pc-detail-val poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
+                <span class="pc-detail-val poppins-medium"
+                  >R$ {{ formatVal(p.preco_custo) }}</span
+                >
               </div>
               <div class="pc-detail-item">
-                <span class="pc-detail-label poppins-regular">Últ. Preço</span>
-                <span class="pc-detail-val poppins-medium">R$ {{ p.ultimo_preco || "--" }}</span>
+                <span class="pc-detail-label poppins-regular"
+                  >Último preço</span
+                >
+                <span class="pc-detail-val poppins-medium"
+                  >R$ {{ p.ultimo_preco || "--" }}</span
+                >
               </div>
               <div class="pc-detail-item">
-                <span class="pc-detail-label poppins-regular">Últ. Qtd</span>
-                <span class="pc-detail-val poppins-medium">R$ {{ p.ultima_quantidade || "--" }}</span>
+                <span class="pc-detail-label poppins-regular"
+                  >Última quantidade</span
+                >
+                <span class="pc-detail-val poppins-medium">{{
+                  p.ultima_quantidade || "--"
+                }}</span>
               </div>
               <div class="pc-detail-item" v-if="p.margem != null">
                 <span class="pc-detail-label poppins-regular">Margem</span>
-                <span :class="['margem-badge', 'poppins-semibold', p.margem > 0 ? 'pos' : 'neg']">
+                <span
+                  :class="[
+                    'margem-badge',
+                    'poppins-semibold',
+                    p.margem > 0 ? 'pos' : 'neg',
+                  ]"
+                >
                   {{ p.margem }}%
                 </span>
               </div>
               <div class="pc-detail-item">
                 <span class="pc-detail-label poppins-regular">Venda</span>
-                <span class="pc-detail-val poppins-medium">R$ {{ formatVal(p.preco_venda) }}</span>
+                <span class="pc-detail-val poppins-medium"
+                  >R$ {{ formatVal(p.preco_venda) }}</span
+                >
               </div>
             </div>
           </div>
@@ -211,7 +281,18 @@
       <!-- ══════════════════════════════════
            TAB: OFERTAS
       ══════════════════════════════════ -->
-      <div v-if="activeTab === 'ofertas'" v-show="user?.nivel != 7" class="tab-pane">
+      <div
+        v-if="activeTab === 'ofertas'"
+        v-show="user?.nivel != 7"
+        class="tab-pane"
+      >
+        <div class="section-intro">
+          <h2 class="poppins-semibold">Ofertas recebidas</h2>
+          <p class="poppins-regular">
+            Compare os preços em Ver ofertas. Após finalizar a cotação,
+            selecione as ofertas para concluir o pedido.
+          </p>
+        </div>
 
         <div class="pane-header">
           <div class="search-wrap">
@@ -223,12 +304,24 @@
               class="sb-input poppins-regular"
             />
           </div>
-          <div class="pane-btn-group" v-if="cabecalho && cabecalho.status_cotacao === 'finalizada'">
-            <button class="action-btn btn-outline poppins-medium" @click="removerTodasSelecoes" :disabled="!existePendente">
+          <div
+            class="pane-btn-group"
+            v-if="cabecalho && cabecalho.status_cotacao === 'finalizada'"
+          >
+            <button
+              class="action-btn btn-outline poppins-medium"
+              @click="removerTodasSelecoes"
+              :disabled="!existePendente"
+            >
               <span class="material-symbols-outlined">remove_done</span>
             </button>
-            <button class="action-btn btn-outline poppins-medium" @click="selecaoAutomatica" :disabled="loadingAutoSelect">
-              <span class="material-symbols-outlined">auto_fix_high</span> Auto
+            <button
+              class="action-btn btn-outline poppins-medium"
+              @click="selecaoAutomatica"
+              :disabled="loadingAutoSelect"
+            >
+              <span class="material-symbols-outlined">auto_fix_high</span>
+              Seleção automática
             </button>
           </div>
         </div>
@@ -256,13 +349,28 @@
             <div class="oferta-card-header">
               <div class="oih-left">
                 <span class="oih-name poppins-semibold">{{ item.nome }}</span>
-                <span class="oih-code mono poppins-regular" v-if="item.codigo_barra">{{ item.codigo_barra }}</span>
+                <span
+                  class="oih-code mono poppins-regular"
+                  v-if="item.codigo_barra"
+                  >{{ item.codigo_barra }}</span
+                >
               </div>
               <div class="oih-right">
-                <span class="oih-qty poppins-regular"  style="color: #000;">{{ item.quantidade }} un.</span>
-                <div :class="['status-pill', 'status-' + (item.status_fechamento || 'none')]">
+                <span class="oih-qty poppins-regular" style="color: #000"
+                  >{{ item.quantidade }} un.</span
+                >
+                <div
+                  :class="[
+                    'status-pill',
+                    'status-' + (item.status_fechamento || 'none'),
+                  ]"
+                >
                   <span class="status-dot"></span>
-                  <span class="poppins-medium">{{ item.status_fechamento ? capitalize(item.status_fechamento) : 'Não Selecionado' }}</span>
+                  <span class="poppins-medium">{{
+                    item.status_fechamento
+                      ? capitalize(item.status_fechamento)
+                      : "Não Selecionado"
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -272,18 +380,29 @@
               <div class="oferta-resumo-stats">
                 <div class="ors-item">
                   <span class="ors-label poppins-regular">Ofertas</span>
-                  <span class="ors-val poppins-semibold">{{ item.ofertas ? item.ofertas.length : 0 }}</span>
+                  <span class="ors-val poppins-semibold">{{
+                    item.ofertas ? item.ofertas.length : 0
+                  }}</span>
                 </div>
                 <div class="ors-item" v-if="melhorOfertaItem(item)">
                   <span class="ors-label poppins-regular">Ganhando</span>
-                  <span class="ors-vendedor poppins-semibold">{{ melhorOfertaItem(item).nome }}</span>
+                  <span class="ors-vendedor poppins-semibold">{{
+                    melhorOfertaItem(item).nome
+                  }}</span>
                 </div>
                 <div class="ors-item" v-if="melhorOfertaItem(item)">
                   <span class="ors-label poppins-regular">Menor preço</span>
-                  <span class="ors-preco poppins-semibold">R$ {{ formatVal(melhorPrecoItem(item)) }}</span>
+                  <span class="ors-preco poppins-semibold"
+                    >R$ {{ formatVal(melhorPrecoItem(item)) }}</span
+                  >
                 </div>
-                <div class="ors-item" v-if="!item.ofertas || item.ofertas.length === 0">
-                  <span class="ors-empty poppins-regular">Nenhuma oferta ainda</span>
+                <div
+                  class="ors-item"
+                  v-if="!item.ofertas || item.ofertas.length === 0"
+                >
+                  <span class="ors-empty poppins-regular"
+                    >Nenhuma oferta ainda</span
+                  >
                 </div>
               </div>
               <div class="oferta-resumo-actions">
@@ -310,12 +429,26 @@
         </div>
 
         <!-- Bar concluir -->
-        <div class="conclude-bar" v-if="cabecalho && cabecalho.status_cotacao === 'finalizada' && existePendente">
+        <div
+          class="conclude-bar"
+          v-if="
+            cabecalho &&
+            cabecalho.status_cotacao === 'finalizada' &&
+            existePendente
+          "
+        >
           <span class="conclude-hint poppins-regular">
             <span class="material-symbols-outlined">info</span>
-            {{ itens.filter(i => i.status_fechamento === 'pendente').length }} produto(s) pendente(s).
+            {{
+              itens.filter((i) => i.status_fechamento === "pendente").length
+            }}
+            produto(s) pendente(s).
           </span>
-          <button class="action-btn btn-success poppins-medium" :disabled="loadingButtonConcluir" @click="concluirCotacao">
+          <button
+            class="action-btn btn-success poppins-medium"
+            :disabled="loadingButtonConcluir"
+            @click="concluirCotacao"
+          >
             <span class="material-symbols-outlined">flag</span> Concluir
           </button>
         </div>
@@ -324,7 +457,19 @@
       <!-- ══════════════════════════════════
            TAB: VENDEDORES
       ══════════════════════════════════ -->
-      <div v-if="activeTab === 'vendedores'" v-show="user?.nivel != 7" class="tab-pane">
+      <div
+        v-if="activeTab === 'vendedores'"
+        v-show="user?.nivel != 7"
+        class="tab-pane"
+      >
+        <div class="section-intro">
+          <h2 class="poppins-semibold">Vendedores participantes</h2>
+          <p class="poppins-regular">
+            Confira os contatos e os indicadores de participação de cada
+            vendedor.
+          </p>
+        </div>
+
         <div v-if="loadingVendedores" class="loading-state">
           <ion-spinner name="crescent" color="primary"></ion-spinner>
           <p class="poppins-regular">Carregando vendedores...</p>
@@ -337,15 +482,23 @@
           <p class="poppins-regular">Nenhum vendedor encontrado.</p>
         </div>
         <div v-else class="vendedores-list-mobile">
-          <div v-for="v in vendedores" :key="v.id_vendedor" class="vendedor-card-mobile">
+          <div
+            v-for="v in vendedores"
+            :key="v.id_vendedor"
+            class="vendedor-card-mobile"
+          >
             <div class="vc-avatar">
               <img v-if="v.foto_perfil" :src="v.foto_perfil" :alt="v.nome" />
-              <span v-else class="vc-initials poppins-semibold">{{ initials(v.nome) }}</span>
+              <span v-else class="vc-initials poppins-semibold">{{
+                initials(v.nome)
+              }}</span>
               <span :class="['vc-status', v.status_conta]"></span>
             </div>
             <div class="vc-info">
               <span class="vc-name poppins-semibold">{{ v.nome }}</span>
-              <span class="vc-user muted poppins-regular">@{{ v.nome_usuario }}</span>
+              <span class="vc-user muted poppins-regular"
+                >@{{ v.nome_usuario }}</span
+              >
               <span class="vc-email muted poppins-regular">{{ v.email }}</span>
             </div>
             <div class="vc-stats">
@@ -369,7 +522,11 @@
       <!-- ══════════════════════════════════
            TAB: SUGESTÃO (desabilitada)
       ══════════════════════════════════ -->
-      <div v-if="activeTab === 'sugestao'" v-show="user?.nivel != 7" class="tab-pane">
+      <div
+        v-if="activeTab === 'sugestao'"
+        v-show="user?.nivel != 7"
+        class="tab-pane"
+      >
         <div class="empty-state">
           <div class="empty-icon-wrap">
             <span class="material-symbols-outlined">lightbulb</span>
@@ -377,7 +534,6 @@
           <p class="poppins-regular">Sugestão de pedido em breve.</p>
         </div>
       </div>
-
     </ion-content>
 
     <!-- ═══════════════════════════════════════════════════════
@@ -385,7 +541,11 @@
     ═══════════════════════════════════════════════════════ -->
 
     <!-- MODAL: EDITAR PRODUTO -->
-    <ion-modal :is-open="showEditModal" @did-dismiss="showEditModal = false" class="bottom-sheet">
+    <ion-modal
+      :is-open="showEditModal"
+      @did-dismiss="showEditModal = false"
+      class="bottom-sheet"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
@@ -396,29 +556,53 @@
             </button>
           </div>
           <div class="modal-body" v-if="editTarget">
-            <p class="modal-prod-name poppins-semibold">{{ editTarget.nome }}</p>
+            <p class="modal-prod-name poppins-semibold">
+              {{ editTarget.nome }}
+            </p>
             <div class="form-group">
               <label class="form-label poppins-medium">Quantidade *</label>
-              <input type="number" v-model.number="editTarget.quantidade" min="1" class="form-input poppins-regular" />
+              <input
+                type="number"
+                v-model.number="editTarget.quantidade"
+                min="1"
+                class="form-input poppins-regular"
+              />
             </div>
             <div class="form-group">
               <label class="form-label poppins-medium">Tipo</label>
-              <select v-model="editTarget.tipo" class="form-input poppins-regular">
+              <select
+                v-model="editTarget.tipo"
+                class="form-input poppins-regular"
+              >
                 <option value="">Selecionar...</option>
                 <option value="unidade">Unidade</option>
                 <option value="caixa">Caixa</option>
                 <option value="fardo">Fardo</option>
-
               </select>
             </div>
             <div class="form-group">
               <label class="form-label poppins-medium">Qtd por embalagem</label>
-              <input type="number" v-model.number="editTarget.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" placeholder="Ex: 12" />
+              <input
+                type="number"
+                v-model.number="editTarget.qtd_unitaria_composicao"
+                min="1"
+                class="form-input poppins-regular"
+                placeholder="Ex: 12"
+              />
             </div>
           </div>
           <div class="modal-footer">
-            <button class="action-btn btn-outline poppins-medium full-w" @click="showEditModal = false">Cancelar</button>
-            <button class="action-btn btn-primary poppins-medium full-w" :disabled="loadingEdit" @click="salvarEdicao">
+            <button
+              class="action-btn btn-outline poppins-medium full-w"
+              @click="showEditModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              class="action-btn btn-primary poppins-medium full-w"
+              :disabled="loadingEdit"
+              @click="salvarEdicao"
+            >
               <span class="material-symbols-outlined">save</span> Salvar
             </button>
           </div>
@@ -442,14 +626,20 @@
       ║    NSCameraUsageDescription → "Leitura de código de barras"  ║
       ╚══════════════════════════════════════════════════════════════╝
     -->
-    <ion-modal :is-open="showAddProdutoModal" @did-dismiss="fecharModalAddProduto" class="bottom-sheet">
+    <ion-modal
+      :is-open="showAddProdutoModal"
+      @did-dismiss="fecharModalAddProduto"
+      class="bottom-sheet"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
           <div class="modal-header">
             <span class="poppins-semibold">
               <template v-if="!modoSelecaoMultipla">Adicionar Produto</template>
-              <template v-else-if="etapaSelecaoMultipla === 'selecionar'">Selecionar Produtos</template>
+              <template v-else-if="etapaSelecaoMultipla === 'selecionar'"
+                >Selecionar Produtos</template
+              >
               <template v-else>Configurar Produtos</template>
             </span>
             <button class="modal-close" @click="fecharModalAddProduto">
@@ -458,9 +648,15 @@
           </div>
 
           <div class="modal-body">
-
-            <template v-if="!(modoSelecaoMultipla && etapaSelecaoMultipla === 'configurar')">
-              <p class="modal-hint poppins-regular">Busque por código de barras, descrição do produto ou leia pela câmera.</p>
+            <template
+              v-if="
+                !(modoSelecaoMultipla && etapaSelecaoMultipla === 'configurar')
+              "
+            >
+              <p class="modal-hint poppins-regular">
+                Busque por código de barras, descrição do produto ou leia pela
+                câmera.
+              </p>
 
               <!-- Busca + botão câmera -->
               <div class="search-camera-row">
@@ -477,11 +673,22 @@
                     @focus="onFocusSearchCatalogo"
                   />
                 </div>
-                <div v-if="searchCatalogo.length" @click="limparTudo" style="background-color: #EEE; border-radius: 50px; height: 30px; width: 30px; font-size: 12px; color: #333;
-                  display: flex; justify-content: center; align-items: center; ">
-                  <div>
-                    X
-                  </div>
+                <div
+                  v-if="searchCatalogo.length"
+                  @click="limparTudo"
+                  style="
+                    background-color: #eee;
+                    border-radius: 50px;
+                    height: 30px;
+                    width: 30px;
+                    font-size: 12px;
+                    color: #333;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                  "
+                >
+                  <div>X</div>
                 </div>
               </div>
             </template>
@@ -490,27 +697,37 @@
                  MODO SELEÇÃO ÚNICA (padrão)
             ═══════════════════════════════════════ -->
             <template v-if="!modoSelecaoMultipla">
-
               <!-- ── ETAPA 1: Lista de resultados (nenhum produto selecionado ainda) ── -->
               <template v-if="!addProduto.id_produto">
-
                 <button
                   class="multi-select-btn poppins-semibold"
                   v-if="catalogoFiltrado.length > 0"
                   @click="ativarSelecaoMultipla"
                 >
-                  <span class="material-symbols-outlined">playlist_add_check</span>
+                  <span class="material-symbols-outlined"
+                    >playlist_add_check</span
+                  >
                   Selecionar mais de um produto
                 </button>
 
                 <!-- Loading da busca -->
-                <div v-if="loadingCatalogo" class="catalogo-loading poppins-regular">
-                  <ion-spinner name="crescent" color="primary" style="width:18px;height:18px"></ion-spinner>
+                <div
+                  v-if="loadingCatalogo"
+                  class="catalogo-loading poppins-regular"
+                >
+                  <ion-spinner
+                    name="crescent"
+                    color="primary"
+                    style="width: 18px; height: 18px"
+                  ></ion-spinner>
                   Buscando...
                 </div>
 
                 <!-- Resultados -->
-                <div class="catalogo-list" v-else-if="catalogoFiltrado.length > 0">
+                <div
+                  class="catalogo-list"
+                  v-else-if="catalogoFiltrado.length > 0"
+                >
                   <div
                     v-for="p in catalogoFiltrado"
                     :key="p.id_produto"
@@ -518,21 +735,33 @@
                     @click="selecionarProdutoCatalogo(p)"
                   >
                     <div class="catalogo-item-info">
-                      <span class="prod-name poppins-semibold">{{ p.nome }}</span>
-                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                      <span class="prod-name poppins-semibold">{{
+                        p.nome
+                      }}</span>
+                      <span
+                        class="mono muted poppins-regular catalogo-barcode"
+                        >{{ p.codigo_barra || "Sem cód." }}</span
+                      >
                       <!--
                         <span class="poppins-regular catalogo-fornecedor" v-if="p.nome_fornecedor">{{ p.nome_fornecedor }}</span>
                       -->
                     </div>
                     <div class="catalogo-item-right">
-                      <span class="prod-price poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
-                      <span class="material-symbols-outlined catalogo-arrow">chevron_right</span>
+                      <span class="prod-price poppins-medium"
+                        >R$ {{ formatVal(p.preco_custo) }}</span
+                      >
+                      <span class="material-symbols-outlined catalogo-arrow"
+                        >chevron_right</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <!-- Paginação -->
-                <div class="catalogo-pagination" v-if="catalogoFiltrado.length > 0 && catalogoPages > 1">
+                <div
+                  class="catalogo-pagination"
+                  v-if="catalogoFiltrado.length > 0 && catalogoPages > 1"
+                >
                   <button
                     class="pag-btn poppins-medium"
                     :disabled="catalogoPage <= 1"
@@ -540,7 +769,9 @@
                   >
                     <span class="material-symbols-outlined">chevron_left</span>
                   </button>
-                  <span class="pag-info poppins-regular">{{ catalogoPage }} / {{ catalogoPages }}</span>
+                  <span class="pag-info poppins-regular"
+                    >{{ catalogoPage }} / {{ catalogoPages }}</span
+                  >
                   <button
                     class="pag-btn poppins-medium"
                     :disabled="catalogoPage >= catalogoPages"
@@ -551,62 +782,125 @@
                 </div>
 
                 <!-- Sem resultados -->
-                <div v-else-if="!loadingCatalogo && searchCatalogo.length >= 2 && catalogoFiltrado.length == 0" class="muted poppins-regular text-center" style="padding:16px 0">
+                <div
+                  v-else-if="
+                    !loadingCatalogo &&
+                    searchCatalogo.length >= 2 &&
+                    catalogoFiltrado.length == 0
+                  "
+                  class="muted poppins-regular text-center"
+                  style="padding: 16px 0"
+                >
                   Nenhum produto encontrado.
                 </div>
               </template>
 
               <!-- ── ETAPA 2: Produto selecionado — detalhe + campos ── -->
               <div v-if="addProduto.id_produto" class="form-selected-prod">
-
                 <!-- Card de detalhe do produto selecionado -->
                 <div class="selected-prod-detail">
                   <div class="selected-prod-detail-top">
-                    <span class="material-symbols-outlined spd-icon">inventory_2</span>
+                    <span class="material-symbols-outlined spd-icon"
+                      >inventory_2</span
+                    >
                     <div class="spd-info">
-                      <span class="spd-name poppins-semibold">{{ addProduto.nome }}</span>
-                      <span class="spd-barcode mono poppins-regular">{{ addProduto.codigo_barra || 'Sem código' }}</span>
+                      <span class="spd-name poppins-semibold">{{
+                        addProduto.nome
+                      }}</span>
+                      <span class="spd-barcode mono poppins-regular">{{
+                        addProduto.codigo_barra || "Sem código"
+                      }}</span>
                       <!--
                       <span class="spd-fornecedor poppins-regular muted" v-if="addProduto.nome_fornecedor">{{ addProduto.nome_fornecedor }}</span>
                       -->
                     </div>
                   </div>
-                  <div class="spd-prices" v-if="addProduto.preco_custo != null || addProduto.preco_venda != null">
-                    <div class="spd-price-item" v-if="addProduto.preco_custo != null">
+                  <div
+                    class="spd-prices"
+                    v-if="
+                      addProduto.preco_custo != null ||
+                      addProduto.preco_venda != null
+                    "
+                  >
+                    <div
+                      class="spd-price-item"
+                      v-if="addProduto.preco_custo != null"
+                    >
                       <span class="spd-price-label poppins-regular">Custo</span>
-                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_custo) }}</span>
+                      <span class="spd-price-val poppins-semibold"
+                        >R$ {{ formatVal(addProduto.preco_custo) }}</span
+                      >
                     </div>
-                    <div class="spd-price-item" v-if="addProduto.margem != null">
-                      <span class="spd-price-label poppins-regular">Margem</span>
-                      <span :class="['spd-price-val poppins-semibold', addProduto.margem > 0 ? 'pos' : 'neg']">{{ addProduto.margem }}%</span>
+                    <div
+                      class="spd-price-item"
+                      v-if="addProduto.margem != null"
+                    >
+                      <span class="spd-price-label poppins-regular"
+                        >Margem</span
+                      >
+                      <span
+                        :class="[
+                          'spd-price-val poppins-semibold',
+                          addProduto.margem > 0 ? 'pos' : 'neg',
+                        ]"
+                        >{{ addProduto.margem }}%</span
+                      >
                     </div>
-                    <div class="spd-price-item" v-if="addProduto.preco_venda != null">
+                    <div
+                      class="spd-price-item"
+                      v-if="addProduto.preco_venda != null"
+                    >
                       <span class="spd-price-label poppins-regular">Venda</span>
-                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.preco_venda) }}</span>
+                      <span class="spd-price-val poppins-semibold"
+                        >R$ {{ formatVal(addProduto.preco_venda) }}</span
+                      >
                     </div>
                     <div class="spd-price-item">
-                      <span class="spd-price-label poppins-regular">Ult. Preço</span>
-                      <span class="spd-price-val poppins-semibold">R$ {{ formatVal(addProduto.ultimo_preco) || "--" }}</span>
+                      <span class="spd-price-label poppins-regular"
+                        >Ult. Preço</span
+                      >
+                      <span class="spd-price-val poppins-semibold"
+                        >R$
+                        {{ formatVal(addProduto.ultimo_preco) || "--" }}</span
+                      >
                     </div>
                     <div class="spd-price-item">
-                      <span class="spd-price-label poppins-regular">Ult. Qtd</span>
-                      <span class="spd-price-val poppins-semibold">{{ `${formatVal(addProduto.ultima_quantidade) } ${addProduto.tipo || ""}`  || "--" }}</span>
+                      <span class="spd-price-label poppins-regular"
+                        >Ult. Qtd</span
+                      >
+                      <span class="spd-price-val poppins-semibold">{{
+                        `${formatVal(addProduto.ultima_quantidade)} ${
+                          addProduto.tipo || ""
+                        }` || "--"
+                      }}</span>
                     </div>
                   </div>
                   <!-- Botão de voltar para a lista -->
-                  <button class="trocar-prod-btn poppins-medium" @click="voltarParaListaCatalogo">
-                    <span class="material-symbols-outlined">arrow_back</span> Trocar produto
+                  <button
+                    class="trocar-prod-btn poppins-medium"
+                    @click="voltarParaListaCatalogo"
+                  >
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Trocar produto
                   </button>
                 </div>
 
                 <!-- Campos de quantidade / tipo / composição -->
                 <div class="form-group">
                   <label class="form-label poppins-medium">Quantidade *</label>
-                  <input type="number" v-model.number="addProduto.quantidade" min="1" class="form-input poppins-regular" />
+                  <input
+                    type="number"
+                    v-model.number="addProduto.quantidade"
+                    min="1"
+                    class="form-input poppins-regular"
+                  />
                 </div>
                 <div class="form-group">
                   <label class="form-label poppins-medium">Tipo</label>
-                  <select v-model="addProduto.tipo" class="form-input poppins-regular">
+                  <select
+                    v-model="addProduto.tipo"
+                    class="form-input poppins-regular"
+                  >
                     <option value="">Selecionar...</option>
                     <option value="unidade">Unidade</option>
                     <option value="caixa">Caixa</option>
@@ -614,8 +908,15 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label poppins-medium">Qtd por embalagem</label>
-                  <input type="number" v-model.number="addProduto.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" />
+                  <label class="form-label poppins-medium"
+                    >Qtd por embalagem</label
+                  >
+                  <input
+                    type="number"
+                    v-model.number="addProduto.qtd_unitaria_composicao"
+                    min="1"
+                    class="form-input poppins-regular"
+                  />
                 </div>
               </div>
             </template>
@@ -624,58 +925,103 @@
                  MODO SELEÇÃO MÚLTIPLA
             ═══════════════════════════════════════ -->
             <template v-else>
-
               <!-- ── ETAPA 1: seleção dos produtos ── -->
               <template v-if="etapaSelecaoMultipla === 'selecionar'">
-
                 <div class="multi-header">
                   <span class="multi-header-count poppins-medium">
-                    {{ produtosSelecionadosMultiplos.length }} produto(s) selecionado(s)
+                    {{ produtosSelecionadosMultiplos.length }} produto(s)
+                    selecionado(s)
                   </span>
-                  <button class="multi-exit-btn poppins-medium" @click="cancelarSelecaoMultipla">
-                    <span class="material-symbols-outlined">close</span> Sair da seleção
+                  <button
+                    class="multi-exit-btn poppins-medium"
+                    @click="cancelarSelecaoMultipla"
+                  >
+                    <span class="material-symbols-outlined">close</span> Sair da
+                    seleção
                   </button>
                 </div>
 
                 <!-- Produtos já selecionados (scroll) -->
-                <div class="multi-selected-scroll" v-if="produtosSelecionadosMultiplos.length > 0">
-                  <div class="multi-chip" v-for="p in produtosSelecionadosMultiplos" :key="p.id_produto">
-                    <span class="multi-chip-name poppins-medium">{{ p.nome }}</span>
-                    <button class="multi-chip-remove" @click.stop="removerProdutoMultiplo(p)">
+                <div
+                  class="multi-selected-scroll"
+                  v-if="produtosSelecionadosMultiplos.length > 0"
+                >
+                  <div
+                    class="multi-chip"
+                    v-for="p in produtosSelecionadosMultiplos"
+                    :key="p.id_produto"
+                  >
+                    <span class="multi-chip-name poppins-medium">{{
+                      p.nome
+                    }}</span>
+                    <button
+                      class="multi-chip-remove"
+                      @click.stop="removerProdutoMultiplo(p)"
+                    >
                       <span class="material-symbols-outlined">close</span>
                     </button>
                   </div>
                 </div>
 
                 <!-- Loading da busca -->
-                <div v-if="loadingCatalogo" class="catalogo-loading poppins-regular">
-                  <ion-spinner name="crescent" color="primary" style="width:18px;height:18px"></ion-spinner>
+                <div
+                  v-if="loadingCatalogo"
+                  class="catalogo-loading poppins-regular"
+                >
+                  <ion-spinner
+                    name="crescent"
+                    color="primary"
+                    style="width: 18px; height: 18px"
+                  ></ion-spinner>
                   Buscando...
                 </div>
 
                 <!-- Resultados (com checkbox) -->
-                <div class="catalogo-list" v-else-if="catalogoFiltrado.length > 0">
+                <div
+                  class="catalogo-list"
+                  v-else-if="catalogoFiltrado.length > 0"
+                >
                   <div
                     v-for="p in catalogoFiltrado"
                     :key="p.id_produto"
-                    :class="['catalogo-item', { 'catalogo-item-selected': isProdutoSelecionadoMultiplo(p) }]"
+                    :class="[
+                      'catalogo-item',
+                      {
+                        'catalogo-item-selected':
+                          isProdutoSelecionadoMultiplo(p),
+                      },
+                    ]"
                     @click="toggleProdutoMultiplo(p)"
                   >
                     <span class="material-symbols-outlined catalogo-item-check">
-                      {{ isProdutoSelecionadoMultiplo(p) ? 'check_box' : 'check_box_outline_blank' }}
+                      {{
+                        isProdutoSelecionadoMultiplo(p)
+                          ? "check_box"
+                          : "check_box_outline_blank"
+                      }}
                     </span>
                     <div class="catalogo-item-info">
-                      <span class="prod-name poppins-semibold">{{ p.nome }}</span>
-                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                      <span class="prod-name poppins-semibold">{{
+                        p.nome
+                      }}</span>
+                      <span
+                        class="mono muted poppins-regular catalogo-barcode"
+                        >{{ p.codigo_barra || "Sem cód." }}</span
+                      >
                     </div>
                     <div class="catalogo-item-right">
-                      <span class="prod-price poppins-medium">R$ {{ formatVal(p.preco_custo) }}</span>
+                      <span class="prod-price poppins-medium"
+                        >R$ {{ formatVal(p.preco_custo) }}</span
+                      >
                     </div>
                   </div>
                 </div>
 
                 <!-- Paginação -->
-                <div class="catalogo-pagination" v-if="catalogoFiltrado.length > 0 && catalogoPages > 1">
+                <div
+                  class="catalogo-pagination"
+                  v-if="catalogoFiltrado.length > 0 && catalogoPages > 1"
+                >
                   <button
                     class="pag-btn poppins-medium"
                     :disabled="catalogoPage <= 1"
@@ -683,7 +1029,9 @@
                   >
                     <span class="material-symbols-outlined">chevron_left</span>
                   </button>
-                  <span class="pag-info poppins-regular">{{ catalogoPage }} / {{ catalogoPages }}</span>
+                  <span class="pag-info poppins-regular"
+                    >{{ catalogoPage }} / {{ catalogoPages }}</span
+                  >
                   <button
                     class="pag-btn poppins-medium"
                     :disabled="catalogoPage >= catalogoPages"
@@ -694,31 +1042,54 @@
                 </div>
 
                 <!-- Sem resultados -->
-                <div v-else-if="!loadingCatalogo && searchCatalogo.length >= 2" class="muted poppins-regular text-center" style="padding:16px 0">
+                <div
+                  v-else-if="!loadingCatalogo && searchCatalogo.length >= 2"
+                  class="muted poppins-regular text-center"
+                  style="padding: 16px 0"
+                >
                   Nenhum produto encontrado.
                 </div>
               </template>
 
               <!-- ── ETAPA 2: configurar quantidade/tipo/composição para todos ── -->
               <template v-else>
-
-                <button class="trocar-prod-btn poppins-medium" style="margin-bottom:12px;" @click="voltarSelecaoMultipla">
-                  <span class="material-symbols-outlined">arrow_back</span> Voltar para seleção
+                <button
+                  class="trocar-prod-btn poppins-medium"
+                  style="margin-bottom: 12px"
+                  @click="voltarSelecaoMultipla"
+                >
+                  <span class="material-symbols-outlined">arrow_back</span>
+                  Voltar para seleção
                 </button>
 
                 <p class="modal-hint poppins-regular">
-                  Defina a quantidade, o tipo e a composição que serão aplicados a todos os produtos selecionados.
+                  Defina a quantidade, o tipo e a composição que serão aplicados
+                  a todos os produtos selecionados.
                 </p>
 
                 <!-- Lista dos produtos selecionados (scroll) -->
                 <div class="multi-selected-list">
-                  <div class="multi-selected-item" v-for="p in produtosSelecionadosMultiplos" :key="p.id_produto">
-                    <span class="material-symbols-outlined spd-icon" style="font-size:18px;">inventory_2</span>
+                  <div
+                    class="multi-selected-item"
+                    v-for="p in produtosSelecionadosMultiplos"
+                    :key="p.id_produto"
+                  >
+                    <span
+                      class="material-symbols-outlined spd-icon"
+                      style="font-size: 18px"
+                      >inventory_2</span
+                    >
                     <div class="multi-selected-item-info">
                       <span class="poppins-semibold">{{ p.nome }}</span>
-                      <span class="mono muted poppins-regular catalogo-barcode">{{ p.codigo_barra || 'Sem cód.' }}</span>
+                      <span
+                        class="mono muted poppins-regular catalogo-barcode"
+                        >{{ p.codigo_barra || "Sem cód." }}</span
+                      >
                     </div>
-                    <button class="multi-chip-remove" @click="removerProdutoMultiplo(p)">
+                    <button
+                      class="multi-chip-remove"
+                      @click="removerProdutoMultiplo(p)"
+                    >
                       <span class="material-symbols-outlined">close</span>
                     </button>
                   </div>
@@ -727,11 +1098,19 @@
                 <!-- Campos compartilhados -->
                 <div class="form-group">
                   <label class="form-label poppins-medium">Quantidade *</label>
-                  <input type="number" v-model.number="multiploConfig.quantidade" min="1" class="form-input poppins-regular" />
+                  <input
+                    type="number"
+                    v-model.number="multiploConfig.quantidade"
+                    min="1"
+                    class="form-input poppins-regular"
+                  />
                 </div>
                 <div class="form-group">
                   <label class="form-label poppins-medium">Tipo *</label>
-                  <select v-model="multiploConfig.tipo" class="form-input poppins-regular">
+                  <select
+                    v-model="multiploConfig.tipo"
+                    class="form-input poppins-regular"
+                  >
                     <option value="">Selecionar...</option>
                     <option value="unidade">Unidade</option>
                     <option value="caixa">Caixa</option>
@@ -739,26 +1118,47 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label poppins-medium">Qtd por embalagem</label>
-                  <input type="number" v-model.number="multiploConfig.qtd_unitaria_composicao" min="1" class="form-input poppins-regular" />
+                  <label class="form-label poppins-medium"
+                    >Qtd por embalagem</label
+                  >
+                  <input
+                    type="number"
+                    v-model.number="multiploConfig.qtd_unitaria_composicao"
+                    min="1"
+                    class="form-input poppins-regular"
+                  />
                 </div>
               </template>
             </template>
-
           </div>
           <div class="modal-footer">
             <template v-if="!modoSelecaoMultipla">
-              <button class="action-btn btn-outline poppins-medium full-w" @click="fecharModalAddProduto">Cancelar</button>
+              <button
+                class="action-btn btn-outline poppins-medium full-w"
+                @click="fecharModalAddProduto"
+              >
+                Cancelar
+              </button>
               <button
                 class="action-btn btn-primary poppins-medium full-w"
-                :disabled="!addProduto.id_produto || !addProduto.quantidade || !addProduto.tipo || loadingAdd"
+                :disabled="
+                  !addProduto.id_produto ||
+                  !addProduto.quantidade ||
+                  !addProduto.tipo ||
+                  loadingAdd
+                "
                 @click="adicionarProduto()"
               >
                 <span class="material-symbols-outlined">add</span> Adicionar
               </button>
             </template>
             <template v-else-if="etapaSelecaoMultipla === 'selecionar'">
-              <button class="action-btn btn-outline poppins-medium full-w" @click="cancelarSelecaoMultipla">Cancelar</button>
+              <button
+                class="action-btn btn-outline poppins-medium full-w"
+                @click="cancelarSelecaoMultipla"
+              >
+                Cancelar
+              </button>
               <button
                 class="action-btn btn-primary poppins-medium full-w"
                 :disabled="produtosSelecionadosMultiplos.length === 0"
@@ -769,10 +1169,20 @@
               </button>
             </template>
             <template v-else>
-              <button class="action-btn btn-outline poppins-medium full-w" @click="voltarSelecaoMultipla">Voltar</button>
+              <button
+                class="action-btn btn-outline poppins-medium full-w"
+                @click="voltarSelecaoMultipla"
+              >
+                Voltar
+              </button>
               <button
                 class="action-btn btn-primary poppins-medium full-w"
-                :disabled="!multiploConfig.quantidade || !multiploConfig.tipo || produtosSelecionadosMultiplos.length === 0 || loadingAdd"
+                :disabled="
+                  !multiploConfig.quantidade ||
+                  !multiploConfig.tipo ||
+                  produtosSelecionadosMultiplos.length === 0 ||
+                  loadingAdd
+                "
                 @click="adicionarProduto()"
               >
                 <span class="material-symbols-outlined">add</span>
@@ -785,34 +1195,61 @@
     </ion-modal>
 
     <!-- MODAL: ADD PRODUTO NÃO CADASTRADO -->
-    <ion-modal :is-open="showAddProdutoModalInexistente" @did-dismiss="showAddProdutoModalInexistente = false" class="bottom-sheet">
+    <ion-modal
+      :is-open="showAddProdutoModalInexistente"
+      @did-dismiss="showAddProdutoModalInexistente = false"
+      class="bottom-sheet"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
           <div class="modal-header">
             <span class="poppins-semibold">Produto Não Cadastrado</span>
-            <button class="modal-close" @click="showAddProdutoModalInexistente = false">
+            <button
+              class="modal-close"
+              @click="showAddProdutoModalInexistente = false"
+            >
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
             <p class="modal-hint poppins-regular">
-              Use para produtos não cadastrados no sistema, como lançamentos ou novos itens ainda não identificados.
+              Use para produtos não cadastrados no sistema, como lançamentos ou
+              novos itens ainda não identificados.
             </p>
             <div class="form-group">
               <label class="form-label poppins-medium">Nome *</label>
-              <input type="text" v-model="addProdutoInexistente.nome" class="form-input poppins-regular" placeholder="Nome do produto" />
+              <input
+                type="text"
+                v-model="addProdutoInexistente.nome"
+                class="form-input poppins-regular"
+                placeholder="Nome do produto"
+              />
             </div>
             <div class="form-group">
               <label class="form-label poppins-medium">Quantidade *</label>
-              <input type="number" v-model.number="addProdutoInexistente.quantidade" min="1" class="form-input poppins-regular" />
+              <input
+                type="number"
+                v-model.number="addProdutoInexistente.quantidade"
+                min="1"
+                class="form-input poppins-regular"
+              />
             </div>
           </div>
           <div class="modal-footer">
-            <button class="action-btn btn-outline poppins-medium full-w" @click="showAddProdutoModalInexistente = false">Cancelar</button>
+            <button
+              class="action-btn btn-outline poppins-medium full-w"
+              @click="showAddProdutoModalInexistente = false"
+            >
+              Cancelar
+            </button>
             <button
               class="action-btn btn-primary poppins-medium full-w"
-              :disabled="!addProdutoInexistente.nome || !addProdutoInexistente.quantidade || loadingAdd"
+              :disabled="
+                !addProdutoInexistente.nome ||
+                !addProdutoInexistente.quantidade ||
+                loadingAdd
+              "
               @click="adicionarProdutoInexistente"
             >
               <span class="material-symbols-outlined">add</span> Adicionar
@@ -823,30 +1260,93 @@
     </ion-modal>
 
     <!-- MODAL: PERÍODO -->
-    <ion-modal :is-open="showPeriodoModal" @did-dismiss="showPeriodoModal = false" class="bottom-sheet">
+    <ion-modal
+      :is-open="showPeriodoModal"
+      :can-dismiss="!loadingPeriodo"
+      @did-dismiss="showPeriodoModal = false"
+      class="bottom-sheet periodo-modal"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
           <div class="modal-header">
-            <span class="poppins-semibold">Ajustar Período</span>
-            <button class="modal-close" @click="showPeriodoModal = false">
+            <span class="poppins-semibold">Período da cotação</span>
+            <button
+              class="modal-close"
+              :disabled="loadingPeriodo"
+              @click="showPeriodoModal = false"
+              aria-label="Fechar período"
+            >
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label poppins-medium">Data Início</label>
-              <input type="date" v-model="periodoEdit.inicio" class="form-input poppins-regular" />
+            <p class="modal-hint poppins-regular">
+              Confira as datas de início e término nos calendários abaixo. As
+              datas salvas já aparecem selecionadas; quando não houver período
+              cadastrado, usamos a data de hoje. As alterações só serão
+              aplicadas ao salvar.
+            </p>
+            <div class="periodo-grid">
+              <div class="periodo-field">
+                <h3 id="periodo-inicio-label" class="poppins-medium">
+                  Início da cotação
+                </h3>
+                <ion-datetime
+                  presentation="date"
+                  locale="pt-BR"
+                  :first-day-of-week="0"
+                  :show-default-title="true"
+                  :value="periodoEdit.inicio"
+                  :disabled="loadingPeriodo"
+                  aria-labelledby="periodo-inicio-label"
+                  @ionChange="atualizarDataPeriodo('inicio', $event)"
+                >
+                  <span slot="title">Selecione a data de início</span>
+                </ion-datetime>
+              </div>
+              <div class="periodo-field">
+                <h3 id="periodo-final-label" class="poppins-medium">
+                  Término da cotação
+                </h3>
+                <ion-datetime
+                  presentation="date"
+                  locale="pt-BR"
+                  :first-day-of-week="0"
+                  :show-default-title="true"
+                  :value="periodoEdit.final"
+                  :min="periodoEdit.inicio"
+                  :disabled="loadingPeriodo"
+                  aria-labelledby="periodo-final-label"
+                  @ionChange="atualizarDataPeriodo('final', $event)"
+                >
+                  <span slot="title">Selecione a data de término</span>
+                </ion-datetime>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label poppins-medium">Data Final</label>
-              <input type="date" v-model="periodoEdit.final" class="form-input poppins-regular" />
-            </div>
+            <p class="modal-hint poppins-regular" aria-live="polite">
+              Período selecionado: {{ formatarData(periodoEdit.inicio) }} até
+              {{ formatarData(periodoEdit.final) }}. O término pode ser no mesmo
+              dia do início.
+            </p>
           </div>
           <div class="modal-footer">
-            <button class="action-btn btn-outline poppins-medium full-w" @click="showPeriodoModal = false">Cancelar</button>
-            <button class="action-btn btn-primary poppins-medium full-w" @click="salvarPeriodo">
-              <span class="material-symbols-outlined">save</span> Salvar
+            <button
+              class="action-btn btn-outline poppins-medium full-w"
+              :disabled="loadingPeriodo"
+              @click="showPeriodoModal = false"
+            >
+              Cancelar
+            </button>
+            <button
+              class="action-btn btn-primary poppins-medium full-w"
+              :disabled="
+                loadingPeriodo || !periodoEdit.inicio || !periodoEdit.final
+              "
+              @click="salvarPeriodo"
+            >
+              <span class="material-symbols-outlined">save</span>
+              {{ loadingPeriodo ? "Salvando..." : "Salvar período" }}
             </button>
           </div>
         </div>
@@ -854,7 +1354,11 @@
     </ion-modal>
 
     <!-- MODAL: FATURAMENTO EXTRA -->
-    <ion-modal :is-open="showFatExtra" @did-dismiss="showFatExtra = false" class="bottom-sheet">
+    <ion-modal
+      :is-open="showFatExtra"
+      @did-dismiss="showFatExtra = false"
+      class="bottom-sheet"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
@@ -865,12 +1369,23 @@
             </button>
           </div>
           <div class="modal-body">
-            <p class="modal-hint poppins-regular">Selecione o vendedor e configure o produto adicional.</p>
+            <p class="modal-hint poppins-regular">
+              Selecione o vendedor e configure o produto adicional.
+            </p>
             <div class="form-group">
               <label class="form-label poppins-medium">Vendedor</label>
-              <select v-model="fatExtra.id_vendedor" class="form-input poppins-regular">
+              <select
+                v-model="fatExtra.id_vendedor"
+                class="form-input poppins-regular"
+              >
                 <option value="" disabled>Selecionar vendedor...</option>
-                <option v-for="v in vendedores" :key="v.id_vendedor" :value="v.id_vendedor">{{ v.nome }}</option>
+                <option
+                  v-for="v in vendedores"
+                  :key="v.id_vendedor"
+                  :value="v.id_vendedor"
+                >
+                  {{ v.nome }}
+                </option>
               </select>
             </div>
             <div class="search-camera-row">
@@ -885,34 +1400,66 @@
                 />
               </div>
               <!-- Câmera também disponível no modal de faturamento extra -->
-              <button class="camera-btn" @click="escanearCodigoBarrasFatExtra" title="Ler código de barras">
+              <button
+                class="camera-btn"
+                @click="escanearCodigoBarrasFatExtra"
+                title="Ler código de barras"
+              >
                 <span class="material-symbols-outlined">barcode_scanner</span>
               </button>
             </div>
-            <div class="catalogo-list" v-if="catalogoExtra.length > 0" style="max-height:130px">
+            <div
+              class="catalogo-list"
+              v-if="catalogoExtra.length > 0"
+              style="max-height: 130px"
+            >
               <div
                 v-for="p in catalogoExtra"
                 :key="p.id_produto"
-                :class="['catalogo-item', { selected: fatExtra.id_produto === p.id_produto }]"
-                @click="fatExtra.id_produto = p.id_produto; fatExtra.nome = p.nome"
+                :class="[
+                  'catalogo-item',
+                  { selected: fatExtra.id_produto === p.id_produto },
+                ]"
+                @click="
+                  fatExtra.id_produto = p.id_produto;
+                  fatExtra.nome = p.nome;
+                "
               >
                 <span class="prod-name poppins-semibold">{{ p.nome }}</span>
-                <span class="mono muted poppins-regular"> · {{ p.codigo_barra }}</span>
+                <span class="mono muted poppins-regular">
+                  · {{ p.codigo_barra }}</span
+                >
               </div>
             </div>
             <div v-if="fatExtra.id_produto">
               <div class="form-group">
                 <label class="form-label poppins-medium">Quantidade</label>
-                <input type="number" v-model.number="fatExtra.quantidade" min="1" class="form-input poppins-regular" />
+                <input
+                  type="number"
+                  v-model.number="fatExtra.quantidade"
+                  min="1"
+                  class="form-input poppins-regular"
+                />
               </div>
               <div class="form-group">
                 <label class="form-label poppins-medium">Preço Unitário</label>
-                <input type="number" v-model.number="fatExtra.preco" step="0.01" min="0" class="form-input poppins-regular" />
+                <input
+                  type="number"
+                  v-model.number="fatExtra.preco"
+                  step="0.01"
+                  min="0"
+                  class="form-input poppins-regular"
+                />
               </div>
             </div>
           </div>
           <div class="modal-footer">
-            <button class="action-btn btn-outline poppins-medium full-w" @click="showFatExtra = false">Cancelar</button>
+            <button
+              class="action-btn btn-outline poppins-medium full-w"
+              @click="showFatExtra = false"
+            >
+              Cancelar
+            </button>
             <button
               class="action-btn btn-primary poppins-medium full-w"
               :disabled="!fatExtra.id_vendedor || !fatExtra.id_produto"
@@ -926,14 +1473,22 @@
     </ion-modal>
 
     <!-- MODAL: VER OFERTAS DO PRODUTO -->
-    <ion-modal :is-open="showOfertasModal" @did-dismiss="fecharModalOfertas" class="bottom-sheet ofertas-modal-sheet">
+    <ion-modal
+      :is-open="showOfertasModal"
+      @did-dismiss="fecharModalOfertas"
+      class="bottom-sheet ofertas-modal-sheet"
+    >
       <ion-content class="modal-content">
         <div class="modal-handle"></div>
         <div class="modal-box">
           <div class="modal-header">
             <div class="om-header-info">
               <span class="poppins-semibold om-title">Ofertas</span>
-              <span class="om-prod-name poppins-regular" v-if="ofertasModalItem">{{ ofertasModalItem.nome }}</span>
+              <span
+                class="om-prod-name poppins-regular"
+                v-if="ofertasModalItem"
+                >{{ ofertasModalItem.nome }}</span
+              >
             </div>
             <button class="modal-close" @click="fecharModalOfertas">
               <span class="material-symbols-outlined">close</span>
@@ -951,26 +1506,53 @@
                 class="sb-input poppins-regular"
                 @input="ofertasModalPage = 1"
               />
-              <button v-if="ofertasModalSearch" class="sb-clear" @click="ofertasModalSearch = ''; ofertasModalPage = 1">
+              <button
+                v-if="ofertasModalSearch"
+                class="sb-clear"
+                @click="
+                  ofertasModalSearch = '';
+                  ofertasModalPage = 1;
+                "
+              >
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
             <div class="om-sort-row">
               <button
-                :class="['om-sort-btn poppins-medium', { active: ofertasModalOrdem === 'asc' }]"
-                @click="ofertasModalOrdem = 'asc'; ofertasModalPage = 1"
+                :class="[
+                  'om-sort-btn poppins-medium',
+                  { active: ofertasModalOrdem === 'asc' },
+                ]"
+                @click="
+                  ofertasModalOrdem = 'asc';
+                  ofertasModalPage = 1;
+                "
               >
-                <span class="material-symbols-outlined">arrow_upward</span> Menor
+                <span class="material-symbols-outlined">arrow_upward</span>
+                Menor
               </button>
               <button
-                :class="['om-sort-btn poppins-medium', { active: ofertasModalOrdem === 'desc' }]"
-                @click="ofertasModalOrdem = 'desc'; ofertasModalPage = 1"
+                :class="[
+                  'om-sort-btn poppins-medium',
+                  { active: ofertasModalOrdem === 'desc' },
+                ]"
+                @click="
+                  ofertasModalOrdem = 'desc';
+                  ofertasModalPage = 1;
+                "
               >
-                <span class="material-symbols-outlined">arrow_downward</span> Maior
+                <span class="material-symbols-outlined">arrow_downward</span>
+                Maior
               </button>
               <button
-                :class="['om-sort-btn poppins-medium', { active: ofertasModalSoEquiv }]"
-                @click="ofertasModalSoEquiv = !ofertasModalSoEquiv; ofertasModalPage = 1"
+                :class="[
+                  'om-sort-btn poppins-medium',
+                  { active: ofertasModalSoEquiv },
+                ]"
+                @click="
+                  ofertasModalSoEquiv = !ofertasModalSoEquiv;
+                  ofertasModalPage = 1;
+                "
               >
                 <span class="material-symbols-outlined">swap_horiz</span> Equiv.
               </button>
@@ -979,7 +1561,10 @@
 
           <!-- Lista paginada -->
           <div class="om-body">
-            <div v-if="ofertasModalPaginadas.length === 0" class="om-empty poppins-regular">
+            <div
+              v-if="ofertasModalPaginadas.length === 0"
+              class="om-empty poppins-regular"
+            >
               <span class="material-symbols-outlined">inbox</span>
               Nenhuma oferta encontrada.
             </div>
@@ -987,68 +1572,154 @@
               <div
                 v-for="oferta in ofertasModalPaginadas"
                 :key="oferta.id_oferta"
-                :class="['vendedor-oferta', { selected: oferta.opcao_1 || oferta.opcao_2 }]"
+                :class="[
+                  'vendedor-oferta',
+                  { selected: oferta.opcao_1 || oferta.opcao_2 },
+                ]"
               >
                 <div class="vo-vendor poppins-medium">
                   <span class="material-symbols-outlined vo-icon">person</span>
                   <b>{{ oferta.nome }}</b>
-                  <span class="muted poppins-regular vo-email">{{ oferta.email }}</span>
+                  <span class="muted poppins-regular vo-email">{{
+                    oferta.email
+                  }}</span>
                 </div>
 
                 <!-- Produto solicitado (1ª opção) -->
                 <div v-if="oferta.primeiro_quantidade != null">
                   <div :class="['opcao-mini', { chosen: oferta.opcao_1 }]">
                     <div class="opcao-row">
-                      <span class="poppins-regular opcao-item"><b>Qtd:</b> {{ oferta.primeiro_quantidade }}</span>
-                      <span class="poppins-regular opcao-item"><b>Preço:</b> R$ {{ formatVal(oferta.primeiro_preco) }}</span>
-                      <span class="poppins-regular opcao-item"><b>Tipo:</b> {{ oferta.primeiro_tipo }}</span>
-                      <span class="poppins-regular opcao-item" v-if="oferta.primeiro_unid_composicao"><b>Un/emb:</b> {{ oferta.primeiro_unid_composicao }}</span>
+                      <span class="poppins-regular opcao-item"
+                        ><b>Qtd:</b> {{ oferta.primeiro_quantidade }}</span
+                      >
+                      <span class="poppins-regular opcao-item"
+                        ><b>Preço:</b> R$
+                        {{ formatVal(oferta.primeiro_preco) }}</span
+                      >
+                      <span class="poppins-regular opcao-item"
+                        ><b>Tipo:</b> {{ oferta.primeiro_tipo }}</span
+                      >
+                      <span
+                        class="poppins-regular opcao-item"
+                        v-if="oferta.primeiro_unid_composicao"
+                        ><b>Un/emb:</b>
+                        {{ oferta.primeiro_unid_composicao }}</span
+                      >
                     </div>
-                    <span v-if="oferta.opcao_1" class="chosen-badge poppins-medium">
-                      <span class="material-symbols-outlined">check_circle</span> Selecionado
+                    <span
+                      v-if="oferta.opcao_1"
+                      class="chosen-badge poppins-medium"
+                    >
+                      <span class="material-symbols-outlined"
+                        >check_circle</span
+                      >
+                      Selecionado
                     </span>
                   </div>
                 </div>
 
                 <!-- Produto equivalente (2ª opção) — só aparece se existir -->
                 <div v-if="oferta.segundo_quantidade != null">
-                  <p class="indicador-oferta poppins-medium">Produto equivalente sugerido:</p>
-                  <div :class="['opcao-mini', 'eq', { chosen: oferta.opcao_2 }]">
-                    <span class="opcao-label eq poppins-semibold">Equivalente</span>
+                  <p class="indicador-oferta poppins-medium">
+                    Produto equivalente sugerido:
+                  </p>
+                  <div
+                    :class="['opcao-mini', 'eq', { chosen: oferta.opcao_2 }]"
+                  >
+                    <span class="opcao-label eq poppins-semibold"
+                      >Equivalente</span
+                    >
                     <div class="opcao-row">
-                      <span class="poppins-regular opcao-item" v-if="oferta.codigo_barra"><b>Cód:</b> {{ oferta.codigo_barra }}</span>
-                      <span class="poppins-regular opcao-item"><b>Qtd:</b> {{ oferta.segundo_quantidade }}</span>
-                      <span class="poppins-regular opcao-item"><b>Preço:</b> R$ {{ formatVal(oferta.segundo_preco) }}</span>
-                      <span class="poppins-regular opcao-item"><b>Tipo:</b> {{ oferta.segundo_tipo }}</span>
-                      <span class="poppins-regular opcao-item" v-if="oferta.segundo_unid_composicao"><b>Un/emb:</b> {{ oferta.segundo_unid_composicao }}</span>
+                      <span
+                        class="poppins-regular opcao-item"
+                        v-if="oferta.codigo_barra"
+                        ><b>Cód:</b> {{ oferta.codigo_barra }}</span
+                      >
+                      <span class="poppins-regular opcao-item"
+                        ><b>Qtd:</b> {{ oferta.segundo_quantidade }}</span
+                      >
+                      <span class="poppins-regular opcao-item"
+                        ><b>Preço:</b> R$
+                        {{ formatVal(oferta.segundo_preco) }}</span
+                      >
+                      <span class="poppins-regular opcao-item"
+                        ><b>Tipo:</b> {{ oferta.segundo_tipo }}</span
+                      >
+                      <span
+                        class="poppins-regular opcao-item"
+                        v-if="oferta.segundo_unid_composicao"
+                        ><b>Un/emb:</b>
+                        {{ oferta.segundo_unid_composicao }}</span
+                      >
                     </div>
-                    <span v-if="oferta.opcao_2" class="chosen-badge poppins-medium">
-                      <span class="material-symbols-outlined">check_circle</span> Selecionado
+                    <span
+                      v-if="oferta.opcao_2"
+                      class="chosen-badge poppins-medium"
+                    >
+                      <span class="material-symbols-outlined"
+                        >check_circle</span
+                      >
+                      Selecionado
                     </span>
                   </div>
                 </div>
 
                 <!-- Obs -->
                 <p class="vo-obs poppins-regular" v-if="oferta.mensagem">
-                  <span class="material-symbols-outlined obs-icon">comment</span> {{ oferta.mensagem }}
+                  <span class="material-symbols-outlined obs-icon"
+                    >comment</span
+                  >
+                  {{ oferta.mensagem }}
                 </p>
 
                 <!-- Ações de seleção (só na finalizada) -->
-                <div class="vo-actions" v-if="cabecalho && cabecalho.status_cotacao === 'finalizada' && ofertasModalItem && ofertasModalItem.status_fechamento !== 'concluido'">
+                <div
+                  class="vo-actions"
+                  v-if="
+                    cabecalho &&
+                    cabecalho.status_cotacao === 'finalizada' &&
+                    ofertasModalItem &&
+                    ofertasModalItem.status_fechamento !== 'concluido'
+                  "
+                >
                   <template v-if="oferta.primeiro_quantidade != null">
-                    <button v-if="!oferta.opcao_1" class="sel-btn poppins-medium" @click="selecionarOfertaModal(ofertasModalItem, oferta, 1)">
-                      <span class="material-symbols-outlined">check</span> Selecionar
+                    <button
+                      v-if="!oferta.opcao_1"
+                      class="sel-btn poppins-medium"
+                      @click="
+                        selecionarOfertaModal(ofertasModalItem, oferta, 1)
+                      "
+                    >
+                      <span class="material-symbols-outlined">check</span>
+                      Selecionar
                     </button>
-                    <button v-else class="desel-btn poppins-medium" @click="removerOfertaModal(ofertasModalItem, oferta, 1)">
-                      <span class="material-symbols-outlined">close</span> Remover
+                    <button
+                      v-else
+                      class="desel-btn poppins-medium"
+                      @click="removerOfertaModal(ofertasModalItem, oferta, 1)"
+                    >
+                      <span class="material-symbols-outlined">close</span>
+                      Remover
                     </button>
                   </template>
                   <template v-if="oferta.segundo_quantidade != null">
-                    <button v-if="!oferta.opcao_2" class="sel-btn eq poppins-medium" @click="selecionarOfertaModal(ofertasModalItem, oferta, 2)">
-                      <span class="material-symbols-outlined">check</span> Equiv.
+                    <button
+                      v-if="!oferta.opcao_2"
+                      class="sel-btn eq poppins-medium"
+                      @click="
+                        selecionarOfertaModal(ofertasModalItem, oferta, 2)
+                      "
+                    >
+                      <span class="material-symbols-outlined">check</span>
+                      Equiv.
                     </button>
-                    <button v-else class="desel-btn poppins-medium" @click="removerOfertaModal(ofertasModalItem, oferta, 2)">
-                      <span class="material-symbols-outlined">close</span> Remover equiv.
+                    <button
+                      v-else
+                      class="desel-btn poppins-medium"
+                      @click="removerOfertaModal(ofertasModalItem, oferta, 2)"
+                    >
+                      <span class="material-symbols-outlined">close</span>
+                      Remover equiv.
                     </button>
                   </template>
                 </div>
@@ -1064,7 +1735,9 @@
               >
                 <span class="material-symbols-outlined">chevron_left</span>
               </button>
-              <span class="pag-info poppins-regular">{{ ofertasModalPage }} / {{ ofertasModalTotalPages }}</span>
+              <span class="pag-info poppins-regular"
+                >{{ ofertasModalPage }} / {{ ofertasModalTotalPages }}</span
+              >
               <button
                 class="pag-btn"
                 :disabled="ofertasModalPage >= ofertasModalTotalPages"
@@ -1107,24 +1780,24 @@
     />
 
     <!-- ══ TOASTS ══ -->
-    
   </ion-page>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import {
   IonPage,
   IonContent,
   IonSpinner,
   IonModal,
+  IonDatetime,
   alertController,
-} from '@ionic/vue'
-import { api } from '@/services/api'
-import { useAuthStore } from '@/stores/auth'
-import exibeErro from '@/utils/ExibeErro'
-import RefresherIonic from '@/components/refresherIonic.vue'
-import { Camera, CameraPermissionState } from '@capacitor/camera'
+} from "@ionic/vue";
+import { api } from "@/services/api";
+import { useAuthStore } from "@/stores/auth";
+import exibeErro from "@/utils/ExibeErro";
+import RefresherIonic from "@/components/refresherIonic.vue";
+import { Camera, CameraPermissionState } from "@capacitor/camera";
 
 /*
   ╔══════════════════════════════════════════════════════════════════╗
@@ -1133,20 +1806,41 @@ import { Camera, CameraPermissionState } from '@capacitor/camera'
   ║  npm install html5-qrcode                                        ║
   ╚══════════════════════════════════════════════════════════════════╝
 */
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
-import { mapState } from 'pinia'
-import ModalDetalhesProduto from '@/components/ModalDetalhesProduto.vue'
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import { mapState } from "pinia";
+import ModalDetalhesProduto from "@/components/ModalDetalhesProduto.vue";
+
+// Datas do calendário usam o dia local, sem conversão implícita para UTC.
+function dataLocal(data: Date): string {
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(data.getDate()).padStart(2, "0")}`;
+}
+
+function interpretarData(valor: unknown): Date | null {
+  if (valor == null || valor === "") return null;
+  const texto = String(valor).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
+    const [ano, mes, dia] = texto.split("-").map(Number);
+    const data = new Date(ano, mes - 1, dia);
+    return dataLocal(data) === texto ? data : null;
+  }
+  const data = new Date(/^\d+$/.test(texto) ? Number(texto) : texto);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
 
 export default defineComponent({
-  name: 'ConsoleCotacaoMobile',
+  name: "ConsoleCotacaoMobile",
 
   components: {
     IonPage,
     IonContent,
     IonSpinner,
     IonModal,
+    IonDatetime,
     RefresherIonic,
-    ModalDetalhesProduto
+    ModalDetalhesProduto,
   },
 
   props: {
@@ -1155,7 +1849,7 @@ export default defineComponent({
 
   data() {
     return {
-      activeTab: 'produtos' as string,
+      activeTab: "produtos" as string,
       auth: null as any,
       idCotacaoLocal: null as number | null,
       nomeCotacao: null as string | null,
@@ -1182,8 +1876,8 @@ export default defineComponent({
       loadingAutoSelect: false,
 
       // Search
-      searchProdutos: '',
-      searchOfertas: '',
+      searchProdutos: "",
+      searchOfertas: "",
 
       // Modais
       showEditModal: false,
@@ -1196,7 +1890,7 @@ export default defineComponent({
       editTarget: null as any,
 
       // Add produto cadastrado
-      searchCatalogo: '',
+      searchCatalogo: "",
       catalogoFiltrado: [] as any[],
       loadingCatalogo: false,
       catalogoPage: 1,
@@ -1206,9 +1900,9 @@ export default defineComponent({
       bloquearTecladoCatalogo: false,
       addProduto: {
         id_produto: null as number | null,
-        nome: '',
-        codigo_barra: '',
-        nome_fornecedor: '',
+        nome: "",
+        codigo_barra: "",
+        nome_fornecedor: "",
         preco_custo: null as number | null,
         preco_venda: null as number | null,
         margem: null as number | null,
@@ -1221,31 +1915,35 @@ export default defineComponent({
 
       // Add múltiplos produtos simultaneamente
       modoSelecaoMultipla: false,
-      etapaSelecaoMultipla: 'selecionar' as 'selecionar' | 'configurar',
+      etapaSelecaoMultipla: "selecionar" as "selecionar" | "configurar",
       produtosSelecionadosMultiplos: [] as any[],
       multiploConfig: {
         quantidade: null as number | null,
-        tipo: '' as string,
+        tipo: "" as string,
         qtd_unitaria_composicao: null as number | null,
       },
 
       // Add produto não cadastrado
-      addProdutoInexistente: { nome: '', quantidade: null as number | null },
+      addProdutoInexistente: { nome: "", quantidade: null as number | null },
 
       // Faturamento extra
       fatExtra: {
-        id_vendedor: '',
+        id_vendedor: "",
         id_produto: null as number | null,
-        nome: '',
+        nome: "",
         quantidade: null as number | null,
         tipo: null as string | null,
         preco: null as number | null,
-        searchProd: '',
+        searchProd: "",
       },
       catalogoExtra: [] as any[],
 
       // Período
-      periodoEdit: { inicio: '', final: '' },
+      periodoEdit: {
+        inicio: dataLocal(new Date()),
+        final: dataLocal(new Date()),
+      },
+      loadingPeriodo: false,
 
       // Sugestões
       sugestoesSelecionadas: [] as number[],
@@ -1257,15 +1955,15 @@ export default defineComponent({
       // Modal de ofertas do produto
       showOfertasModal: false,
       ofertasModalItem: null as any,
-      ofertasModalSearch: '',
-      ofertasModalOrdem: 'asc' as 'asc' | 'desc',
+      ofertasModalSearch: "",
+      ofertasModalOrdem: "asc" as "asc" | "desc",
       ofertasModalSoEquiv: false,
       ofertasModalPage: 1,
       OFERTAS_POR_PAGINA: 10,
 
       totalOfertas: 0,
 
-      barcodeBuffer: '',
+      barcodeBuffer: "",
       barcodeTimeout: null,
       barcodeLastKeyTime: 0,
       barcodeInterval: null,
@@ -1276,207 +1974,261 @@ export default defineComponent({
 
       // Scanner
       scannerAtivo: false,
-      scannerContexto: '' as string, // 'catalogo' | 'fatExtra'
+      scannerContexto: "" as string, // 'catalogo' | 'fatExtra'
 
       // Instância html5-qrcode
       html5QrcodeInstance: null as any,
 
       // Permissão de câmera
-      permissaoCamera: 'prompt' as CameraPermissionState,
+      permissaoCamera: "prompt" as CameraPermissionState,
       verificandoPermissao: false,
-    }
+    };
   },
 
   computed: {
-    ...mapState(useAuthStore, ['user', 'menuPermitido']),
+    ...mapState(useAuthStore, ["user", "menuPermitido"]),
     tabs(): any[] {
       return [
-        { key: 'produtos',   label: 'Produtos',   icon: 'inventory_2',  badge: this.itens.length || null,    disabled: false },
-        { key: 'ofertas',    label: 'Ofertas',    icon: 'local_offer',  badge: this.totalOfertas || null,         disabled: false },
-        { key: 'vendedores', label: 'Vendedores', icon: 'group',        badge: null,                         disabled: false },
-        { key: 'sugestao',   label: 'Sugestão',   icon: 'lightbulb',    badge: null,                         disabled: true  },
-      ]
+        {
+          key: "produtos",
+          label: "Produtos",
+          icon: "inventory_2",
+          badge: this.itens.length || null,
+          disabled: false,
+        },
+        {
+          key: "ofertas",
+          label: "Ofertas",
+          icon: "local_offer",
+          badge: this.totalOfertas || null,
+          disabled: false,
+        },
+        {
+          key: "vendedores",
+          label: "Vendedores",
+          icon: "group",
+          badge: null,
+          disabled: false,
+        },
+        {
+          key: "sugestao",
+          label: "Sugestão",
+          icon: "lightbulb",
+          badge: null,
+          disabled: true,
+        },
+      ];
     },
 
     produtosFiltrados(): any[] {
-      const t = this.searchProdutos.toLowerCase()
-      if (!t) return this.itens
-      return this.itens.filter(i =>
-        (i.nome?.toLowerCase().includes(t)) || (i.codigo_barra?.toLowerCase().includes(t))
-      )
+      const t = this.searchProdutos.toLowerCase();
+      if (!t) return this.itens;
+      return this.itens.filter(
+        (i) =>
+          i.nome?.toLowerCase().includes(t) ||
+          i.codigo_barra?.toLowerCase().includes(t)
+      );
     },
 
     itensFiltradosOfertas(): any[] {
-      const t = this.searchOfertas.toLowerCase()
-      return this.ofertas.filter(i => {
-        if (!t) return true
-        return (i.nome?.toLowerCase().includes(t)) ||
+      const t = this.searchOfertas.toLowerCase();
+      return this.ofertas.filter((i) => {
+        if (!t) return true;
+        return (
+          i.nome?.toLowerCase().includes(t) ||
           i.ofertas?.some((o: any) => o.nome?.toLowerCase().includes(t))
-      })
+        );
+      });
     },
 
     ofertasModalFiltradas(): any[] {
-      if (!this.ofertasModalItem?.ofertas) return []
-      let lista = [...this.ofertasModalItem.ofertas]
+      if (!this.ofertasModalItem?.ofertas) return [];
+      let lista = [...this.ofertasModalItem.ofertas];
 
       // Filtro de busca por vendedor
-      const t = this.ofertasModalSearch.toLowerCase()
+      const t = this.ofertasModalSearch.toLowerCase();
       if (t) {
-        lista = lista.filter((o: any) =>
-          o.nome?.toLowerCase().includes(t) || o.email?.toLowerCase().includes(t)
-        )
+        lista = lista.filter(
+          (o: any) =>
+            o.nome?.toLowerCase().includes(t) ||
+            o.email?.toLowerCase().includes(t)
+        );
       }
 
       // Filtro somente equivalentes
       if (this.ofertasModalSoEquiv) {
-        lista = lista.filter((o: any) => o.segundo_quantidade != null)
+        lista = lista.filter((o: any) => o.segundo_quantidade != null);
       }
 
       // Separar principais e equivalentes (sem principal)
-      const principais = lista.filter((o: any) => o.primeiro_quantidade != null)
-      const soEquiv    = lista.filter((o: any) => o.primeiro_quantidade == null && o.segundo_quantidade != null)
+      const principais = lista.filter(
+        (o: any) => o.primeiro_quantidade != null
+      );
+      const soEquiv = lista.filter(
+        (o: any) =>
+          o.primeiro_quantidade == null && o.segundo_quantidade != null
+      );
 
       // Ordenar principais por preço
       const sortFn = (a: any, b: any) => {
-        const pa = Number(a.primeiro_preco ?? a.segundo_preco ?? Infinity)
-        const pb = Number(b.primeiro_preco ?? b.segundo_preco ?? Infinity)
-        return this.ofertasModalOrdem === 'asc' ? pa - pb : pb - pa
-      }
-      principais.sort(sortFn)
-      soEquiv.sort(sortFn)
+        const pa = Number(a.primeiro_preco ?? a.segundo_preco ?? Infinity);
+        const pb = Number(b.primeiro_preco ?? b.segundo_preco ?? Infinity);
+        return this.ofertasModalOrdem === "asc" ? pa - pb : pb - pa;
+      };
+      principais.sort(sortFn);
+      soEquiv.sort(sortFn);
 
-      return [...principais, ...soEquiv]
+      return [...principais, ...soEquiv];
     },
 
     ofertasModalTotalPages(): number {
-      return Math.max(1, Math.ceil(this.ofertasModalFiltradas.length / this.OFERTAS_POR_PAGINA))
+      return Math.max(
+        1,
+        Math.ceil(this.ofertasModalFiltradas.length / this.OFERTAS_POR_PAGINA)
+      );
     },
 
     ofertasModalPaginadas(): any[] {
-      const ini = (this.ofertasModalPage - 1) * this.OFERTAS_POR_PAGINA
-      return this.ofertasModalFiltradas.slice(ini, ini + this.OFERTAS_POR_PAGINA)
+      const ini = (this.ofertasModalPage - 1) * this.OFERTAS_POR_PAGINA;
+      return this.ofertasModalFiltradas.slice(
+        ini,
+        ini + this.OFERTAS_POR_PAGINA
+      );
     },
 
     existePendente(): boolean {
-      return this.itens.some(i => i.status_fechamento === 'pendente')
+      return this.itens.some((i) => i.status_fechamento === "pendente");
     },
 
     podeEditarProduto(): boolean {
-      return this.cabecalho && (this.cabecalho.status_cotacao === 'fechada')
+      return this.cabecalho && this.cabecalho.status_cotacao === "fechada";
+    },
+    estaConcluido() {
+      return this.itens.some((i) => i.status_fechamento === "concluido");
     },
   },
 
   watch: {
     activeTab(v: string) {
-      if (v === 'ofertas'    && this.ofertas.length === 0)    this.carregarOfertas()
-      if (v === 'vendedores' && this.vendedores.length === 0) this.carregarVendedores()
-      if (v === 'sugestao'   && this.sugestoes.length === 0)  this.carregarSugestoes()
+      if (v === "ofertas" && this.ofertas.length === 0) this.carregarOfertas();
+      if (v === "vendedores" && this.vendedores.length === 0)
+        this.carregarVendedores();
+      if (v === "sugestao" && this.sugestoes.length === 0)
+        this.carregarSugestoes();
     },
   },
 
   methods: {
     // ─── UTILS ───────────────────────────────────────────────────
     formatarData(v: any): string {
-      if (!v) return '—'
-      return new Date(Number(v)).toLocaleDateString('pt-BR')
+      return interpretarData(v)?.toLocaleDateString("pt-BR") || "Não definido";
     },
     formatVal(v: any): string {
-      if (v == null) return '—'
-      return Number(v).toFixed(2)
+      if (v == null) return "—";
+      return Number(v).toFixed(2);
     },
     capitalize(s: string): string {
-      if (!s) return ''
-      return s.charAt(0).toUpperCase() + s.slice(1)
+      if (!s) return "";
+      return s.charAt(0).toUpperCase() + s.slice(1);
     },
     initials(nome: string): string {
-      return (nome || '').split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+      return (nome || "")
+        .split(" ")
+        .slice(0, 2)
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase();
     },
     statusLabel(s: string, statusFechamento?: string | null): string {
-
-      if (s === 'fechada') return 'Indisponível'
-      if (s === 'aberta')  return 'Aberta'
-      if (s === 'finalizada') {
-        return !this.existePendente ? 'Finalizada' : 'Fechada'
+      if (s === "fechada") return "Indisponível";
+      if (s === "aberta") return "Aberta";
+      if (s === "finalizada") {
+        return !this.existePendente ? "Finalizada" : "Fechada";
       }
       const map: Record<string, string> = {
-        rascunho: 'Rascunho',
-        concluida: 'Concluída',
-      }
-      return map[s] || s
+        rascunho: "Rascunho",
+        concluida: "Concluída",
+      };
+      return map[s] || s;
     },
-    toast(msg: string, type = 'success') {
-      const id = ++this.toastId
-      this.toasts.push({ id, msg, type })
-      setTimeout(() => { this.toasts = this.toasts.filter((t: any) => t.id !== id) }, 3500)
+    toast(msg: string, type = "success") {
+      const id = ++this.toastId;
+      this.toasts.push({ id, msg, type });
+      setTimeout(() => {
+        this.toasts = this.toasts.filter((t: any) => t.id !== id);
+      }, 3500);
     },
 
     // ─── CARREGAMENTO ────────────────────────────────────────────
     async carregarProdutos() {
       try {
-        this.loadingProdutos = true
-        const res = await api.get(`/mvpu/cotacao/historicoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`)
-        const d = res.data.data
+        this.loadingProdutos = true;
+        const res = await api.get(
+          `/mvpu/cotacao/historicoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`
+        );
+        const d = res.data.data;
         if (d) {
           if (Array.isArray(d)) {
-            this.itens = d
+            this.itens = d;
           } else {
-            this.cabecalho = d.cabecalho_cotacao || this.cabecalho
-            this.itens = d.conteudo_cotacao || d
+            this.cabecalho = d.cabecalho_cotacao || this.cabecalho;
+            this.itens = d.conteudo_cotacao || d;
           }
         }
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingProdutos = false
+        this.loadingProdutos = false;
       }
     },
 
     async carregarOfertas() {
       try {
-        this.loadingOfertas = true
-        const res = await api.get(`/mvpu/cotacao/historicoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`)
-        const d = res.data.data
+        this.loadingOfertas = true;
+        const res = await api.get(
+          `/mvpu/cotacao/historicoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`
+        );
+        const d = res.data.data;
         if (d) {
-          this.cabecalho = d.cabecalho_cotacao || this.cabecalho
-          this.ofertas = d.conteudo_cotacao || []
+          this.cabecalho = d.cabecalho_cotacao || this.cabecalho;
+          this.ofertas = d.conteudo_cotacao || [];
 
-          if(this.ofertas.length){
-            for(const ofertaProd of this.ofertas){
-              this.totalOfertas += ofertaProd.ofertas.length
+          if (this.ofertas.length) {
+            for (const ofertaProd of this.ofertas) {
+              this.totalOfertas += ofertaProd.ofertas.length;
             }
           }
-
-          
-
         }
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingOfertas = false
+        this.loadingOfertas = false;
       }
     },
 
     async carregarVendedores() {
       try {
-        this.loadingVendedores = true
-        const res = await api.get(`/mvpu/usuario/consultarVendedores/${this.auth.loja.id_loja}`)
-        this.vendedores = res.data.data || []
+        this.loadingVendedores = true;
+        const res = await api.get(
+          `/mvpu/usuario/consultarVendedores/${this.auth.loja.id_loja}`
+        );
+        this.vendedores = res.data.data || [];
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingVendedores = false
+        this.loadingVendedores = false;
       }
     },
 
     async carregarSugestoes() {
       try {
-        this.loadingSugestoes = true
-        await new Promise(r => setTimeout(r, 600))
-        this.sugestoes = []
+        this.loadingSugestoes = true;
+        await new Promise((r) => setTimeout(r, 600));
+        this.sugestoes = [];
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingSugestoes = false
+        this.loadingSugestoes = false;
       }
     },
 
@@ -1490,34 +2242,42 @@ export default defineComponent({
      * de busca já foi disparado e deve ser interrompido).
      */
     aplicarSubstituicaoCodigoBarras(event: any): boolean {
-      if (!event) return false
+      if (!event) return false;
 
-      const inputType: string = event.inputType || ''
-      const dataInserida: string = event.data || ''
+      const inputType: string = event.inputType || "";
+      const dataInserida: string = event.data || "";
 
       // Só nos interessa inserção em lote: colar (insertFromPaste) ou
       // inserção de texto direto via valor (insertText com múltiplos chars,
       // típico de leitores de código de barras que escrevem tudo de uma vez)
       const ehInsercaoEmLote =
-        inputType === 'insertFromPaste' ||
-        inputType === 'insertFromDrop' ||
-        (inputType === 'insertText' && dataInserida && dataInserida.length >= 8)
+        inputType === "insertFromPaste" ||
+        inputType === "insertFromDrop" ||
+        (inputType === "insertText" &&
+          dataInserida &&
+          dataInserida.length >= 8);
 
-      if (!ehInsercaoEmLote) return false
+      if (!ehInsercaoEmLote) return false;
 
       // Extrai sequências de dígitos do trecho inserido (prioridade) ou,
       // se o evento não informar `data` (ex: alguns casos de paste), do
       // valor atual do input inteiro.
-      const origem = dataInserida && dataInserida.length >= 8 ? dataInserida : (event.target?.value || '')
-      const sequencias = origem.match(/\d{8,}/g)
+      const origem =
+        dataInserida && dataInserida.length >= 8
+          ? dataInserida
+          : event.target?.value || "";
+      const sequencias = origem.match(/\d{8,}/g);
 
-      if (!sequencias || sequencias.length === 0) return false
+      if (!sequencias || sequencias.length === 0) return false;
 
       // Usa a maior sequência numérica encontrada como o novo código.
-      const novoCodigo = sequencias.reduce((a: string, b: string) => (b.length > a.length ? b : a), sequencias[0])
+      const novoCodigo = sequencias.reduce(
+        (a: string, b: string) => (b.length > a.length ? b : a),
+        sequencias[0]
+      );
 
-      this.searchCatalogo = novoCodigo
-      return true
+      this.searchCatalogo = novoCodigo;
+      return true;
     },
 
     async buscarCatalogo(event?: any) {
@@ -1525,65 +2285,79 @@ export default defineComponent({
       // digitação em lote de leitor de código de barras), substitui o valor
       // anterior do campo pelos novos dígitos antes de buscar.
       if (this.aplicarSubstituicaoCodigoBarras(event)) {
-        await this.buscarCatalogoImediato(this.searchCatalogo)
-        return
+        await this.buscarCatalogoImediato(this.searchCatalogo);
+        return;
       }
 
       if (!this.searchCatalogo || this.searchCatalogo.length < 2) {
-        this.catalogoFiltrado = []
-        this.catalogoPage = 1
-        this.catalogoPages = 1
-        return
+        this.catalogoFiltrado = [];
+        this.catalogoPage = 1;
+        this.catalogoPages = 1;
+        return;
       }
-      clearTimeout(this.timer)
+      clearTimeout(this.timer);
       this.timer = setTimeout(async () => {
-        await this._fetchCatalogo(this.searchCatalogo, 1)
-      }, 400)
+        await this._fetchCatalogo(this.searchCatalogo, 1);
+      }, 400);
     },
 
     async mudarPaginaCatalogo(page: number) {
-      await this._fetchCatalogo(this.searchCatalogo, page)
+      await this._fetchCatalogo(this.searchCatalogo, page);
     },
 
     async _fetchCatalogo(search: string, page: number) {
       try {
-        this.loadingCatalogo = true
+        this.loadingCatalogo = true;
         const res = await api.get(
           `/mvpu/produto/consultarProdutos/${this.auth.loja.id_loja}`,
-          { params: { page, limit: 10, search, id_usuario: this.auth.user?.id_usuario } }
-        )
-        this.catalogoFiltrado = res.data.data || []
-        this.catalogoPage     = res.data.page  || 1
-        this.catalogoPages    = res.data.pages || 1
+          {
+            params: {
+              page,
+              limit: 10,
+              search,
+              id_usuario: this.auth.user?.id_usuario,
+            },
+          }
+        );
+        this.catalogoFiltrado = res.data.data || [];
+        this.catalogoPage = res.data.page || 1;
+        this.catalogoPages = res.data.pages || 1;
       } catch (e) {
-        this.catalogoFiltrado = []
+        this.catalogoFiltrado = [];
       } finally {
-        this.loadingCatalogo = false
+        this.loadingCatalogo = false;
       }
     },
 
     abrirDetalhes(produto) {
-      this.produtoDetalhes = produto
-      this.showDetalhesProduto = true
+      this.produtoDetalhes = produto;
+      this.showDetalhesProduto = true;
     },
 
     async buscarCatalogoExtra() {
       if (!this.fatExtra.searchProd || this.fatExtra.searchProd.length < 2) {
-        this.catalogoExtra = []
-        return
+        this.catalogoExtra = [];
+        return;
       }
-      clearTimeout(this.timerExtra)
+      clearTimeout(this.timerExtra);
       this.timerExtra = setTimeout(async () => {
         try {
           const res = await api.get(
             `/mvpu/produto/consultarProdutos/${this.auth.loja.id_loja}`,
-            { params: { page: 1, limit: 10, search: this.fatExtra.searchProd, id_usuario: this.auth.user?.id_usuario } }
-          )
-          this.catalogoExtra = res.data.data || []
+            {
+              params: {
+                page: 1,
+                limit: 10,
+                search: this.fatExtra.searchProd,
+                id_usuario: this.auth.user?.id_usuario,
+              },
+            }
+          );
+          this.catalogoExtra = res.data.data || [];
         } catch (e) {
-          this.catalogoExtra = []
+          this.catalogoExtra = [];
         }
-      }, 400)
+      }, 400);
     },
 
     // ─── PERMISSÃO DE CÂMERA ─────────────────────────────────────
@@ -1595,15 +2369,15 @@ export default defineComponent({
      */
     async verificarPermissaoCamera(): Promise<boolean> {
       try {
-        const status = await Camera.checkPermissions()
+        const status = await Camera.checkPermissions();
         // "camera" é a chave retornada pelo Capacitor Camera plugin
-        this.permissaoCamera = (status as any).camera ?? status
-        return this.permissaoCamera === 'granted'
+        this.permissaoCamera = (status as any).camera ?? status;
+        return this.permissaoCamera === "granted";
       } catch (e) {
         // Em ambiente web puro (fora do Capacitor), a API pode não existir —
         // retornamos true para deixar o html5-qrcode tratar via MediaDevices API
-        
-        return true
+
+        return true;
       }
     },
 
@@ -1619,43 +2393,44 @@ export default defineComponent({
      */
     async solicitarPermissaoCamera(): Promise<boolean> {
       try {
-        this.verificandoPermissao = true
+        this.verificandoPermissao = true;
 
         // 1. Verifica estado atual antes de pedir
-        const jaPermitido = await this.verificarPermissaoCamera()
-        if (jaPermitido) return true
+        const jaPermitido = await this.verificarPermissaoCamera();
+        if (jaPermitido) return true;
 
         // 2. Permissão negada definitivamente — não é possível pedir novamente
-        if (this.permissaoCamera === 'denied') {
+        if (this.permissaoCamera === "denied") {
           this.toast(
-            'Câmera bloqueada. Abra as configurações do dispositivo e habilite a permissão para este app.',
-            'error'
-          )
-          return false
+            "Câmera bloqueada. Abra as configurações do dispositivo e habilite a permissão para este app.",
+            "error"
+          );
+          return false;
         }
 
         // 3. Estado 'prompt' ou 'prompt-with-rationale' — solicita ao usuário
-        const resultado = await Camera.requestPermissions({ permissions: ['camera'] })
-        this.permissaoCamera = (resultado as any).camera ?? resultado
+        const resultado = await Camera.requestPermissions({
+          permissions: ["camera"],
+        });
+        this.permissaoCamera = (resultado as any).camera ?? resultado;
 
-        if (this.permissaoCamera === 'granted') {
-          return true
+        if (this.permissaoCamera === "granted") {
+          return true;
         }
 
         // Usuário recusou
         this.toast(
-          'Permissão de câmera negada. Para usar o leitor de código de barras, autorize o acesso à câmera.',
-          'error'
-        )
-        return false
-
+          "Permissão de câmera negada. Para usar o leitor de código de barras, autorize o acesso à câmera.",
+          "error"
+        );
+        return false;
       } catch (e) {
         // Em ambiente web puro (sem Capacitor), a API não existe —
         // deixamos o html5-qrcode chamar getUserMedia e tratar o prompt nativo do browser
-        
-        return true
+
+        return true;
       } finally {
-        this.verificandoPermissao = false
+        this.verificandoPermissao = false;
       }
     },
 
@@ -1665,7 +2440,7 @@ export default defineComponent({
      * o estado atual e dar contexto ao ícone/botão se necessário no futuro.
      */
     async verificarPermissaoCameraAoEntrar() {
-      await this.verificarPermissaoCamera()
+      await this.verificarPermissaoCamera();
     },
 
     // ─── SCANNER DE CÓDIGO DE BARRAS (html5-qrcode) ──────────────
@@ -1678,14 +2453,12 @@ export default defineComponent({
         Html5QrcodeSupportedFormats.EAN_13,
         Html5QrcodeSupportedFormats.EAN_8,
         Html5QrcodeSupportedFormats.CODE_128,
-      ]
-      return new Html5Qrcode('html5-qrcode-reader', {
+      ];
+      return new Html5Qrcode("html5-qrcode-reader", {
         formatsToSupport: formatos,
         verbose: true,
-      })
+      });
     },
-
-    
 
     /**
      * Inicia o scanner html5-qrcode usando a câmera traseira (environment).
@@ -1697,42 +2470,47 @@ export default defineComponent({
         // ── Guarda de permissão ──────────────────────────────────
         // Solicita (ou confirma) permissão antes de tentar abrir a câmera.
         // Em Android/iOS nativo usa @capacitor/camera; em web usa MediaDevices.
-        const permitido = await this.solicitarPermissaoCamera()
+        const permitido = await this.solicitarPermissaoCamera();
         if (!permitido) {
           // Permissão negada: fecha o overlay e aborta sem lançar erro
-          this.scannerAtivo = false
-          return
+          this.scannerAtivo = false;
+          return;
         }
         // ────────────────────────────────────────────────────────
 
         // Para qualquer scan anterior antes de iniciar um novo
-        await this._pararScanner()
+        await this._pararScanner();
 
-        this.html5QrcodeInstance = this._criarInstanciaScanner()
+        this.html5QrcodeInstance = this._criarInstanciaScanner();
 
         const config = {
           fps: 10,
-
-        }
+        };
 
         await this.html5QrcodeInstance.start(
-          { facingMode: 'environment' }, // câmera traseira
+          { facingMode: "environment" }, // câmera traseira
           config,
           (decodedText: string) => {
-            this.showAddProdutoModal = true
-            onSucesso(decodedText)
+            this.showAddProdutoModal = true;
+            onSucesso(decodedText);
           },
           // Erros de frame são ignorados (não logar cada frame sem leitura)
           undefined
-        )
+        );
       } catch (e: any) {
-        this.scannerAtivo = false
+        this.scannerAtivo = false;
         // Usuário negou permissão ou câmera indisponível
-        const msg = e?.message || String(e)
-        if (msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')) {
-          this.toast('Permissão de câmera negada. Habilite nas configurações.', 'error')
+        const msg = e?.message || String(e);
+        if (
+          msg.toLowerCase().includes("permission") ||
+          msg.toLowerCase().includes("notallowed")
+        ) {
+          this.toast(
+            "Permissão de câmera negada. Habilite nas configurações.",
+            "error"
+          );
         } else {
-          exibeErro(e, this.$toast)
+          exibeErro(e, this.$toast);
         }
       }
     },
@@ -1743,16 +2521,16 @@ export default defineComponent({
     async _pararScanner() {
       if (this.html5QrcodeInstance) {
         try {
-          const state = this.html5QrcodeInstance.getState()
+          const state = this.html5QrcodeInstance.getState();
           // Estado 2 = SCANNING, estado 3 = PAUSED
           if (state === 2 || state === 3) {
-            await this.html5QrcodeInstance.stop()
+            await this.html5QrcodeInstance.stop();
           }
-          await this.html5QrcodeInstance.clear()
+          await this.html5QrcodeInstance.clear();
         } catch (_) {
           // Ignorar erros ao parar (ex.: scanner já estava parado)
         }
-        this.html5QrcodeInstance = null
+        this.html5QrcodeInstance = null;
       }
     },
 
@@ -1761,37 +2539,37 @@ export default defineComponent({
      * Chamado pelo botão FAB de câmera na tab de produtos.
      */
     async abrirScannerCatalogo() {
-      this.fecharModalAddProduto()
-      await this.$nextTick()
-      this.escanearCodigoBarrasCatalogo()
+      this.fecharModalAddProduto();
+      await this.$nextTick();
+      this.escanearCodigoBarrasCatalogo();
     },
-
-    
 
     /**
      * Escaneia código de barras e preenche o campo de busca do catálogo.
      * Usa html5-qrcode — funciona em web, Android (WebView) e iOS (WKWebView).
      */
     async escanearCodigoBarrasCatalogo() {
-      this.scannerAtivo = true
-      this.scannerContexto = 'catalogo'
+      this.scannerAtivo = true;
+      this.scannerContexto = "catalogo";
 
-      await this.$nextTick()
+      await this.$nextTick();
 
       await this._iniciarScanner(async (codigo: string) => {
-        await this._pararScanner()
-        this.scannerAtivo = false
+        await this._pararScanner();
+        this.scannerAtivo = false;
 
         // Leitura rápida: bloqueia o teclado virtual antes de focar/preencher o input
-        this.bloquearTecladoCatalogo = true
-        this.searchCatalogo = codigo
+        this.bloquearTecladoCatalogo = true;
+        this.searchCatalogo = codigo;
 
-        await this.$nextTick()
-        const input = this.$refs.searchCatalogoInput as HTMLInputElement | undefined
-        input?.focus()
+        await this.$nextTick();
+        const input = this.$refs.searchCatalogoInput as
+          | HTMLInputElement
+          | undefined;
+        input?.focus();
 
-        await this.buscarCatalogoImediato(codigo)
-      })
+        await this.buscarCatalogoImediato(codigo);
+      });
     },
 
     /**
@@ -1803,26 +2581,26 @@ export default defineComponent({
      * para o teclado abrir normalmente, como já era o comportamento padrão.
      */
     async onFocusSearchCatalogo() {
-      if (!this.bloquearTecladoCatalogo) return
-      await this.$nextTick()
-      this.bloquearTecladoCatalogo = false
+      if (!this.bloquearTecladoCatalogo) return;
+      await this.$nextTick();
+      this.bloquearTecladoCatalogo = false;
     },
 
     /**
      * Escaneia código de barras para o modal de Faturamento Extra.
      */
     async escanearCodigoBarrasFatExtra() {
-      this.scannerAtivo = true
-      this.scannerContexto = 'fatExtra'
+      this.scannerAtivo = true;
+      this.scannerContexto = "fatExtra";
 
-      await this.$nextTick()
+      await this.$nextTick();
 
       await this._iniciarScanner(async (codigo: string) => {
-        await this._pararScanner()
-        this.scannerAtivo = false
-        this.fatExtra.searchProd = codigo
-        await this.buscarCatalogoExtraImediato(codigo)
-      })
+        await this._pararScanner();
+        this.scannerAtivo = false;
+        this.fatExtra.searchProd = codigo;
+        await this.buscarCatalogoExtraImediato(codigo);
+      });
     },
 
     /**
@@ -1832,17 +2610,24 @@ export default defineComponent({
       try {
         const res = await api.get(
           `/mvpu/produto/consultarProdutos/${this.auth.loja.id_loja}`,
-          { params: { page: 1, limit: 10, search: codigo, id_usuario: this.auth.user?.id_usuario } }
-        )
-        this.catalogoFiltrado = res.data.data || []
-        this.catalogoPage     = 1
-        this.catalogoPages    = res.data.pages || 1
+          {
+            params: {
+              page: 1,
+              limit: 10,
+              search: codigo,
+              id_usuario: this.auth.user?.id_usuario,
+            },
+          }
+        );
+        this.catalogoFiltrado = res.data.data || [];
+        this.catalogoPage = 1;
+        this.catalogoPages = res.data.pages || 1;
         // Auto-seleciona se vier exatamente 1 resultado com código exato
         if (this.catalogoFiltrado.length === 1) {
-          this.selecionarProdutoCatalogo(this.catalogoFiltrado[0])
+          this.selecionarProdutoCatalogo(this.catalogoFiltrado[0]);
         }
       } catch (e) {
-        this.catalogoFiltrado = []
+        this.catalogoFiltrado = [];
       }
     },
 
@@ -1850,182 +2635,233 @@ export default defineComponent({
       try {
         const res = await api.get(
           `/mvpu/produto/consultarProdutos/${this.auth.loja.id_loja}`,
-          { params: { page: 1, limit: 10, search: codigo, id_usuario: this.auth.user?.id_usuario } }
-        )
-        this.catalogoExtra = res.data.data || []
+          {
+            params: {
+              page: 1,
+              limit: 10,
+              search: codigo,
+              id_usuario: this.auth.user?.id_usuario,
+            },
+          }
+        );
+        this.catalogoExtra = res.data.data || [];
         if (this.catalogoExtra.length === 1) {
-          this.fatExtra.id_produto = this.catalogoExtra[0].id_produto
-          this.fatExtra.nome = this.catalogoExtra[0].nome
+          this.fatExtra.id_produto = this.catalogoExtra[0].id_produto;
+          this.fatExtra.nome = this.catalogoExtra[0].nome;
         }
       } catch (e) {
-        this.catalogoExtra = []
+        this.catalogoExtra = [];
       }
     },
 
     async cancelarScanner() {
-      await this._pararScanner()
-      this.scannerAtivo = false
+      await this._pararScanner();
+      this.scannerAtivo = false;
     },
 
     // ─── AÇÕES COTAÇÃO ────────────────────────────────────────────
     async abrirCotacao() {
       try {
-        this.loadingAcao = true
-        const payload = { update_tipo: 'aberta', inicio_cotacao: 'n/a', final_cotacao: 'n/a' }
-        await api.put(`/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, payload)
-        this.toast('Cotação aberta! Vendedores já podem ofertar.')
-        await this.carregarProdutos()
+        this.loadingAcao = true;
+        const payload = {
+          update_tipo: "aberta",
+          inicio_cotacao: "n/a",
+          final_cotacao: "n/a",
+        };
+        await api.put(
+          `/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          payload
+        );
+        this.toast("Cotação aberta! Vendedores já podem ofertar.");
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAcao = false
+        this.loadingAcao = false;
       }
     },
 
     async finalizarCotacao() {
       try {
-        this.loadingAcao = true
-        const payload = { update_tipo: 'finalizada', inicio_cotacao: 'n/a', final_cotacao: 'n/a' }
-        await api.put(`/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, payload)
-        this.toast('Cotação finalizada. Selecione as melhores ofertas.')
-        await this.carregarProdutos()
-        await this.carregarOfertas()
-        this.activeTab = 'ofertas'
+        this.loadingAcao = true;
+        const payload = {
+          update_tipo: "finalizada",
+          inicio_cotacao: "n/a",
+          final_cotacao: "n/a",
+        };
+        await api.put(
+          `/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          payload
+        );
+        this.toast("Cotação finalizada. Selecione as melhores ofertas.");
+        await this.carregarProdutos();
+        await this.carregarOfertas();
+        this.activeTab = "ofertas";
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAcao = false
+        this.loadingAcao = false;
       }
     },
 
     async concluirCotacao() {
       try {
-        this.loadingButtonConcluir = true
-        await api.put(`/mvpu/cotacao/confirmarCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`)
-        this.toast('Cotação concluída com sucesso!')
-        await this.carregarProdutos()
-        await this.carregarOfertas()
+        this.loadingButtonConcluir = true;
+        await api.put(
+          `/mvpu/cotacao/confirmarCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`
+        );
+        this.toast("Cotação concluída com sucesso!");
+        await this.carregarProdutos();
+        await this.carregarOfertas();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingButtonConcluir = false
+        this.loadingButtonConcluir = false;
       }
     },
 
     // ─── PRODUTOS ────────────────────────────────────────────────
     async selecionarProdutoCatalogo(p: any) {
-      this.addProduto.id_produto             = p.id_produto
-      this.addProduto.nome                   = p.nome
-      this.addProduto.codigo_barra           = p.codigo_barra || ''
-      this.addProduto.nome_fornecedor        = p.nome_fornecedor || ''
-      this.addProduto.preco_custo            = p.preco_custo
-      this.addProduto.preco_venda            = p.preco_venda
-      this.addProduto.margem                 = p.margem
+      this.addProduto.id_produto = p.id_produto;
+      this.addProduto.nome = p.nome;
+      this.addProduto.codigo_barra = p.codigo_barra || "";
+      this.addProduto.nome_fornecedor = p.nome_fornecedor || "";
+      this.addProduto.preco_custo = p.preco_custo;
+      this.addProduto.preco_venda = p.preco_venda;
+      this.addProduto.margem = p.margem;
 
       const payload = {
         id_cotacao: this.idCotacaoLocal,
-        codigo_barra: this.addProduto.codigo_barra
-      }
+        codigo_barra: this.addProduto.codigo_barra,
+      };
 
-      const produtoUltimaCompra = await api.post(`/mvpu/produto/ultimaCotProd/${this.auth.loja.id_loja}`, payload)
-      
-      this.addProduto.ultimo_preco      = produtoUltimaCompra.data.data[0].ultimo_preco
-      this.addProduto.ultima_quantidade = produtoUltimaCompra.data.data[0].quantidade
-      this.addProduto.tipo              = produtoUltimaCompra.data.data[0].tipo
+      const produtoUltimaCompra = await api.post(
+        `/mvpu/produto/ultimaCotProd/${this.auth.loja.id_loja}`,
+        payload
+      );
 
+      this.addProduto.ultimo_preco =
+        produtoUltimaCompra.data.data[0].ultimo_preco;
+      this.addProduto.ultima_quantidade =
+        produtoUltimaCompra.data.data[0].quantidade;
+      this.addProduto.tipo = produtoUltimaCompra.data.data[0].tipo;
     },
 
     voltarParaListaCatalogo() {
-      this.addProduto.id_produto             = null
-      this.addProduto.nome                   = ''
-      this.addProduto.codigo_barra           = ''
-      this.addProduto.nome_fornecedor        = ''
-      this.addProduto.preco_custo            = null
-      this.addProduto.preco_venda            = null
-      this.addProduto.margem                 = null
-      this.addProduto.quantidade             = null
-      this.addProduto.tipo                   = ''
-      this.addProduto.qtd_unitaria_composicao = null
+      this.addProduto.id_produto = null;
+      this.addProduto.nome = "";
+      this.addProduto.codigo_barra = "";
+      this.addProduto.nome_fornecedor = "";
+      this.addProduto.preco_custo = null;
+      this.addProduto.preco_venda = null;
+      this.addProduto.margem = null;
+      this.addProduto.quantidade = null;
+      this.addProduto.tipo = "";
+      this.addProduto.qtd_unitaria_composicao = null;
     },
 
     fecharModalAddProduto() {
-      this.showAddProdutoModal = false
+      this.showAddProdutoModal = false;
       this.addProduto = {
-        id_produto: null, nome: '', codigo_barra: '', nome_fornecedor: '',
-        preco_custo: null, preco_venda: null, margem: null,
-        quantidade: null, tipo: '', qtd_unitaria_composicao: null,
-      }
-      this.searchCatalogo = ''
-      this.catalogoFiltrado = []
-      this.catalogoPage = 1
-      this.catalogoPages = 1
-      this.bloquearTecladoCatalogo = false
-      this.cancelarSelecaoMultipla()
+        id_produto: null,
+        nome: "",
+        codigo_barra: "",
+        nome_fornecedor: "",
+        preco_custo: null,
+        preco_venda: null,
+        margem: null,
+        quantidade: null,
+        tipo: "",
+        qtd_unitaria_composicao: null,
+      };
+      this.searchCatalogo = "";
+      this.catalogoFiltrado = [];
+      this.catalogoPage = 1;
+      this.catalogoPages = 1;
+      this.bloquearTecladoCatalogo = false;
+      this.cancelarSelecaoMultipla();
     },
 
     // ─── SELEÇÃO MÚLTIPLA DE PRODUTOS ─────────────────────────────
     ativarSelecaoMultipla() {
-      this.modoSelecaoMultipla = true
-      this.etapaSelecaoMultipla = 'selecionar'
-      this.produtosSelecionadosMultiplos = []
+      this.modoSelecaoMultipla = true;
+      this.etapaSelecaoMultipla = "selecionar";
+      this.produtosSelecionadosMultiplos = [];
     },
 
     cancelarSelecaoMultipla() {
-      this.modoSelecaoMultipla = false
-      this.etapaSelecaoMultipla = 'selecionar'
-      this.produtosSelecionadosMultiplos = []
-      this.multiploConfig = { quantidade: null, tipo: '', qtd_unitaria_composicao: null }
+      this.modoSelecaoMultipla = false;
+      this.etapaSelecaoMultipla = "selecionar";
+      this.produtosSelecionadosMultiplos = [];
+      this.multiploConfig = {
+        quantidade: null,
+        tipo: "",
+        qtd_unitaria_composicao: null,
+      };
     },
 
     toggleProdutoMultiplo(p: any) {
-      const idx = this.produtosSelecionadosMultiplos.findIndex((sp: any) => sp.id_produto === p.id_produto)
+      const idx = this.produtosSelecionadosMultiplos.findIndex(
+        (sp: any) => sp.id_produto === p.id_produto
+      );
       if (idx >= 0) {
-        this.produtosSelecionadosMultiplos.splice(idx, 1)
+        this.produtosSelecionadosMultiplos.splice(idx, 1);
       } else {
-        this.produtosSelecionadosMultiplos.push(p)
+        this.produtosSelecionadosMultiplos.push(p);
       }
     },
 
     isProdutoSelecionadoMultiplo(p: any): boolean {
-      return this.produtosSelecionadosMultiplos.some((sp: any) => sp.id_produto === p.id_produto)
+      return this.produtosSelecionadosMultiplos.some(
+        (sp: any) => sp.id_produto === p.id_produto
+      );
     },
 
     removerProdutoMultiplo(p: any) {
-      const idx = this.produtosSelecionadosMultiplos.findIndex((sp: any) => sp.id_produto === p.id_produto)
-      if (idx >= 0) this.produtosSelecionadosMultiplos.splice(idx, 1)
+      const idx = this.produtosSelecionadosMultiplos.findIndex(
+        (sp: any) => sp.id_produto === p.id_produto
+      );
+      if (idx >= 0) this.produtosSelecionadosMultiplos.splice(idx, 1);
     },
 
     avancarSelecaoMultipla() {
       if (this.produtosSelecionadosMultiplos.length === 0) {
         this.$toast.add({
-          severity: 'info',
-          summary: 'Nenhum produto selecionado',
-          detail: 'Selecione ao menos um produto para continuar',
-          life: 3000
+          severity: "info",
+          summary: "Nenhum produto selecionado",
+          detail: "Selecione ao menos um produto para continuar",
+          life: 3000,
         });
-        return
+        return;
       }
-      this.etapaSelecaoMultipla = 'configurar'
+      this.etapaSelecaoMultipla = "configurar";
     },
 
     voltarSelecaoMultipla() {
-      this.etapaSelecaoMultipla = 'selecionar'
+      this.etapaSelecaoMultipla = "selecionar";
     },
 
-    resetarNovoProdutoAdicionado(){
+    resetarNovoProdutoAdicionado() {
       this.addProduto = {
-        id_produto: null, nome: '', codigo_barra: '', nome_fornecedor: '',
-        preco_custo: null, preco_venda: null, margem: null,
-        quantidade: null, tipo: '', qtd_unitaria_composicao: null,
-      }
+        id_produto: null,
+        nome: "",
+        codigo_barra: "",
+        nome_fornecedor: "",
+        preco_custo: null,
+        preco_venda: null,
+        margem: null,
+        quantidade: null,
+        tipo: "",
+        qtd_unitaria_composicao: null,
+      };
     },
 
-    limparTudo(){
-      this.searchCatalogo=''
-      this.catalogoExtra = []
-      this.catalogoFiltrado = []
-      this.catalogoPage = 1
-      this.catalogoPages = 1
+    limparTudo() {
+      this.searchCatalogo = "";
+      this.catalogoExtra = [];
+      this.catalogoFiltrado = [];
+      this.catalogoPage = 1;
+      this.catalogoPages = 1;
     },
 
     /**
@@ -2035,35 +2871,38 @@ export default defineComponent({
      */
     async _enviarItensCotacao(itens: any[][]) {
       for (const item of itens) {
-        const codigoBarra = item[0]
+        const codigoBarra = item[0];
         const produtoJaAdicionado = this.itens.find(
           (i: any) => i.codigo_barra === codigoBarra
-        )
+        );
 
         if (produtoJaAdicionado) {
-          this.$toast.add({ 
-            severity: 'warn', 
-            summary: `Produto já existe na cotação.`, 
-            detail: `O Produto com código de barra ${codigoBarra} já foi adicionado à cotação. Feche essa janela e procure o produto para alterar a quantidade`, 
-            life: 3000 
+          this.$toast.add({
+            severity: "warn",
+            summary: `Produto já existe na cotação.`,
+            detail: `O Produto com código de barra ${codigoBarra} já foi adicionado à cotação. Feche essa janela e procure o produto para alterar a quantidade`,
+            life: 3000,
           });
-          return
+          return;
         }
       }
 
       const payloadRequisicao = {
         codigo_barra: itens,
         id_cotacao: `${this.idCotacaoLocal}`,
-      }
+      };
 
-      await api.post(`/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`, payloadRequisicao)
-      this.$toast.add({ 
-        severity: 'success', 
-        summary: `Sucesso ao adicionar produtos`, 
-        detail: `Produtos adicionados com sucesso, ao fechar, confira na lista`, 
-        life: 3000 
+      await api.post(
+        `/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`,
+        payloadRequisicao
+      );
+      this.$toast.add({
+        severity: "success",
+        summary: `Sucesso ao adicionar produtos`,
+        detail: `Produtos adicionados com sucesso, ao fechar, confira na lista`,
+        life: 3000,
       });
-      this.resetarNovoProdutoAdicionado()
+      this.resetarNovoProdutoAdicionado();
     },
 
     /**
@@ -2076,34 +2915,37 @@ export default defineComponent({
      */
     async adicionarProduto() {
       if (this.modoSelecaoMultipla) {
-        return await this.adicionarProdutosMultiplos()
+        return await this.adicionarProdutosMultiplos();
       }
 
       try {
-
-        if(!this.addProduto.quantidade || !this.addProduto.tipo || !this.addProduto.codigo_barra){
-          this.$toast.add({ 
-            severity: 'info', 
-            summary: 'Dados faltantes', 
-            detail: `Preencha os campos obrigatórios para prosseguir`, 
-            life: 3000 
+        if (
+          !this.addProduto.quantidade ||
+          !this.addProduto.tipo ||
+          !this.addProduto.codigo_barra
+        ) {
+          this.$toast.add({
+            severity: "info",
+            summary: "Dados faltantes",
+            detail: `Preencha os campos obrigatórios para prosseguir`,
+            life: 3000,
           });
-          return
+          return;
         }
 
-        this.loadingAdd = true
+        this.loadingAdd = true;
         const payload_item = [
           this.addProduto.codigo_barra,
           this.addProduto.quantidade,
           this.addProduto.tipo,
           this.addProduto.qtd_unitaria_composicao,
-        ]
-        await this._enviarItensCotacao([payload_item])
-        await this.carregarProdutos()
+        ];
+        await this._enviarItensCotacao([payload_item]);
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAdd = false
+        this.loadingAdd = false;
       }
     },
 
@@ -2115,220 +2957,256 @@ export default defineComponent({
       try {
         if (!this.multiploConfig.quantidade || !this.multiploConfig.tipo) {
           this.$toast.add({
-            severity: 'info',
-            summary: 'Dados faltantes',
+            severity: "info",
+            summary: "Dados faltantes",
             detail: `Preencha os campos obrigatórios para prosseguir`,
-            life: 3000
+            life: 3000,
           });
-          return
+          return;
         }
 
         if (this.produtosSelecionadosMultiplos.length === 0) {
           this.$toast.add({
-            severity: 'info',
-            summary: 'Nenhum produto selecionado',
-            detail: 'Selecione ao menos um produto para continuar',
-            life: 3000
+            severity: "info",
+            summary: "Nenhum produto selecionado",
+            detail: "Selecione ao menos um produto para continuar",
+            life: 3000,
           });
-          return
+          return;
         }
 
-        this.loadingAdd = true
+        this.loadingAdd = true;
         const itens = this.produtosSelecionadosMultiplos.map((p: any) => [
           p.codigo_barra,
           this.multiploConfig.quantidade,
           this.multiploConfig.tipo,
           this.multiploConfig.qtd_unitaria_composicao,
-        ])
-        await this._enviarItensCotacao(itens)
-        this.toast(`${itens.length} produto(s) adicionado(s)!`)
-        this.cancelarSelecaoMultipla()
-        await this.carregarProdutos()
+        ]);
+        await this._enviarItensCotacao(itens);
+        this.toast(`${itens.length} produto(s) adicionado(s)!`);
+        this.cancelarSelecaoMultipla();
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAdd = false
+        this.loadingAdd = false;
       }
     },
 
     async adicionarProdutoInexistente() {
       try {
-        this.loadingAdd = true
+        this.loadingAdd = true;
         const payloadRequisicao = {
-          codigo_barra: [[this.addProdutoInexistente.nome, this.addProdutoInexistente.quantidade]],
-        }
-        await api.post(`/mvpu/cotacao/adicionarProdutoInexis/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, payloadRequisicao)
-        this.toast('Produto adicionado!')
-        this.showAddProdutoModalInexistente = false
-        this.addProdutoInexistente = { nome: '', quantidade: null }
-        await this.carregarProdutos()
+          codigo_barra: [
+            [
+              this.addProdutoInexistente.nome,
+              this.addProdutoInexistente.quantidade,
+            ],
+          ],
+        };
+        await api.post(
+          `/mvpu/cotacao/adicionarProdutoInexis/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          payloadRequisicao
+        );
+        this.toast("Produto adicionado!");
+        this.showAddProdutoModalInexistente = false;
+        this.addProdutoInexistente = { nome: "", quantidade: null };
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAdd = false
+        this.loadingAdd = false;
       }
     },
 
     abrirEditarProduto(p: any) {
-      this.editTarget = { ...p }
-      this.showEditModal = true
+      this.editTarget = { ...p };
+      this.showEditModal = true;
     },
 
     async salvarEdicao() {
       try {
-        this.loadingEdit = true
+        this.loadingEdit = true;
         await api.put(`/mvpu/cotacao/atualizarItem/${this.auth.loja.id_loja}`, {
           id_solicitado: this.editTarget.id_solicitado,
           id_cotacao: this.idCotacaoLocal,
           quantidade: this.editTarget.quantidade,
           tipo: this.editTarget.tipo || null,
-          qtd_unitaria_composicao: this.editTarget.qtd_unitaria_composicao || null,
-        })
-        this.toast('Produto atualizado!')
-        this.showEditModal = false
-        await this.carregarProdutos()
+          qtd_unitaria_composicao:
+            this.editTarget.qtd_unitaria_composicao || null,
+        });
+        this.toast("Produto atualizado!");
+        this.showEditModal = false;
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingEdit = false
+        this.loadingEdit = false;
       }
     },
 
     async confirmarDeleteProduto(p: any) {
       const alert = await alertController.create({
-        header: 'Remover produto',
+        header: "Remover produto",
         message: `Remover "${p.nome}" da cotação?`,
         buttons: [
-          { text: 'Cancelar', role: 'cancel' },
+          { text: "Cancelar", role: "cancel" },
           {
-            text: 'Remover',
-            role: 'destructive',
+            text: "Remover",
+            role: "destructive",
             handler: () => this.deletarProduto(p),
           },
         ],
-      })
-      await alert.present()
+      });
+      await alert.present();
     },
 
     async deletarProduto(p: any) {
       try {
-        await api.delete(`/mvpu/cotacao/deletarItem/${this.auth.loja.id_loja}`, {
-          data: { id_solicitado: [p.id_solicitado], id_cotacao: this.idCotacaoLocal },
-        })
-        this.toast('Produto removido.')
-        await this.carregarProdutos()
+        await api.delete(
+          `/mvpu/cotacao/deletarItem/${this.auth.loja.id_loja}`,
+          {
+            data: {
+              id_solicitado: [p.id_solicitado],
+              id_cotacao: this.idCotacaoLocal,
+            },
+          }
+        );
+        this.toast("Produto removido.");
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       }
     },
 
     // ─── MODAL OFERTAS ───────────────────────────────────────────
     abrirModalOfertas(item: any) {
-      this.ofertasModalItem    = item
-      this.ofertasModalSearch  = ''
-      this.ofertasModalOrdem   = 'asc'
-      this.ofertasModalSoEquiv = false
-      this.ofertasModalPage    = 1
-      this.showOfertasModal    = true
+      this.ofertasModalItem = item;
+      this.ofertasModalSearch = "";
+      this.ofertasModalOrdem = "asc";
+      this.ofertasModalSoEquiv = false;
+      this.ofertasModalPage = 1;
+      this.showOfertasModal = true;
     },
 
     fecharModalOfertas() {
-      this.showOfertasModal = false
-      this.ofertasModalItem = null
+      this.showOfertasModal = false;
+      this.ofertasModalItem = null;
     },
 
     async selecionarOfertaModal(item: any, oferta: any, opcao: number) {
-      await this.selecionarOferta(item, oferta, opcao)
+      await this.selecionarOferta(item, oferta, opcao);
       // atualiza o item do modal com os dados frescos
-      const atualizado = this.ofertas.find((o: any) => o.id_solicitado === item.id_solicitado)
-      if (atualizado) this.ofertasModalItem = atualizado
+      const atualizado = this.ofertas.find(
+        (o: any) => o.id_solicitado === item.id_solicitado
+      );
+      if (atualizado) this.ofertasModalItem = atualizado;
     },
 
     async removerOfertaModal(item: any, oferta: any, opcao: number) {
-      await this.removerOferta(item, oferta, opcao)
-      const atualizado = this.ofertas.find((o: any) => o.id_solicitado === item.id_solicitado)
-      if (atualizado) this.ofertasModalItem = atualizado
+      await this.removerOferta(item, oferta, opcao);
+      const atualizado = this.ofertas.find(
+        (o: any) => o.id_solicitado === item.id_solicitado
+      );
+      if (atualizado) this.ofertasModalItem = atualizado;
     },
 
     // ─── HELPERS CARD RESUMO ─────────────────────────────────────
     melhorOfertaItem(item: any): any {
-      if (!item.ofertas?.length) return null
-      let melhor: any = null
-      let melhorPreco = Infinity
+      if (!item.ofertas?.length) return null;
+      let melhor: any = null;
+      let melhorPreco = Infinity;
       for (const o of item.ofertas) {
-        const preco = Number(o.primeiro_preco ?? o.segundo_preco ?? Infinity)
-        if (preco < melhorPreco) { melhorPreco = preco; melhor = o }
+        const preco = Number(o.primeiro_preco ?? o.segundo_preco ?? Infinity);
+        if (preco < melhorPreco) {
+          melhorPreco = preco;
+          melhor = o;
+        }
       }
-      return melhor
+      return melhor;
     },
 
     melhorPrecoItem(item: any): number | null {
-      const o = this.melhorOfertaItem(item)
-      if (!o) return null
-      return Number(o.primeiro_preco ?? o.segundo_preco ?? null)
+      const o = this.melhorOfertaItem(item);
+      if (!o) return null;
+      return Number(o.primeiro_preco ?? o.segundo_preco ?? null);
     },
 
     // ─── OFERTAS / SELEÇÃO ───────────────────────────────────────
     async selecionarOferta(item: any, oferta: any, opcao: number) {
       try {
-        await api.post(`/mvpu/cotacao/confirmarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, {
-          pendentes: [{
-            id_solicitado: oferta.id_solicitado,
-            id_oferta: oferta.id_oferta,
-            opcao_1: opcao === 1,
-            opcao_2: opcao === 2,
-          }],
-        })
-        this.toast('Oferta selecionada!')
-        await this.carregarOfertas()
-        await this.carregarProdutos()
+        await api.post(
+          `/mvpu/cotacao/confirmarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          {
+            pendentes: [
+              {
+                id_solicitado: oferta.id_solicitado,
+                id_oferta: oferta.id_oferta,
+                opcao_1: opcao === 1,
+                opcao_2: opcao === 2,
+              },
+            ],
+          }
+        );
+        this.toast("Oferta selecionada!");
+        await this.carregarOfertas();
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       }
     },
 
     async removerOferta(item: any, oferta: any, opcao: number) {
       try {
-        const payload = { pendentes: [[oferta.id_resultado, opcao]] }
-        await api.delete(`/mvpu/cotacao/deletarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, { data: payload })
-        this.toast('Seleção removida.')
-        await this.carregarOfertas()
-        await this.carregarProdutos()
+        const payload = { pendentes: [[oferta.id_resultado, opcao]] };
+        await api.delete(
+          `/mvpu/cotacao/deletarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          { data: payload }
+        );
+        this.toast("Seleção removida.");
+        await this.carregarOfertas();
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       }
     },
 
     selecaoAutomatica() {
-      this.loadingAutoSelect = true
+      this.loadingAutoSelect = true;
       try {
-        const pendentes: any[] = []
+        const pendentes: any[] = [];
         for (const item of this.ofertas) {
-          if (item.status_fechamento === 'concluido') continue
-          if (!item.ofertas?.length) continue
+          if (item.status_fechamento === "concluido") continue;
+          if (!item.ofertas?.length) continue;
 
-          let melhor: any = null
-          let melhorPreco = Infinity
-          let melhorOpcao: number | null = null
+          let melhor: any = null;
+          let melhorPreco = Infinity;
+          let melhorOpcao: number | null = null;
 
           for (const oferta of item.ofertas) {
-            if (oferta.primeiro_quantidade != null && oferta.primeiro_preco != null) {
-              const preco = Number(oferta.primeiro_preco)
+            if (
+              oferta.primeiro_quantidade != null &&
+              oferta.primeiro_preco != null
+            ) {
+              const preco = Number(oferta.primeiro_preco);
               if (preco < melhorPreco) {
-                melhorPreco = preco
-                melhor = oferta
-                melhorOpcao = 1
+                melhorPreco = preco;
+                melhor = oferta;
+                melhorOpcao = 1;
               }
             }
           }
           if (!melhor) {
             for (const oferta of item.ofertas) {
-              if (oferta.segundo_quantidade != null && oferta.segundo_preco != null) {
-                const preco = Number(oferta.segundo_preco)
+              if (
+                oferta.segundo_quantidade != null &&
+                oferta.segundo_preco != null
+              ) {
+                const preco = Number(oferta.segundo_preco);
                 if (preco < melhorPreco) {
-                  melhorPreco = preco
-                  melhor = oferta
-                  melhorOpcao = 2
+                  melhorPreco = preco;
+                  melhor = oferta;
+                  melhorOpcao = 2;
                 }
               }
             }
@@ -2340,128 +3218,206 @@ export default defineComponent({
               id_oferta: melhor.id_oferta,
               opcao_1: melhorOpcao === 1,
               opcao_2: melhorOpcao === 2,
-            })
+            });
           }
         }
 
         if (pendentes.length === 0) {
-          this.toast('Nenhuma oferta válida para seleção automática.', 'error')
-          return
+          this.toast("Nenhuma oferta válida para seleção automática.", "error");
+          return;
         }
 
-        api.post(`/mvpu/cotacao/confirmarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, { pendentes })
+        api
+          .post(
+            `/mvpu/cotacao/confirmarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+            { pendentes }
+          )
           .then(() => {
-            this.toast(`${pendentes.length} oferta(s) selecionadas automaticamente!`)
-            this.carregarOfertas()
-            this.carregarProdutos()
+            this.toast(
+              `${pendentes.length} oferta(s) selecionadas automaticamente!`
+            );
+            this.carregarOfertas();
+            this.carregarProdutos();
           })
-          .catch((e: any) => exibeErro(e, this.$toast))
+          .catch((e: any) => exibeErro(e, this.$toast));
       } finally {
-        this.loadingAutoSelect = false
+        this.loadingAutoSelect = false;
       }
     },
 
     async removerTodasSelecoes() {
-      this.loadingAutoSelect = true
-      const pendentes: any[] = []
+      this.loadingAutoSelect = true;
+      const pendentes: any[] = [];
       try {
         for (const item of this.ofertas) {
-          if (!item.ofertas?.length) continue
+          if (!item.ofertas?.length) continue;
           for (const oferta of item.ofertas) {
-            if (!oferta.id_resultado) continue
-            if (oferta.opcao_1) pendentes.push([oferta.id_resultado, oferta.opcao_1])
-            if (oferta.opcao_2) pendentes.push([oferta.id_resultado, oferta.opcao_2])
+            if (!oferta.id_resultado) continue;
+            if (oferta.opcao_1)
+              pendentes.push([oferta.id_resultado, oferta.opcao_1]);
+            if (oferta.opcao_2)
+              pendentes.push([oferta.id_resultado, oferta.opcao_2]);
           }
         }
-        await api.delete(`/mvpu/cotacao/deletarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, {
-          data: { pendentes },
-        })
-        this.toast('Seleção removida.')
-        await this.carregarOfertas()
-        await this.carregarProdutos()
+        await api.delete(
+          `/mvpu/cotacao/deletarPendente/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          {
+            data: { pendentes },
+          }
+        );
+        this.toast("Seleção removida.");
+        await this.carregarOfertas();
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
       } finally {
-        this.loadingAutoSelect = false
+        this.loadingAutoSelect = false;
       }
     },
 
     // ─── FATURAMENTO EXTRA ───────────────────────────────────────
     abrirFaturamentoExtra(item: any) {
-      this.fatExtra = { id_vendedor: '', id_produto: null, nome: '', quantidade: null, tipo: null, preco: null, searchProd: '' }
-      this.catalogoExtra = []
-      this.showFatExtra = true
+      this.fatExtra = {
+        id_vendedor: "",
+        id_produto: null,
+        nome: "",
+        quantidade: null,
+        tipo: null,
+        preco: null,
+        searchProd: "",
+      };
+      this.catalogoExtra = [];
+      this.showFatExtra = true;
     },
 
     async confirmarFatExtra() {
-      this.toast('Produto extra adicionado ao faturamento do vendedor!')
-      this.showFatExtra = false
+      this.toast("Produto extra adicionado ao faturamento do vendedor!");
+      this.showFatExtra = false;
     },
 
     // ─── PERÍODO ─────────────────────────────────────────────────
+    preencherPeriodo() {
+      const inicio = interpretarData(this.cabecalho?.inicio_cotacao);
+      const final = interpretarData(this.cabecalho?.final_cotacao);
+      const hoje = dataLocal(new Date());
+      this.periodoEdit = {
+        inicio: inicio ? dataLocal(inicio) : final ? dataLocal(final) : hoje,
+        final: final ? dataLocal(final) : inicio ? dataLocal(inicio) : hoje,
+      };
+      if (this.periodoEdit.final < this.periodoEdit.inicio) {
+        this.periodoEdit.final = this.periodoEdit.inicio;
+      }
+    },
+    abrirPeriodoModal() {
+      if (this.estaConcluido) return;
+      this.preencherPeriodo();
+      this.showPeriodoModal = true;
+    },
+    atualizarDataPeriodo(campo: "inicio" | "final", evento: CustomEvent) {
+      const valor = evento.detail.value;
+      if (typeof valor !== "string") return;
+      const data = interpretarData(valor.slice(0, 10));
+      if (!data) return;
+      this.periodoEdit[campo] = dataLocal(data);
+      if (
+        campo === "inicio" &&
+        this.periodoEdit.final < this.periodoEdit.inicio
+      ) {
+        this.periodoEdit.final = this.periodoEdit.inicio;
+      }
+    },
     async salvarPeriodo() {
+      if (this.loadingPeriodo || this.estaConcluido) return;
+      const inicio = interpretarData(this.periodoEdit.inicio);
+      const final = interpretarData(this.periodoEdit.final);
+      if (!inicio || !final) {
+        this.toast(
+          "Selecione datas válidas para o início e o término.",
+          "error"
+        );
+        return;
+      }
+      if (inicio.getTime() > final.getTime()) {
+        this.toast(
+          "A data de término deve ser igual ou posterior à data de início.",
+          "error"
+        );
+        return;
+      }
+      this.loadingPeriodo = true;
       try {
         const payload = {
-          update_tipo: 'periodo',
-          inicio_cotacao: new Date(this.periodoEdit.inicio).getTime(),
-          final_cotacao: new Date(this.periodoEdit.final).getTime(),
+          update_tipo: "periodo",
+          inicio_cotacao: inicio.getTime(),
+          final_cotacao: final.getTime(),
+        };
+        await api.put(
+          `/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`,
+          payload
+        );
+        if (this.cabecalho) {
+          this.cabecalho.inicio_cotacao = payload.inicio_cotacao;
+          this.cabecalho.final_cotacao = payload.final_cotacao;
         }
-        if (payload.inicio_cotacao > payload.final_cotacao) {
-          this.toast('A data final deve ser maior que a data inicial.', 'error')
-          return
-        }
-        await api.put(`/mvpu/cotacao/alterarEstadoCotacao/${this.auth.loja.id_loja}/${this.idCotacaoLocal}`, payload)
-        this.toast('Período atualizado!')
-        this.showPeriodoModal = false
-        await this.carregarProdutos()
+        this.toast("Período da cotação atualizado!");
+        this.loadingPeriodo = false;
+        this.showPeriodoModal = false;
+        await this.carregarProdutos();
       } catch (e) {
-        exibeErro(e, this.$toast)
+        exibeErro(e, this.$toast);
+      } finally {
+        this.loadingPeriodo = false;
       }
     },
 
     // ─── SUGESTÕES ───────────────────────────────────────────────
     toggleAllSugestoes(e: any) {
-      this.sugestoesSelecionadas = e.target.checked ? this.sugestoes.map((s: any) => s.id_produto) : []
+      this.sugestoesSelecionadas = e.target.checked
+        ? this.sugestoes.map((s: any) => s.id_produto)
+        : [];
     },
 
     async adicionarSugestoes() {
-      const selecionados = this.sugestoes.filter((s: any) => this.sugestoesSelecionadas.includes(s.id_produto))
+      const selecionados = this.sugestoes.filter((s: any) =>
+        this.sugestoesSelecionadas.includes(s.id_produto)
+      );
       for (const s of selecionados) {
         try {
-          await api.post(`/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`, {
-            id_cotacao: this.idCotacaoLocal,
-            id_produto: s.id_produto,
-            quantidade: s.qtd_sugerida || 1,
-          })
+          await api.post(
+            `/mvpu/cotacao/adicionarItem/${this.auth.loja.id_loja}`,
+            {
+              id_cotacao: this.idCotacaoLocal,
+              id_produto: s.id_produto,
+              quantidade: s.qtd_sugerida || 1,
+            }
+          );
         } catch (e) {
-          exibeErro(e, this.$toast)
+          exibeErro(e, this.$toast);
         }
       }
-      this.toast(`${selecionados.length} produto(s) adicionado(s) à cotação!`)
-      this.sugestoesSelecionadas = []
-      await this.carregarProdutos()
-      this.activeTab = 'produtos'
+      this.toast(`${selecionados.length} produto(s) adicionado(s) à cotação!`);
+      this.sugestoesSelecionadas = [];
+      await this.carregarProdutos();
+      this.activeTab = "produtos";
     },
 
-    
     handleBarcodeScanner(event) {
-      if (event.key === 'Enter') {
-        return
+      if (event.key === "Enter") {
+        return;
       }
 
       // Buffer apenas dígitos: a regra de detecção de leitor de código de
       // barras é baseada em sequência numérica (mín. 8 números numa rajada).
       if (/^[0-9]$/.test(event.key)) {
-        this.barcodeBuffer += event.key
-        this.lastBarcodeKeyTime = Date.now()
+        this.barcodeBuffer += event.key;
+        this.lastBarcodeKeyTime = Date.now();
       }
     },
 
     async onBarcodeScanned(codigo) {
-
       // Exemplo para catálogo
-      this.searchCatalogo = codigo
-      await this.buscarCatalogoImediato(codigo)
+      this.searchCatalogo = codigo;
+      await this.buscarCatalogoImediato(codigo);
 
       // Exemplo para faturamento extra
       // this.fatExtra.searchProd = codigo
@@ -2469,57 +3425,50 @@ export default defineComponent({
     },
 
     async verificarScanner() {
-    if (!this.barcodeBuffer) return
+      if (!this.barcodeBuffer) return;
 
-    const agora = Date.now()
+      const agora = Date.now();
 
-    // Nenhuma tecla recebida nos últimos 100ms
-    if (agora - this.lastBarcodeKeyTime > 100) {
-      const codigo = this.barcodeBuffer
+      // Nenhuma tecla recebida nos últimos 100ms
+      if (agora - this.lastBarcodeKeyTime > 100) {
+        const codigo = this.barcodeBuffer;
 
-      this.barcodeBuffer = ''
+        this.barcodeBuffer = "";
 
-      // Sequência com pelo menos 8 dígitos numéricos chegou de uma vez:
-      // SUBSTITUI qualquer código/busca anterior pelo novo, em vez de
-      // concatenar ou manter o que já estava no campo.
-      if (codigo.length >= 8) {
+        // Sequência com pelo menos 8 dígitos numéricos chegou de uma vez:
+        // SUBSTITUI qualquer código/busca anterior pelo novo, em vez de
+        // concatenar ou manter o que já estava no campo.
+        if (codigo.length >= 8) {
+          this.showAddProdutoModal = true;
 
-
-        this.showAddProdutoModal = true
-
-        this.searchCatalogo = codigo
-        setTimeout(()=>{
-          this.searchCatalogo = codigo
-        },150)
-        await this.buscarCatalogoImediato(codigo)
+          this.searchCatalogo = codigo;
+          setTimeout(() => {
+            this.searchCatalogo = codigo;
+          }, 150);
+          await this.buscarCatalogoImediato(codigo);
+        }
       }
-    }
-
-  }
-
+    },
   },
 
   ionViewDidEnter() {
-    const authStore = useAuthStore()
-    if (!authStore.token && !localStorage.getItem('token')) {
-      this.$router.replace({ name: 'Login' })
-      return
+    const authStore = useAuthStore();
+    if (!authStore.token && !localStorage.getItem("token")) {
+      this.$router.replace({ name: "Login" });
+      return;
     }
-    this.auth = authStore
+    this.auth = authStore;
 
-    const query = this.$route?.query || {}
+    const query = this.$route?.query || {};
 
+    document.addEventListener("keydown", this.handleBarcodeScanner);
 
-    document.addEventListener('keydown', this.handleBarcodeScanner)
+    this.barcodeInterval = setInterval(() => {
+      this.verificarScanner();
+    }, 50);
 
-      this.barcodeInterval = setInterval(() => {
-        this.verificarScanner()
-      }, 50)
-
-    
-
-    this.idCotacaoLocal = this.id_cotacao || Number(query.id_cotacao)
-    this.nomeCotacao = query.nome_cotacao as string
+    this.idCotacaoLocal = this.id_cotacao || Number(query.id_cotacao);
+    this.nomeCotacao = query.nome_cotacao as string;
 
     if (query.status_cotacao) {
       this.cabecalho = {
@@ -2528,54 +3477,67 @@ export default defineComponent({
         status_cotacao: query.status_cotacao,
         inicio_cotacao: query.inicio_cotacao,
         final_cotacao: query.final_cotacao,
-      }
-      if (query.inicio_cotacao) {
-        const ini = new Date(Number(query.inicio_cotacao))
-        const fin = new Date(Number(query.final_cotacao))
-        this.periodoEdit.inicio = ini.toISOString().split('T')[0]
-        this.periodoEdit.final = fin.toISOString().split('T')[0]
-      }
+      };
+      this.preencherPeriodo();
     }
 
     // Verifica permissão de câmera silenciosamente ao entrar na tela
     // (não exibe diálogo — apenas atualiza this.permissaoCamera)
-    this.verificarPermissaoCameraAoEntrar()
+    this.verificarPermissaoCameraAoEntrar();
 
     setTimeout(() => {
-      this.carregarProdutos()
-      this.carregarOfertas()
-      this.carregarVendedores()
-    }, 100)
+      this.carregarProdutos();
+      this.carregarOfertas();
+      this.carregarVendedores();
+    }, 100);
   },
-
 
   async ionViewWillLeave() {
     // Garante que o scanner é parado ao sair da tela (libera câmera)
-    await this._pararScanner()
-    this.scannerAtivo = false
+    await this._pararScanner();
+    this.scannerAtivo = false;
 
     if (this.barcodeInterval) {
-      clearInterval(this.barcodeInterval)
-      this.barcodeInterval = null
+      clearInterval(this.barcodeInterval);
+      this.barcodeInterval = null;
     }
   },
-})
+});
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap");
 
 /* ══ FONTS ══ */
-.poppins-regular  { font-family: 'Poppins', sans-serif; font-weight: 400; }
-.poppins-medium   { font-family: 'Poppins', sans-serif; font-weight: 500; }
-.poppins-semibold { font-family: 'Poppins', sans-serif; font-weight: 600; }
-.mono { font-family: 'DM Mono', monospace; }
-.muted { color: #94a3b8; }
-.text-center { text-align: center; }
+.poppins-regular {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+}
+.poppins-medium {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+}
+.poppins-semibold {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+.mono {
+  font-family: "DM Mono", monospace;
+}
+.muted {
+  color: #94a3b8;
+}
+.text-center {
+  text-align: center;
+}
 
 /* ══ PAGE ══ */
-.console-page { background: #fff; }
-.console-content { --background: #f8fafc; }
+.console-page {
+  background: #fff;
+}
+.console-content {
+  --background: #f8fafc;
+}
 
 /* ══ HEADER ══ */
 .cc-header {
@@ -2586,52 +3548,140 @@ export default defineComponent({
   background: #fff;
   border-bottom: 1px solid #f1f5f9;
 }
-.cc-header-left { display: flex; align-items: center; gap: 10px; }
-.back-btn {
-  width: 34px; height: 34px;
-  background: rgba(255,128,73,.1);
-  border: none; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  color: #ff8049; flex-shrink: 0;
+.cc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.back-btn span { font-size: 18px; }
-.cotacao-identity { display: flex; flex-direction: column; }
-.cotacao-label { font-size: 9px; font-weight: 700; letter-spacing: .1em; color: #ff8049; text-transform: uppercase; }
-.cotacao-name { font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.2; max-width: 170px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-header-right { display: flex; align-items: center; gap: 7px; }
-.meta-id { font-size: 11px; color: #94a3b8; font-family: 'DM Mono', monospace; }
+.back-btn {
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 128, 73, 0.1);
+  border: none;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff8049;
+  flex-shrink: 0;
+}
+.back-btn span {
+  font-size: 18px;
+}
+.cotacao-identity {
+  display: flex;
+  flex-direction: column;
+}
+.cotacao-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ff8049;
+  text-transform: uppercase;
+}
+.cotacao-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+  max-width: 170px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.meta-id {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: "DM Mono", monospace;
+}
 
 /* ══ STATUS PILL ══ */
 .status-pill {
-  display: flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
   font-size: 10px;
 }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.status-aberta    { background: rgba(16,185,129,.15); color: #059669; }
-.status-aberta .status-dot { background: #10b981; }
-.status-fechada   { background: rgba(0,0,0,.08); color: #64748b; }
-.status-fechada .status-dot { background: #94a3b8; }
-.status-finalizada { background: rgba(99,102,241,.15); color: #4f46e5; }
-.status-finalizada .status-dot { background: #818cf8; }
-.status-concluida  { background: rgba(16,185,129,.15); color: #059669; }
-.status-concluida .status-dot { background: #10b981; }
-.status-pendente  { background: rgba(245,158,11,.15); color: #d97706; }
-.status-pendente .status-dot { background: #f59e0b; }
-.status-concluido { background: rgba(16,185,129,.15); color: #059669; }
-.status-concluido .status-dot { background: #10b981; }
-.status-none { background: rgba(0,0,0,.05); color: #64748b; }
-.status-none .status-dot { background: #cbd5e1; }
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-aberta {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+.status-aberta .status-dot {
+  background: #10b981;
+}
+.status-fechada {
+  background: rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+.status-fechada .status-dot {
+  background: #94a3b8;
+}
+.status-finalizada {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4f46e5;
+}
+.status-finalizada .status-dot {
+  background: #818cf8;
+}
+.status-concluida {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+.status-concluida .status-dot {
+  background: #10b981;
+}
+.status-pendente {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+.status-pendente .status-dot {
+  background: #f59e0b;
+}
+.status-concluido {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+.status-concluido .status-dot {
+  background: #10b981;
+}
+.status-none {
+  background: rgba(0, 0, 0, 0.05);
+  color: #64748b;
+}
+.status-none .status-dot {
+  background: #cbd5e1;
+}
 
 /* ══ PERÍODO ══ */
 .periodo-bar {
-  display: flex; align-items: center; gap: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   padding: 8px 16px;
   background: #fff7ed;
   border-bottom: 1px solid #fed7aa;
 }
-.periodo-icon { font-size: 14px; color: #ff8049; }
-.periodo-text { font-size: 12px; color: #c2410c; }
+.periodo-icon {
+  font-size: 14px;
+  color: #ff8049;
+}
+.periodo-text {
+  font-size: 12px;
+  color: #c2410c;
+}
 
 /* ══ HEADER ACTIONS ══ */
 .header-actions {
@@ -2644,29 +3694,70 @@ export default defineComponent({
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.header-actions::-webkit-scrollbar { display: none; }
+.header-actions::-webkit-scrollbar {
+  display: none;
+}
 
 /* ══ ACTION BUTTONS ══ */
 .action-btn {
-  display: flex; align-items: center; gap: 5px;
-  padding: 8px 14px; border-radius: 10px;
-  font-size: 12px; font-weight: 500;
-  border: none; cursor: pointer;
-  white-space: nowrap; flex-shrink: 0;
-  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
 }
-.action-btn span { font-size: 16px; }
-.action-btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn-primary    { background: #ff8049; color: #fff; }
-.btn-primary:not(:disabled):active { background: #e67341; }
-.btn-outline    { background: #fff; color: #ff8049; border: 1px solid #ff8049; }
-.btn-outline:not(:disabled):active { background: #fff7ed; }
-.btn-outline-gray { background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
-.btn-info       { background: #6366f1; color: #fff; }
-.btn-info:not(:disabled):active { background: #4f46e5; }
-.btn-success    { background: #10b981; color: #fff; }
-.btn-success:not(:disabled):active { background: #059669; }
-.full-w { flex: 1; justify-content: center; }
+.action-btn span {
+  font-size: 16px;
+}
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: #ff8049;
+  color: #fff;
+}
+.btn-primary:not(:disabled):active {
+  background: #e67341;
+}
+.btn-outline {
+  background: #fff;
+  color: #ff8049;
+  border: 1px solid #ff8049;
+}
+.btn-outline:not(:disabled):active {
+  background: #fff7ed;
+}
+.btn-outline-gray {
+  background: #fff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.btn-info {
+  background: #6366f1;
+  color: #fff;
+}
+.btn-info:not(:disabled):active {
+  background: #4f46e5;
+}
+.btn-success {
+  background: #10b981;
+  color: #fff;
+}
+.btn-success:not(:disabled):active {
+  background: #059669;
+}
+.full-w {
+  flex: 1;
+  justify-content: center;
+}
 
 /* ══ TABS ══ */
 .tabs-bar {
@@ -2677,317 +3768,793 @@ export default defineComponent({
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-.tabs-bar::-webkit-scrollbar { display: none; }
+.tabs-bar::-webkit-scrollbar {
+  display: none;
+}
 .tab-btn {
-  display: flex; align-items: center; gap: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   padding: 11px 14px;
-  background: transparent; border: none;
-  color: #94a3b8; font-size: 12px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all .2s;
-  white-space: nowrap; flex-shrink: 0;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-.tab-btn.active { color: #ff8049; border-bottom-color: #ff8049; }
-.tab-btn.tab-disable { opacity: .4; cursor: not-allowed; }
-.tab-icon { font-size: 16px; }
-.tab-label { }
+.tab-btn.active {
+  color: #ff8049;
+  border-bottom-color: #ff8049;
+}
+.tab-btn.tab-disable {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tab-icon {
+  font-size: 16px;
+}
+.tab-label {
+}
 .tab-badge {
-  background: rgba(255,128,73,.15); color: #ff8049;
-  font-size: 9px; font-weight: 700;
-  padding: 1px 5px; border-radius: 8px;
+  background: rgba(255, 128, 73, 0.15);
+  color: #ff8049;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
 }
 
 /* ══ TAB PANE ══ */
 .tab-pane {
   padding: 14px 14px 120px;
-  animation: fadeIn .2s ease;
+  animation: fadeIn 0.2s ease;
 }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* ══ PANE HEADER ══ */
 .pane-header {
-  display: flex; align-items: center; gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
-
-@media(max-width: 600px){
-  .pane-header{
+@media (max-width: 600px) {
+  .pane-header {
     display: flex;
     flex-direction: column;
     width: 100%;
     align-items: start;
   }
-  .search-wrap{
+  .search-wrap {
     width: 100%;
   }
-  .pane-btn-group{
+  .pane-btn-group {
     width: 100%;
   }
-  
 }
 
 /* ══ SEARCH ══ */
 .search-wrap {
-  display: flex; align-items: center; gap: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 9px 12px;
   flex: 1;
 }
-.search-wrap-flex { flex: 1; }
-.sb-icon { font-size: 17px; color: #94a3b8; flex-shrink: 0; }
-.sb-input { flex: 1; border: none; background: transparent; font-size: 13px; color: #334155; outline: none; width: 100%; }
-.sb-input::placeholder { color: #cbd5e1; }
-.sb-clear { background: none; border: none; padding: 0; display: flex; align-items: center; }
-.sb-clear span { font-size: 16px; color: #cbd5e1; }
+.search-wrap-flex {
+  flex: 1;
+}
+.sb-icon {
+  font-size: 17px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.sb-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #334155;
+  outline: none;
+  width: 100%;
+}
+.sb-input::placeholder {
+  color: #cbd5e1;
+}
+.sb-clear {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.sb-clear span {
+  font-size: 16px;
+  color: #cbd5e1;
+}
 
 /* Botão câmera */
-.search-camera-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.camera-btn {
-  width: 42px; height: 42px;
-  background: #ff8049; border: none; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; flex-shrink: 0; cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255,128,73,.35);
-  transition: all .2s;
+.search-camera-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-.camera-btn span { font-size: 20px; }
-.camera-btn:active { background: #e67341; transform: scale(.95); }
+.camera-btn {
+  width: 42px;
+  height: 42px;
+  background: #ff8049;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 128, 73, 0.35);
+  transition: all 0.2s;
+}
+.camera-btn span {
+  font-size: 20px;
+}
+.camera-btn:active {
+  background: #e67341;
+  transform: scale(0.95);
+}
 
 /* FAB scanner no pane de produtos */
-.pane-btn-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.fab-scan-btn {
-  width: 38px; height: 38px;
-  background: #ff8049; border: none; border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; cursor: pointer;
-  box-shadow: 0 4px 10px rgba(255,128,73,.3);
-  transition: all .2s; flex-shrink: 0;
+.pane-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.fab-scan-btn span { font-size: 20px; }
-.fab-scan-btn:active { transform: scale(.93); }
+.fab-scan-btn {
+  width: 38px;
+  height: 38px;
+  background: #ff8049;
+  border: none;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 128, 73, 0.3);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.fab-scan-btn span {
+  font-size: 20px;
+}
+.fab-scan-btn:active {
+  transform: scale(0.93);
+}
 
 /* ══ LOADING / EMPTY ══ */
-.loading-state, .empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 50px 20px; text-align: center; gap: 10px;
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  text-align: center;
+  gap: 10px;
 }
-.loading-state p { font-size: 13px; color: #94a3b8; margin: 6px 0 0; }
+.loading-state p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 6px 0 0;
+}
 .empty-icon-wrap {
-  width: 64px; height: 64px;
-  background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 20px;
-  display: flex; align-items: center; justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.empty-icon-wrap span { font-size: 28px; color: #cbd5e1; }
-.empty-state h3 { font-size: 15px; color: #334155; margin: 0; }
-.empty-state p  { font-size: 13px; color: #94a3b8; margin: 0; max-width: 240px; line-height: 1.5; }
+.empty-icon-wrap span {
+  font-size: 28px;
+  color: #cbd5e1;
+}
+.empty-state h3 {
+  font-size: 15px;
+  color: #334155;
+  margin: 0;
+}
+.empty-state p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  max-width: 240px;
+  line-height: 1.5;
+}
 
 /* ══ PRODUTOS LIST (mobile cards) ══ */
-.produtos-list { display: flex; flex-direction: column; gap: 10px; }
+.produtos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .produto-card {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   padding: 13px 14px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
-.pc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-.pc-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.pc-name { font-size: 13px; color: #1e293b; }
-.pc-barcode { font-size: 11px; }
-.pc-cat { font-size: 11px; color: #94a3b8; }
-.pc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.pc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.pc-name {
+  font-size: 13px;
+  color: #1e293b;
+}
+.pc-barcode {
+  font-size: 11px;
+}
+.pc-cat {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.pc-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .icon-btn {
-  width: 30px; height: 30px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  border: none; cursor: pointer; transition: all .2s;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.icon-btn span { font-size: 17px; }
-.icon-btn.edit { background: #f1f5f9; color: #64748b; }
-.icon-btn.edit:active { background: #ff8049; color: #fff; }
-.icon-btn.del  { background: rgba(239,68,68,.1); color: #ef4444; }
-.icon-btn.del:active  { background: #ef4444; color: #fff; }
-.locked-hint { font-size: 16px; color: #cbd5e1; }
+.icon-btn span {
+  font-size: 17px;
+}
+.icon-btn.edit {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.icon-btn.edit:active {
+  background: #ff8049;
+  color: #fff;
+}
+.icon-btn.del {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+.icon-btn.del:active {
+  background: #ef4444;
+  color: #fff;
+}
+.locked-hint {
+  font-size: 16px;
+  color: #cbd5e1;
+}
 .pc-details {
-  display: flex; flex-wrap: wrap; gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-top: 10px;
   border-top: 1px solid #f1f5f9;
 }
-.pc-detail-item { display: flex; flex-direction: column; gap: 1px; min-width: 60px; }
-.pc-detail-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
-.pc-detail-val { font-size: 12px; color: #475569; }
-.type-tag {
-  display: inline-block; background: #f1f5f9; color: #475569;
-  padding: 1px 7px; border-radius: 6px; font-size: 11px; text-transform: capitalize;
+.pc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 60px;
 }
-.margem-badge { display: inline-block; padding: 1px 7px; border-radius: 6px; font-size: 11px; }
-.margem-badge.pos { background: rgba(16,185,129,.15); color: #059669; }
-.margem-badge.neg { background: rgba(239,68,68,.15); color: #dc2626; }
+.pc-detail-label {
+  font-size: 9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.pc-detail-val {
+  font-size: 12px;
+  color: #475569;
+}
+.type-tag {
+  display: inline-block;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-transform: capitalize;
+}
+.margem-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.margem-badge.pos {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+.margem-badge.neg {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
 
 /* ══ OFERTAS ══ */
-.ofertas-list { display: flex; flex-direction: column; gap: 12px; }
-.oferta-card {
-  background: #fff; border: 1px solid #e2e8f0;
-  border-radius: 16px; overflow: hidden;
+.ofertas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.oferta-card.pendente  { border-color: rgba(245,158,11,.5); }
-.oferta-card.concluido { border-color: rgba(16,185,129,.5); }
+.oferta-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.oferta-card.pendente {
+  border-color: rgba(245, 158, 11, 0.5);
+}
+.oferta-card.concluido {
+  border-color: rgba(16, 185, 129, 0.5);
+}
 .oferta-card-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   padding: 12px 14px;
   background: #fafafa;
   border-bottom: 1px solid #f1f5f9;
   gap: 8px;
 }
-.oih-name { font-size: 13px; color: #1e293b; display: block; }
-.oih-code { font-size: 10px; display: block; }
-.oih-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-.oih-qty { font-size: 11px; color: #94a3b8; }
-.vendedores-list { padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
-.no-ofertas { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; padding: 8px 0; }
-.no-ofertas span { font-size: 18px; }
-.vendedor-oferta {
-  background: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 12px; padding: 11px 12px;
-  transition: border-color .2s;
+.oih-name {
+  font-size: 13px;
+  color: #1e293b;
+  display: block;
 }
-.vendedor-oferta.selected { border-color: #10b981; background: rgba(16,185,129,.03); }
-.vo-vendor { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 8px; flex-wrap: wrap; }
-.vo-icon { font-size: 16px; color: #ff8049; }
-.vo-email { font-size: 11px; }
-.indicador-oferta { font-size: 11px; color: #64748b; margin: 8px 0 4px; }
-.opcao-mini {
-  display: flex; flex-direction: column; gap: 4px;
-  background: #fff; border: 1px solid #e2e8f0;
-  border-radius: 10px; padding: 8px 10px; margin-bottom: 6px;
+.oih-code {
+  font-size: 10px;
+  display: block;
 }
-.opcao-mini.chosen { background: rgba(16,185,129,.07); border-color: #10b981; }
-.opcao-mini.eq { border-style: dashed; }
-.opcao-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .05em;
-  background: rgba(255,128,73,.12); color: #ff8049;
-  padding: 1px 6px; border-radius: 5px; width: fit-content;
+.oih-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
 }
-.opcao-label.eq { background: rgba(99,102,241,.12); color: #6366f1; }
-.opcao-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.opcao-item { font-size: 12px; color: #475569; }
-.chosen-badge { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #059669; }
-.chosen-badge span { font-size: 14px; }
-.vo-obs { font-size: 12px; color: #64748b; font-style: italic; margin-top: 6px; display: flex; align-items: flex-start; gap: 5px; }
-.obs-icon { font-size: 14px; }
-.vo-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
-.sel-btn, .desel-btn {
-  display: flex; align-items: center; gap: 4px;
-  padding: 6px 12px; border-radius: 8px;
-  font-size: 11px; border: none; cursor: pointer;
-  transition: all .2s;
+.oih-qty {
+  font-size: 11px;
+  color: #94a3b8;
 }
-.sel-btn  { background: rgba(16,185,129,.1); color: #059669; border: 1px solid rgba(16,185,129,.3); }
-.sel-btn:active  { background: #10b981; color: #fff; }
-.sel-btn.eq { background: rgba(99,102,241,.1); color: #4f46e5; border-color: rgba(99,102,241,.3); }
-.sel-btn.eq:active { background: #6366f1; color: #fff; }
-.desel-btn { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.25); }
-.desel-btn:active { background: #ef4444; color: #fff; }
-.extra-faturamento { padding: 6px 14px 12px; }
-.link-btn {
-  display: flex; align-items: center; gap: 5px;
-  background: none; border: none; color: #ff8049;
-  cursor: pointer; font-size: 12px; padding: 0;
-}
-.link-btn span { font-size: 16px; }
-.conclude-bar {
-  display: flex; justify-content: space-between; align-items: center;
-  background: #fff; border: 1px solid #e2e8f0;
-  border-radius: 14px; padding: 12px 14px; margin-top: 14px;
+.vendedores-list {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
-.conclude-hint { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 6px; }
-.conclude-hint span { font-size: 16px; }
+.no-ofertas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 8px 0;
+}
+.no-ofertas span {
+  font-size: 18px;
+}
+.vendedor-oferta {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 11px 12px;
+  transition: border-color 0.2s;
+}
+.vendedor-oferta.selected {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.03);
+}
+.vo-vendor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.vo-icon {
+  font-size: 16px;
+  color: #ff8049;
+}
+.vo-email {
+  font-size: 11px;
+}
+.indicador-oferta {
+  font-size: 11px;
+  color: #64748b;
+  margin: 8px 0 4px;
+}
+.opcao-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.opcao-mini.chosen {
+  background: rgba(16, 185, 129, 0.07);
+  border-color: #10b981;
+}
+.opcao-mini.eq {
+  border-style: dashed;
+}
+.opcao-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(255, 128, 73, 0.12);
+  color: #ff8049;
+  padding: 1px 6px;
+  border-radius: 5px;
+  width: fit-content;
+}
+.opcao-label.eq {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+}
+.opcao-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.opcao-item {
+  font-size: 12px;
+  color: #475569;
+}
+.chosen-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #059669;
+}
+.chosen-badge span {
+  font-size: 14px;
+}
+.vo-obs {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.obs-icon {
+  font-size: 14px;
+}
+.vo-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.sel-btn,
+.desel-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sel-btn {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.sel-btn:active {
+  background: #10b981;
+  color: #fff;
+}
+.sel-btn.eq {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+.sel-btn.eq:active {
+  background: #6366f1;
+  color: #fff;
+}
+.desel-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.desel-btn:active {
+  background: #ef4444;
+  color: #fff;
+}
+.extra-faturamento {
+  padding: 6px 14px 12px;
+}
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: #ff8049;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+.link-btn span {
+  font-size: 16px;
+}
+.conclude-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 14px;
+  gap: 10px;
+}
+.conclude-hint {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.conclude-hint span {
+  font-size: 16px;
+}
 
 /* ══ VENDEDORES MOBILE ══ */
-.vendedores-list-mobile { display: flex; flex-direction: column; gap: 10px; }
-.vendedor-card-mobile {
-  background: #fff; border: 1px solid #e2e8f0;
-  border-radius: 16px; padding: 14px;
-  display: flex; align-items: center; gap: 12px;
+.vendedores-list-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.vc-avatar { position: relative; flex-shrink: 0; }
-.vc-avatar img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.vendedor-card-mobile {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.vc-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+.vc-avatar img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
 .vc-initials {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(255,128,73,.1); color: #ff8049;
-  display: flex; align-items: center; justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 128, 73, 0.1);
+  color: #ff8049;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 15px;
 }
-.vc-status { position: absolute; bottom: 1px; right: 1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; }
-.vc-status.ativo { background: #10b981; }
-.vc-status.inativo { background: #9ca3af; }
-.vc-info { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
-.vc-name { font-size: 13px; color: #1e293b; }
-.vc-user, .vc-email { font-size: 11px; }
-.vc-stats { display: flex; gap: 12px; flex-shrink: 0; }
-.vc-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.vc-stat b { font-size: 14px; color: #ff8049; }
-.vc-stat span { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
+.vc-status {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+.vc-status.ativo {
+  background: #10b981;
+}
+.vc-status.inativo {
+  background: #9ca3af;
+}
+.vc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.vc-name {
+  font-size: 13px;
+  color: #1e293b;
+}
+.vc-user,
+.vc-email {
+  font-size: 11px;
+}
+.vc-stats {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.vc-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.vc-stat b {
+  font-size: 14px;
+  color: #ff8049;
+}
+.vc-stat span {
+  font-size: 9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
 
 /* ══ MODAIS (bottom sheet) ══ */
 ion-modal.bottom-sheet {
   --border-radius: 20px 20px 0 0;
-  --box-shadow: 0 -4px 24px rgba(0,0,0,.1);
+  --box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1);
   align-items: flex-end;
 }
-.modal-content { --background: #fff; }
-.modal-handle {
-  width: 36px; height: 4px; background: #e2e8f0;
-  border-radius: 4px; margin: 10px auto 0;
+.modal-content {
+  --background: #fff;
 }
-.modal-box { padding: 0; }
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  margin: 10px auto 0;
+}
+.modal-box {
+  padding: 0;
+}
 .modal-header {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 14px 18px;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 15px; color: #1e293b;
+  font-size: 15px;
+  color: #1e293b;
 }
-.modal-close { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
-.modal-close span { font-size: 20px; }
-.modal-body { padding: 16px 18px; }
+.modal-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.modal-close span {
+  font-size: 20px;
+}
+.modal-body {
+  padding: 16px 18px;
+}
 .modal-footer {
-  display: flex; gap: 10px;
+  display: flex;
+  gap: 10px;
   padding: 14px 18px;
   border-top: 1px solid #f1f5f9;
 }
-.modal-prod-name { font-size: 14px; color: #ff8049; margin-bottom: 14px; }
-.modal-hint { font-size: 13px; color: #64748b; margin-bottom: 14px; line-height: 1.5; }
-.form-group { margin-bottom: 12px; }
+.modal-prod-name {
+  font-size: 14px;
+  color: #ff8049;
+  margin-bottom: 14px;
+}
+.modal-hint {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.form-group {
+  margin-bottom: 12px;
+}
 .form-label {
-  display: block; font-size: 10px; text-transform: uppercase;
-  letter-spacing: .5px; color: #ff8049; margin-bottom: 5px;
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #ff8049;
+  margin-bottom: 5px;
 }
 .form-input {
-  width: 100%; background: #f8fafc;
-  border: 1px solid #e2e8f0; border-radius: 10px;
-  padding: 10px 12px; font-size: 13px; color: #1e293b;
-  outline: none; font-family: 'Poppins', sans-serif;
-  transition: border-color .2s;
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  outline: none;
+  font-family: "Poppins", sans-serif;
+  transition: border-color 0.2s;
   -webkit-appearance: none;
 }
-.form-input:focus { border-color: #ff8049; background: #fff; }
+.form-input:focus {
+  border-color: #ff8049;
+  background: #fff;
+}
 
 /* Catálogo de busca — estilos migrados para bloco CATÁLOGO — BUSCA NOVA */
-.prod-name { color: #1e293b; font-size: 13px; }
-.prod-price { font-size: 12px; color: #94a3b8; }
-.form-selected-prod { margin-top: 4px; }
+.prod-name {
+  color: #1e293b;
+  font-size: 13px;
+}
+.prod-price {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.form-selected-prod {
+  margin-top: 4px;
+}
 
 /* ══ SCANNER OVERLAY (html5-qrcode) ══ */
 .scanner-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.92);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.92);
   z-index: 9999;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 20px;
 }
 /* Contêiner que envolve o vídeo + cantos decorativos */
@@ -3020,248 +4587,832 @@ ion-modal.bottom-sheet {
 }
 /* Cantos decorativos sobrepostos ao vídeo */
 .scanner-corners {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 .scanner-corner {
-  position: absolute; width: 28px; height: 28px;
-  border-color: #ff8049; border-style: solid;
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #ff8049;
+  border-style: solid;
 }
-.scanner-corner.tl { top: 8px;  left: 8px;  border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
-.scanner-corner.tr { top: 8px;  right: 8px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
-.scanner-corner.bl { bottom: 8px; left: 8px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
-.scanner-corner.br { bottom: 8px; right: 8px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+.scanner-corner.tl {
+  top: 8px;
+  left: 8px;
+  border-width: 3px 0 0 3px;
+  border-radius: 6px 0 0 0;
+}
+.scanner-corner.tr {
+  top: 8px;
+  right: 8px;
+  border-width: 3px 3px 0 0;
+  border-radius: 0 6px 0 0;
+}
+.scanner-corner.bl {
+  bottom: 8px;
+  left: 8px;
+  border-width: 0 0 3px 3px;
+  border-radius: 0 0 0 6px;
+}
+.scanner-corner.br {
+  bottom: 8px;
+  right: 8px;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 6px 0;
+}
 .scanner-line {
-  position: absolute; left: 12px; right: 12px; top: 50%;
-  height: 2px; background: #ff8049;
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 2px;
+  background: #ff8049;
   animation: scanLine 2s ease-in-out infinite;
   border-radius: 2px;
 }
 @keyframes scanLine {
-  0%, 100% { top: 12%; }
-  50%       { top: 88%; }
+  0%,
+  100% {
+    top: 12%;
+  }
+  50% {
+    top: 88%;
+  }
 }
-.scanner-hint { font-size: 14px; color: rgba(255,255,255,.85); }
+.scanner-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
 .scanner-cancel {
-  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
-  color: #fff; border-radius: 12px; padding: 10px 24px;
-  font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
-.scanner-cancel span { font-size: 18px; }
+.scanner-cancel span {
+  font-size: 18px;
+}
 
 /* ══ TOASTS ══ */
 .toast-container {
-  position: fixed; bottom: 24px; left: 16px; right: 16px;
-  z-index: 10000; display: flex; flex-direction: column; gap: 8px;
+  position: fixed;
+  bottom: 24px;
+  left: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   pointer-events: none;
 }
 .toast-item {
-  display: flex; align-items: center; gap: 9px;
-  padding: 12px 16px; border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  border-radius: 14px;
   font-size: 13px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   pointer-events: auto;
 }
-.toast-item span { font-size: 18px; }
-.toast-item.success { background: #10b981; color: #fff; }
-.toast-item.error   { background: #ef4444; color: #fff; }
-.toast-enter-active, .toast-leave-active { transition: all .3s ease; }
-.toast-enter-from { opacity: 0; transform: translateY(20px); }
-.toast-leave-to   { opacity: 0; transform: translateY(20px); }
+.toast-item span {
+  font-size: 18px;
+}
+.toast-item.success {
+  background: #10b981;
+  color: #fff;
+}
+.toast-item.error {
+  background: #ef4444;
+  color: #fff;
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
 
 /* ══ CATÁLOGO — BUSCA NOVA ══ */
 .catalogo-loading {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; color: #94a3b8; padding: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 12px 0;
 }
 .catalogo-list {
-  max-height: 220px; overflow-y: auto;
-  border: 1px solid #e2e8f0; border-radius: 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   margin-bottom: 10px;
 }
 .catalogo-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 12px; cursor: pointer;
-  border-bottom: 1px solid #f1f5f9; transition: background .15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
   gap: 8px;
 }
-.catalogo-item:last-child { border-bottom: none; }
-.catalogo-item:active { background: rgba(255,128,73,.08); }
-.catalogo-item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.catalogo-barcode { font-size: 11px; }
-.catalogo-fornecedor { font-size: 11px; color: #94a3b8; }
-.catalogo-item-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.catalogo-arrow { font-size: 18px; color: #cbd5e1; }
+.catalogo-item:last-child {
+  border-bottom: none;
+}
+.catalogo-item:active {
+  background: rgba(255, 128, 73, 0.08);
+}
+.catalogo-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.catalogo-barcode {
+  font-size: 11px;
+}
+.catalogo-fornecedor {
+  font-size: 11px;
+  color: #94a3b8;
+}
+.catalogo-item-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.catalogo-arrow {
+  font-size: 18px;
+  color: #cbd5e1;
+}
 
 /* Paginação do catálogo */
 .catalogo-pagination {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   padding: 6px 0 10px;
 }
 .pag-btn {
-  width: 30px; height: 30px; border-radius: 8px;
-  background: #f1f5f9; border: none; color: #475569;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all .15s;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.pag-btn:disabled { opacity: .35; cursor: not-allowed; }
-.pag-btn span { font-size: 18px; }
-.pag-info { font-size: 12px; color: #64748b; }
+.pag-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.pag-btn span {
+  font-size: 18px;
+}
+.pag-info {
+  font-size: 12px;
+  color: #64748b;
+}
 
 /* Detalhe do produto selecionado */
 .selected-prod-detail {
   background: #fff8f5;
-  border: 1px solid rgba(255,128,73,.25);
-  border-radius: 14px; padding: 12px 14px;
+  border: 1px solid rgba(255, 128, 73, 0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
   margin-bottom: 14px;
 }
-.selected-prod-detail-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-.spd-icon { font-size: 22px; color: #ff8049; flex-shrink: 0; margin-top: 2px; }
-.spd-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.spd-name { font-size: 13px; color: #1e293b; line-height: 1.3; }
-.spd-barcode { font-size: 11px; color: #64748b; }
-.spd-fornecedor { font-size: 11px; }
-.spd-prices {
-  display: flex; flex-wrap: wrap; gap: 10px;
-  padding: 8px 0; border-top: 1px solid rgba(255,128,73,.15);
+.selected-prod-detail-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   margin-bottom: 10px;
 }
-.spd-price-item { display: flex; flex-direction: column; gap: 1px; min-width: 55px; }
-.spd-price-label { font-size: 9px; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; }
-.spd-price-val { font-size: 13px; color: #1e293b; }
-.spd-price-val.pos { color: #059669; }
-.spd-price-val.neg { color: #dc2626; }
+.spd-icon {
+  font-size: 22px;
+  color: #ff8049;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.spd-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.spd-name {
+  font-size: 13px;
+  color: #1e293b;
+  line-height: 1.3;
+}
+.spd-barcode {
+  font-size: 11px;
+  color: #64748b;
+}
+.spd-fornecedor {
+  font-size: 11px;
+}
+.spd-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 128, 73, 0.15);
+  margin-bottom: 10px;
+}
+.spd-price-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 55px;
+}
+.spd-price-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #94a3b8;
+}
+.spd-price-val {
+  font-size: 13px;
+  color: #1e293b;
+}
+.spd-price-val.pos {
+  color: #059669;
+}
+.spd-price-val.neg {
+  color: #dc2626;
+}
 
 /* Botão trocar produto */
 .trocar-prod-btn {
-  display: flex; align-items: center; gap: 5px;
-  background: none; border: 1px solid #e2e8f0;
-  border-radius: 9px; padding: 6px 12px;
-  font-size: 12px; color: #64748b; cursor: pointer;
-  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.trocar-prod-btn span { font-size: 16px; }
-.trocar-prod-btn:active { background: #f1f5f9; border-color: #cbd5e1; }
+.trocar-prod-btn span {
+  font-size: 16px;
+}
+.trocar-prod-btn:active {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
 
 /* ══ OFERTA CARD — RESUMO ══ */
 .oferta-resumo {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 10px 14px 12px;
-  gap: 10px; flex-wrap: wrap;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 .oferta-resumo-stats {
-  display: flex; flex-wrap: wrap; gap: 12px; flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  flex: 1;
 }
-.ors-item { display: flex; flex-direction: column; gap: 1px; min-width: 60px; }
-.ors-label { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .4px; }
-.ors-val { font-size: 14px; color: #1e293b; }
-.ors-vendedor { font-size: 12px; color: #ff8049; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
-.ors-preco { font-size: 13px; color: #059669; }
-.ors-empty { font-size: 12px; color: #94a3b8; font-style: italic; padding: 4px 0; }
-.oferta-resumo-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ors-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 60px;
+}
+.ors-label {
+  font-size: 9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.ors-val {
+  font-size: 14px;
+  color: #1e293b;
+}
+.ors-vendedor {
+  font-size: 12px;
+  color: #ff8049;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.ors-preco {
+  font-size: 13px;
+  color: #059669;
+}
+.ors-empty {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 4px 0;
+}
+.oferta-resumo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .ver-ofertas-btn {
-  display: flex; align-items: center; gap: 5px;
-  background: rgba(255,128,73,.1); color: #ff8049;
-  border: 1px solid rgba(255,128,73,.3);
-  border-radius: 10px; padding: 7px 12px;
-  font-size: 12px; cursor: pointer; transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 128, 73, 0.1);
+  color: #ff8049;
+  border: 1px solid rgba(255, 128, 73, 0.3);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
   white-space: nowrap;
 }
-.ver-ofertas-btn span { font-size: 16px; }
-.ver-ofertas-btn:active { background: #ff8049; color: #fff; }
+.ver-ofertas-btn span {
+  font-size: 16px;
+}
+.ver-ofertas-btn:active {
+  background: #ff8049;
+  color: #fff;
+}
 
 /* ══ MODAL OFERTAS ══ */
 ion-modal.ofertas-modal-sheet {
   --height: 90%;
 }
-.om-header-info { display: flex; flex-direction: column; gap: 1px; }
-.om-title { font-size: 15px; color: #1e293b; }
-.om-prod-name { font-size: 12px; color: #ff8049; }
-.om-filters { padding: 10px 18px 0; display: flex; flex-direction: column; gap: 8px; }
-.om-search { margin-bottom: 0; }
-.om-sort-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.om-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.om-title {
+  font-size: 15px;
+  color: #1e293b;
+}
+.om-prod-name {
+  font-size: 12px;
+  color: #ff8049;
+}
+.om-filters {
+  padding: 10px 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.om-search {
+  margin-bottom: 0;
+}
+.om-sort-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .om-sort-btn {
-  display: flex; align-items: center; gap: 4px;
-  padding: 5px 10px; border-radius: 8px;
-  font-size: 11px; border: 1px solid #e2e8f0;
-  background: #f8fafc; color: #64748b; cursor: pointer;
-  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.om-sort-btn span { font-size: 14px; }
-.om-sort-btn.active { background: rgba(255,128,73,.1); color: #ff8049; border-color: rgba(255,128,73,.4); }
-.om-body { padding: 10px 14px 20px; overflow-y: auto; }
+.om-sort-btn span {
+  font-size: 14px;
+}
+.om-sort-btn.active {
+  background: rgba(255, 128, 73, 0.1);
+  color: #ff8049;
+  border-color: rgba(255, 128, 73, 0.4);
+}
+.om-body {
+  padding: 10px 14px 20px;
+  overflow-y: auto;
+}
 .om-empty {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px; color: #94a3b8;
-  padding: 24px 0; justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 24px 0;
+  justify-content: center;
 }
-.om-empty span { font-size: 20px; }
-.om-ofertas-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.om-empty span {
+  font-size: 20px;
+}
+.om-ofertas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
 .om-pagination {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   padding: 8px 0;
 }
-.oih-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.oih-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
 
 /* ══ SELEÇÃO MÚLTIPLA DE PRODUTOS ══ */
 .multi-select-btn {
-  width: 100%; height: 40px; color: #FFF; font-family: 'Poppins'; font-weight: 650;
-  background-color: #ff8049; margin-bottom: 10px; border-radius: 10px;
-  border: none; display: flex; align-items: center; justify-content: center; gap: 6px;
-  cursor: pointer; transition: opacity .15s;
+  width: 100%;
+  height: 40px;
+  color: #fff;
+  font-family: "Poppins";
+  font-weight: 650;
+  background-color: #ff8049;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
 }
-.multi-select-btn span { font-size: 18px; }
-.multi-select-btn:active { opacity: .85; }
+.multi-select-btn span {
+  font-size: 18px;
+}
+.multi-select-btn:active {
+  opacity: 0.85;
+}
 
 .multi-header {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
-.multi-header-count { font-size: 13px; color: #1e293b; }
+.multi-header-count {
+  font-size: 13px;
+  color: #1e293b;
+}
 .multi-exit-btn {
-  display: flex; align-items: center; gap: 4px;
-  background: none; border: 1px solid #e2e8f0; border-radius: 9px;
-  padding: 6px 10px; font-size: 12px; color: #64748b; cursor: pointer;
-  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
 }
-.multi-exit-btn span { font-size: 16px; }
-.multi-exit-btn:active { background: #f1f5f9; border-color: #cbd5e1; }
+.multi-exit-btn span {
+  font-size: 16px;
+}
+.multi-exit-btn:active {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
 
 .multi-selected-scroll {
-  display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 10px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
   scrollbar-width: none;
 }
-.multi-selected-scroll::-webkit-scrollbar { display: none; }
+.multi-selected-scroll::-webkit-scrollbar {
+  display: none;
+}
 .multi-chip {
-  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
-  background: rgba(255,128,73,.1); border: 1px solid rgba(255,128,73,.3);
-  color: #ff8049; border-radius: 999px; padding: 6px 8px 6px 12px;
-  font-size: 12px; white-space: nowrap; max-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  background: rgba(255, 128, 73, 0.1);
+  border: 1px solid rgba(255, 128, 73, 0.3);
+  color: #ff8049;
+  border-radius: 999px;
+  padding: 6px 8px 6px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  max-width: 180px;
 }
-.multi-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.multi-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .multi-chip-remove {
-  display: flex; align-items: center; justify-content: center;
-  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(255,128,73,.2); border: none; color: #ff8049; cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: rgba(255, 128, 73, 0.2);
+  border: none;
+  color: #ff8049;
+  cursor: pointer;
 }
-.multi-chip-remove span { font-size: 13px; }
+.multi-chip-remove span {
+  font-size: 13px;
+}
 
-.catalogo-item-check { font-size: 20px; color: #ff8049; flex-shrink: 0; }
-.catalogo-item-selected { background: rgba(255,128,73,.08); }
+.catalogo-item-check {
+  font-size: 20px;
+  color: #ff8049;
+  flex-shrink: 0;
+}
+.catalogo-item-selected {
+  background: rgba(255, 128, 73, 0.08);
+}
 
 .multi-selected-list {
-  max-height: 180px; overflow-y: auto;
-  border: 1px solid #e2e8f0; border-radius: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   margin-bottom: 14px;
 }
 .multi-selected-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 12px; border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
 }
-.multi-selected-item:last-child { border-bottom: none; }
+.multi-selected-item:last-child {
+  border-bottom: none;
+}
 .multi-selected-item-info {
-  display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
-.multi-selected-item-info span:first-child { font-size: 13px; color: #1e293b; }
+.multi-selected-item-info span:first-child {
+  font-size: 13px;
+  color: #1e293b;
+}
+
+/* Organização responsiva e calendário em português. */
+.console-content {
+  --padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.cc-header {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cc-header-left,
+.cotacao-identity {
+  min-width: 0;
+}
+.cc-header-left {
+  flex: 1 1 200px;
+}
+.cotacao-name {
+  max-width: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.cc-header-right,
+.header-actions,
+.pane-header,
+.pane-btn-group {
+  flex-wrap: wrap;
+}
+.header-actions {
+  overflow: visible;
+}
+.action-btn {
+  min-height: 44px;
+  white-space: normal;
+  justify-content: center;
+}
+.pane-header > .search-wrap {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.pane-btn-group {
+  display: flex;
+  gap: 8px;
+}
+.section-intro {
+  margin-bottom: 16px;
+}
+.section-intro h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #1e293b;
+}
+.section-intro p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+}
+.periodo-bar {
+  align-items: flex-start;
+}
+.periodo-text {
+  line-height: 1.7;
+}
+.periodo-icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.pc-name,
+.oih-name,
+.vc-name,
+.vc-email,
+.prod-name,
+.spd-name,
+.om-prod-name {
+  overflow-wrap: anywhere;
+}
+.pc-top {
+  gap: 10px;
+}
+.pc-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+}
+.pc-detail-item,
+.ors-item {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.icon-btn,
+.modal-close,
+.pag-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+.form-input,
+.sb-input {
+  box-sizing: border-box;
+  min-width: 0;
+}
+.modal-footer {
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+}
+.periodo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.periodo-field {
+  min-width: 0;
+}
+.periodo-field h3 {
+  font-size: 14px;
+  color: #1e293b;
+  margin: 0 0 10px;
+}
+.periodo-field ion-datetime {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  --background: #f8fafc;
+}
+ion-modal.periodo-modal {
+  --width: min(780px, 100%);
+  --height: 90%;
+  --max-height: 900px;
+}
+button:focus-visible {
+  outline: 2px solid #c2410c;
+  outline-offset: 3px;
+}
+@media (min-width: 768px) {
+  .tab-pane {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+  }
+  .produtos-list,
+  .vendedores-list-mobile {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  ion-modal.bottom-sheet {
+    --border-radius: 20px;
+    align-items: center;
+  }
+}
+@media (max-width: 600px) {
+  .pane-header > .search-wrap {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .pane-btn-group .action-btn,
+  .header-actions .action-btn {
+    flex: 1 1 140px;
+  }
+  .tabs-bar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tab-btn {
+    justify-content: center;
+    white-space: normal;
+    padding: 12px 8px;
+  }
+  .vendedor-card-mobile {
+    flex-wrap: wrap;
+  }
+  .vc-stats {
+    width: 100%;
+    justify-content: space-around;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+  }
+  .oferta-card-header,
+  .conclude-bar {
+    flex-wrap: wrap;
+  }
+  .oih-right {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .oferta-resumo-actions,
+  .ver-ofertas-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .periodo-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .form-input,
+  .sb-input {
+    font-size: 16px;
+  }
+  .modal-footer {
+    flex-wrap: wrap;
+  }
+  .modal-footer .action-btn {
+    flex: 1 1 120px;
+  }
+}
+@media (max-width: 360px) {
+  .pc-top {
+    flex-wrap: wrap;
+  }
+  .pc-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .modal-body {
+    padding: 12px 8px;
+  }
+}
 
 /* Fim dos estilos */
 </style>

@@ -82,8 +82,13 @@
             </div>
             <div class="stat-box accent">
               <span class="stat-label">Valor Total</span>
-              <span class="stat-value">R$ {{ valorTotalFaturamento.toFixed(2) }}</span>
+              <span class="stat-value">R$ {{ valorTotalFaturamento }}</span>
             </div>
+          </div>
+
+          <div v-if="possuiProdutosFaturamentoExtra" class="faturamento-extra-banner">
+            <span style="font-size: 25px; margin-bottom: 3px;" class="material-symbols-outlined">local_atm</span>
+            <span>ESSA COTAÇÃO POSSUI PRODUTOS EXTRAS FATURADOS, AQUELES QUE CONTER ESSE ÍCONE SÃO DE FATURAMENTO EXTRA</span>
           </div>
 
           <div class="table-card">
@@ -108,7 +113,12 @@
               </Column>
 
               <Column header="UNIT.">
-                <template #body="s"><span class="cell-sm">R$ {{ s.data.preco_unit_p }}</span></template>
+                <template #body="s">
+                  <span v-if="isFaturamentoExtra(s.data)" class="cell-sm faturamento-extra-cell" title="Produto de faturamento extra (sem preço na cotação)">
+                    <span class="material-symbols-outlined">local_atm</span>
+                  </span>
+                  <span v-else class="cell-sm">R$ {{ s.data.preco_unit_p }}</span>
+                </template>
               </Column>
               <Column header="TOTAL">
                 <template #body="s"><b class="cell-accent">R$ {{ s.data.qtd_total_oferta }}</b></template>
@@ -172,13 +182,43 @@
             </div>
           </div>
 
+          <!-- Consulta única: retrato parcial, separado do faturamento final. -->
+          <section v-if="isQuoteOpen || resumoGanhando" class="winning-panel" aria-labelledby="winning-title" :aria-busy="carregandoGanhando">
+            <div class="winning-heading">
+              <span class="winning-icon material-symbols-outlined" aria-hidden="true">leaderboard</span>
+              <div><span class="winning-eyebrow">SUA POSIÇÃO NA DISPUTA</span><h2 id="winning-title">O que você está ganhando</h2></div>
+              <span class="winning-partial">Resultado parcial</span>
+            </div>
+            <div class="winning-warning">
+              <span class="material-symbols-outlined" aria-hidden="true">info</span>
+              <p><strong>Este NÃO é o faturamento final da cotação.</strong> É apenas o que você está ganhando no momento da consulta. O valor e os produtos estão sujeitos a alterações caso outro vendedor faça uma oferta melhor.</p>
+            </div>
+            <template v-if="!resumoGanhando">
+              <p class="winning-once">Você pode consultar <strong>uma única vez por cotação</strong>. Ao clicar, sua consulta será registrada e não poderá ser atualizada.</p>
+              <button class="winning-button" :disabled="carregandoGanhando || consultaGanhandoBloqueada || !isQuoteOpen" @click="visualizarGanhando">
+                <span class="material-symbols-outlined" :class="{ spin: carregandoGanhando }" aria-hidden="true">{{ carregandoGanhando ? 'progress_activity' : 'visibility' }}</span>
+                {{ carregandoGanhando ? 'Consultando sua posição…' : consultaGanhandoBloqueada ? 'Consulta já utilizada' : 'Visualizar o que estou ganhando' }}
+              </button>
+            </template>
+            <p v-if="erroGanhando" class="winning-error" role="alert">{{ erroGanhando }}</p>
+            <div v-if="resumoGanhando" class="winning-result" role="status" aria-live="polite">
+              <div class="winning-stats">
+                <div class="winning-total"><span>Valor total que você estava ganhando</span><strong>{{ moedaGanhando(resumoGanhando.valor_total_ganhando) }}</strong><small>Valor parcial · não representa venda confirmada</small></div>
+                <div class="winning-count"><span>Produtos em vantagem</span><strong>{{ quantidadeProdutosGanhando }}</strong><small>no momento da consulta</small></div>
+              </div>
+              <div class="winning-legend"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span><strong>Os produtos que você está ganhando estão em verde.</strong></div>
+              <p class="winning-snapshot">Consulta única realizada {{ dataConsultaGanhando }}. Os destaques representam esse momento e não são atualizados após novas ofertas.</p>
+              <div v-if="!resumoGanhando.produtos.length" class="winning-empty"><span class="material-symbols-outlined" aria-hidden="true">trending_up</span><div><strong>Nenhum produto em vantagem nesta consulta.</strong><p>Você ainda pode revisar suas ofertas enquanto a cotação estiver aberta.</p></div></div>
+            </div>
+          </section>
+
           <!-- ===== EXCEL ACTIONS ===== -->
           <div class="excel-actions" v-if="statusChipLabel == 'Aberta'" style="margin-bottom: 20px;">
-            <button class="btn-excel-export" @click="exportToExcel">
+            <button class="btn-excel-export" style="width: 100%; height: 50px;" @click="exportToExcel">
               <span class="material-symbols-outlined">download</span>
               Exportar Pedido (Excel)
             </button>
-            <label class="btn-excel-import">
+            <label class="btn-excel-import" style="width: 100%; height: 50px;">
               <span class="material-symbols-outlined">upload</span>
               Importar Respostas (Excel)
               <input type="file" accept=".xlsx,.xls" style="display:none" @change="importFromExcel" />
@@ -205,7 +245,7 @@
               v-for="item in paginatedItems"
               :key="item.id_solicitado"
               class="item-card"
-              :class="{ 'is-answered': item.oferta_existente, 'is-saving': savingItems[item.id_solicitado] }"
+              :class="{ 'is-answered': item.oferta_existente, 'is-saving': savingItems[item.id_solicitado], 'is-winning': produtoEstaGanhando(item) }"
             >
               <!-- Card Header -->
               <div class="card-head">
@@ -214,6 +254,7 @@
                   <div class="card-info">
                     <span class="ean-label">{{ item.codigo_barra }}</span>
                     <span class="prod-name">{{ item.nome }}</span>
+                    <span v-if="produtoEstaGanhando(item)" class="winning-item-tag"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Ganhando na consulta</span>
                     <div class="prod-meta">
                       <span>Qtd: <b>{{ item.quantidade }}</b></span>
                       <span>Tipo: <b>{{ item.tipo }}</b></span>
@@ -342,7 +383,7 @@
               class="nav-btn prev"
               :class="{ disabled: currentPage === 1 }"
               :disabled="currentPage === 1"
-              @click="goToPage(currentPage - 1)"
+              @click="goToPage(currentPage - 1); scrollToTop()"
             >
               <span class="material-symbols-outlined">arrow_back_ios</span>
               Anterior
@@ -358,7 +399,7 @@
               class="nav-btn next"
               :class="{ disabled: currentPage === totalPages }"
               :disabled="currentPage === totalPages"
-              @click="goToPage(currentPage + 1)"
+              @click="goToPage(currentPage + 1); scrollToTop()"
             >
               Próxima
               <span class="material-symbols-outlined">arrow_forward_ios</span>
@@ -412,14 +453,15 @@
                   <tr
                     v-for="item in paginatedItemsDesktop"
                     :key="item.id_solicitado"
-                    :class="{ 'produto-selecionado-auto': item.oferta_existente }"
+                    :class="{ 'produto-selecionado-auto': item.oferta_existente, 'is-winning': produtoEstaGanhando(item) }"
                   >
                     <td>
                       <div class="prod-cell">
                         <span class="prod-name">{{ item.nome }}</span>
+                    <span v-if="produtoEstaGanhando(item)" class="winning-item-tag"><span class="material-symbols-outlined" aria-hidden="true">check_circle</span>Ganhando na consulta</span>
                       </div>
                     </td>
-                    <td><span class="mono">{{ item.codigo_barra || 'Não cadastrado' }}</span></td>
+                    <td><span class="mono">{{ item.codigo_barra || item.codigo_barra_inex || 'Não cadastrado' }}</span></td>
                     <td><b>{{ item.quantidade || '--' }}</b></td>
                     <td>
                       <span class="type-tag" v-if="item.tipo">{{ item.tipo }}</span>
@@ -703,6 +745,8 @@ export default defineComponent({
   },
   data() {
     return {
+      carregandoGanhando: false,
+      consultasGanhando: {} as Record<string, { resumo?: any; bloqueada?: boolean; erro?: string }>,
       loading: true,
       items: [] as any[],
       offers: [] as any[],
@@ -742,6 +786,32 @@ export default defineComponent({
     };
   },
   computed: {
+    chaveConsultaGanhando(): string {
+      return JSON.stringify([this.idVendedor, this.id_loja, this.id_cotacao]);
+    },
+    resumoGanhando(): any {
+      return this.consultasGanhando[this.chaveConsultaGanhando]?.resumo || null;
+    },
+    consultaGanhandoBloqueada(): boolean {
+      return !!this.consultasGanhando[this.chaveConsultaGanhando]?.bloqueada;
+    },
+    erroGanhando(): string {
+      return this.consultasGanhando[this.chaveConsultaGanhando]?.erro || '';
+    },
+    idsProdutosGanhando(): Set<string> {
+      return new Set((this.resumoGanhando?.produtos || []).map((p: any) => this.normalizarIdentificador(p.id_produto)).filter(Boolean));
+    },
+    barrasProdutosGanhando(): Set<string> {
+      return new Set((this.resumoGanhando?.produtos || []).map((p: any) => this.normalizarIdentificador(p.codigo_barra)).filter(Boolean));
+    },
+    quantidadeProdutosGanhando(): number {
+      return this.resumoGanhando?.quantidade_produtos_ganhando ?? this.idsProdutosGanhando.size;
+    },
+    dataConsultaGanhando(): string {
+      const timestamp = Number(this.resumoGanhando?.visualizado_em);
+      return Number.isFinite(timestamp) && timestamp > 0
+        ? new Date(timestamp).toLocaleString('pt-BR') : 'nesta sessão';
+    },
     isQuoteOpen(): boolean {
       return this.currentQuoteStatus === 'aberta';
     },
@@ -823,6 +893,11 @@ export default defineComponent({
       return total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
     },
 
+    // ── Produtos de faturamento extra (sem preço definido na cotação) ──
+    possuiProdutosFaturamentoExtra(): boolean {
+      return (this.produtos_selecionados || []).some((p: any) => this.isFaturamentoExtra(p));
+    },
+
     // ── Computeds exclusivos da visão desktop (>= 992px) ────────────
     itemsById(): Record<string, any> {
       const map: Record<string, any> = {};
@@ -862,6 +937,58 @@ export default defineComponent({
     }
   },
   methods: {
+    normalizarIdentificador(valor: unknown): string {
+      return valor == null ? '' : String(valor).trim();
+    },
+    produtoEstaGanhando(item: any): boolean {
+      if (!this.resumoGanhando) return false;
+      const id = this.normalizarIdentificador(item.id_produto);
+      const barras = [item.codigo_barra, item.codigo_barra_inex, item.oferta_existente?.codigo_barra]
+        .map(this.normalizarIdentificador).filter(Boolean);
+      return (!!id && this.idsProdutosGanhando.has(id)) || barras.some(barra => this.barrasProdutosGanhando.has(barra));
+    },
+    moedaGanhando(valor: unknown): string {
+      return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    },
+    async visualizarGanhando() {
+      if (this.carregandoGanhando || this.resumoGanhando || this.consultaGanhandoBloqueada || !this.isQuoteOpen) return;
+      const chave = this.chaveConsultaGanhando;
+      if (!this.id_loja || !this.id_cotacao) {
+        this.consultasGanhando[chave] = { erro: 'Não foi possível identificar a loja e a cotação. Reabra os detalhes.' };
+        return;
+      }
+      this.carregandoGanhando = true;
+      this.consultasGanhando[chave] = {};
+      try {
+        const { data } = await api.get(`/mvpu/cotacao/visualizarGanhando/${encodeURIComponent(this.id_loja)}/${encodeURIComponent(this.id_cotacao)}`);
+        // Suporta tanto { body: { data } } quanto { data }.
+        const envelope = data?.body ?? data;
+        if (String(envelope?.COD) === '1430') {
+          this.consultasGanhando[chave] = { bloqueada: true, erro: 'Você já utilizou a consulta única desta cotação. Não é possível consultar novamente.' };
+          return;
+        }
+        if (Number(data?.status) >= 400) {
+          throw new Error(envelope?.MSG || 'Não foi possível consultar sua posição.');
+        }
+        const resumo = envelope?.data;
+        if (!Array.isArray(resumo?.produtos) || resumo.valor_total_ganhando == null || resumo.valor_total_ganhando === '' || !Number.isFinite(Number(resumo.valor_total_ganhando))) {
+          this.consultasGanhando[chave] = { bloqueada: true, erro: 'O servidor respondeu sem um resumo válido. A consulta pode ter sido registrada; entre em contato com o suporte.' };
+          return;
+        }
+        this.consultasGanhando[chave] = { resumo, bloqueada: true };
+      } catch (erro: any) {
+        const envelope = erro.response?.data?.body ?? erro.response?.data;
+        const jaConsultou = String(envelope?.COD) === '1430';
+        this.consultasGanhando[chave] = {
+          bloqueada: jaConsultou,
+          erro: jaConsultou
+            ? 'Você já utilizou a consulta única desta cotação. O resultado anterior não está disponível nesta sessão.'
+            : envelope?.MSG || (erro.response ? 'Não foi possível consultar sua posição. Tente novamente.' : 'Não foi possível receber o resultado. A consulta pode ter sido registrada pelo servidor; uma nova tentativa não garante uma nova consulta.')
+        };
+      } finally {
+        this.carregandoGanhando = false;
+      }
+    },
     // ===== PAGINATION =====
     goToPage(page: number) {
       if (page < 1 || page > this.totalPages) return;
@@ -890,19 +1017,20 @@ export default defineComponent({
       return pageItems.some(i => i.oferta_existente) && !this.isPageFullyAnswered(page);
     },
 
-    /**
-     * After data loads, automatically jump to the first page that still has
-     * unanswered items. If all pages are done, stay on page 1.
-     */
-    autoNavigateToFirstPendingPage() {
-      for (let p = 1; p <= this.totalPages; p++) {
-        if (!this.isPageFullyAnswered(p)) {
-          this.currentPage = p;
-          return;
+    /** Abre a página do último item respondido na ordem da lista. */
+    autoNavigateToLastAnsweredPage() {
+      const pageOfLastAnswer = (items: any[], pageSize: number): number => {
+        for (let index = items.length - 1; index >= 0; index--) {
+          if (items[index].oferta_existente) {
+            return Math.floor(index / pageSize) + 1;
+          }
         }
-      }
-      // All answered — go to last page
-      this.currentPage = this.totalPages || 1;
+        return 1;
+      };
+
+      this.currentPage = pageOfLastAnswer(this.combinedItems, this.itemsPerPage);
+      // No desktop, a posição deve respeitar a busca que está sendo exibida.
+      this.currentPageDesktop = pageOfLastAnswer(this.filteredItemsDesktop, this.itemsPerPageDesktop);
     },
 
     // ===== EXISTING METHODS =====
@@ -977,12 +1105,14 @@ export default defineComponent({
       if (!this.isQuoteOpen) return;
       if (!confirm('Remover esta oferta?')) return;
       try {
+        
         const payload = {
           arrayDeletados: [item.oferta_existente.id_oferta],
           id_cotacao: parseInt(this.id_cotacao as string)
         };
         await api.delete(`/mvpu/cotacao/removerOferta/${this.id_loja}`, { data: payload });
         await this.fetchAllData();
+
       } catch (err) {
         alert('Erro ao remover');
       }
@@ -1155,9 +1285,9 @@ export default defineComponent({
         });
         this.tempOffers = newTempOffers;
 
-        // Auto-navigate to first page with pending items
+        // Após carregar produtos e ofertas, retoma a página do último respondido.
         this.$nextTick(() => {
-          this.autoNavigateToFirstPendingPage();
+          this.autoNavigateToLastAnsweredPage();
         });
       } catch (err) {
         this.$toast.add({ severity: 'error', summary: 'Erro ao buscar dados', detail: 'Tente novamente em instantes.', life: 3000 });
@@ -1171,6 +1301,12 @@ export default defineComponent({
       return new Date(parseInt(timestamp)).toLocaleString('pt-BR');
     },
 
+    // Produto sem preço unitário definido na cotação = faturamento extra
+    isFaturamentoExtra(produto: any): boolean {
+      const preco = produto?.preco_unit_p;
+      return preco === null || preco === undefined || preco === '' || isNaN(Number(preco)) || Number(preco) === 0;
+    },
+
     async montarDocumento() {
       try {
         this.totalItens = 0;
@@ -1179,7 +1315,7 @@ export default defineComponent({
         this.produtos_selecionados = produtos.data?.data;
         this.produtos_selecionados.forEach((prod: any) => {
           this.totalItens += (prod.quantidade_p * (prod.unid_comp_p || 1));
-          this.valorTotalFaturamento += prod.qtd_total_oferta;
+          this.valorTotalFaturamento += Number(prod.qtd_total_oferta) || 0;
         });
       } catch (e) {
         this.$toast.add({ severity: 'error', summary: 'Erro ao buscar produtos', detail: 'Aguarde um momento...', life: 3000 });
@@ -1199,7 +1335,7 @@ export default defineComponent({
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(22);
-        const textMarket = "Market";
+        const textMarket = "Market ";
         const textVizium = "Vizium";
         const marketWidth = doc.getTextWidth(textMarket);
         const viziumWidth = doc.getTextWidth(textVizium);
@@ -1215,7 +1351,21 @@ export default defineComponent({
         doc.setTextColor(...lightGray);
         doc.setFont("helvetica", "bold");
         doc.text("RESULTADO DA COTAÇÃO", 15, 42);
-        doc.text(`EMITIDO EM: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 15, 42, { align: "right" });
+
+        const agora = new Date();
+
+        const dataHora = agora.toLocaleString('pt-BR', {
+          timeZone: 'America/Sao_Paulo',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+
+        doc.text(`EMITIDO EM: ${dataHora}`, pageWidth - 15, 42, { align: "right" });
 
         doc.setFontSize(10);
         doc.setTextColor(...secondaryColor);
@@ -1227,18 +1377,32 @@ export default defineComponent({
         doc.text(`NOME FANTASIA: ${this.nome_fantasia || 'N/A'}`, 15, 63);
         doc.text(`RAZÃO SOCIAL: ${this.razao_social || 'N/A'}`, 15, 68);
 
+        let tableStartY = 75;
+        if (this.possuiProdutosFaturamentoExtra) {
+          doc.setFontSize(7.5);
+          doc.setTextColor(...primaryColor);
+          doc.setFont("helvetica", "bold");
+          doc.text("ESSA COTAÇÃO POSSUI PRODUTOS EXTRAS FATURADOS (MARCADOS COMO \"FAT. EXTRA\" NA COLUNA UNIT.)", 15, tableStartY);
+          tableStartY += 6;
+        }
+
+        const formatMoeda = (v: any) => {
+          const n = Number(v);
+          return isNaN(n) ? '0.00' : n.toFixed(2);
+        };
+
         const tableBody = this.produtos_selecionados.map(item => [
           item.codigo_barra,
           { content: item.nome, styles: { fontStyle: 'bold', textColor: [30, 41, 59] } },
           item.quantidade_p,
           item.unid_comp_p,
           item.primeiro_tipo,
-          `R$ ${item.preco_unit_p.toFixed(2)}`,
-          `R$ ${item.qtd_total_oferta.toFixed(2)}`
+          this.isFaturamentoExtra(item) ? 'FAT. EXTRA' : `R$ ${formatMoeda(item.preco_unit_p)}`,
+          `R$ ${formatMoeda(item.qtd_total_oferta)}`
         ]);
 
         autoTable(doc, {
-          startY: 75,
+          startY: tableStartY,
           head: [['CÓD. BARRA', 'NOME PROD.', 'QTD.','QTD. POR EMB.', 'TIPO', 'UNIT.', 'SUBTOTAL']],
           body: tableBody,
           theme: 'plain',
@@ -1296,7 +1460,7 @@ export default defineComponent({
           doc.save(pdfFileName);
         }
       } catch (error) {
-        
+        this.$toast.add({ severity: 'error', summary: 'Erro ao gerar PDF', detail: 'Não foi possível gerar o comprovante. Tente novamente.', life: 3000 });
       } finally {
         this.loading = false;
       }
@@ -1656,6 +1820,16 @@ export default defineComponent({
         this.$toast.add({ severity: 'error', summary: 'Erro na importação', detail: 'Não foi possível processar a planilha.', life: 4000 });
       }
     },
+
+    scrollToTop() {
+      const element = document.querySelector('.btn-excel-import')
+
+      element?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+
   },
 
   ionViewWillEnter() {
@@ -1826,6 +2000,35 @@ ion-content {
 
 .cell-sm { font-size: 11px; color: #444; }
 .cell-accent { font-size: 12px; font-weight: 700; color: #FF8049; }
+
+/* ===== Aviso de produtos de faturamento extra ===== */
+.faturamento-extra-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #059669;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.faturamento-extra-banner .material-symbols-outlined {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.faturamento-extra-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.faturamento-extra-cell .material-symbols-outlined {
+  font-size: 18px;
+  color: #059669;
+}
 
 .footer-actions { display: flex; flex-direction: column; gap: 8px; padding-bottom: 16px; }
 
@@ -2031,9 +2234,9 @@ ion-content {
 .status-dot.pending { background: #ddd; }
 
 .card-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.ean-label { font-size: 10px; color: #bbb; font-weight: 500; letter-spacing: 0.3px; }
+.ean-label { font-size: 12px; color: #222; font-weight: 500; letter-spacing: 0.3px; }
 .prod-name {
-  font-size: 14px; font-weight: 600; color: #1a1a1a;
+  font-size: 14px; font-weight: 800; color: #1a1a1a;
 }
 .prod-meta {
   display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
@@ -2629,4 +2832,14 @@ ion-content {
 @media print {
   .back-btn, .footer-actions { display: none !important; }
 }
+
+/* Posição parcial: não se confunde com o faturamento do pedido. */
+.winning-panel{margin:0 0 20px;padding:24px;border:1px solid #cde4d7;border-radius:20px;background:linear-gradient(135deg,#f4fbf7,#fff 70%);box-shadow:0 8px 28px #163c2810}
+.winning-heading{display:flex;align-items:center;gap:12px;margin-bottom:18px}.winning-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:#dcf3e5;color:#177443;font-size:26px;flex-shrink:0}.winning-eyebrow{font-size:10px;letter-spacing:1.4px;font-weight:700;color:#397051}.winning-heading h2{font-size:20px;line-height:1.3;margin:4px 0 0;color:#173b29;letter-spacing:-.5px}.winning-partial{margin-left:auto;font-size:11px;font-weight:600;padding:6px 10px;border-radius:20px;background:#fff0d4;color:#805414;white-space:nowrap}
+.winning-warning{display:flex;gap:10px;background:#fff8e9;border:1px solid #eedcba;border-radius:12px;padding:13px;color:#735322}.winning-warning>.material-symbols-outlined{font-size:21px;flex-shrink:0}.winning-warning p{margin:0;font-size:12px;line-height:1.7}.winning-warning strong{display:block;color:#664315}.winning-once{font-size:12px;line-height:1.6;color:#53665a;margin:16px 0 12px}.winning-button{display:flex;justify-content:center;align-items:center;gap:9px;background:#187244;color:#fff;border:0;border-radius:12px;padding:14px 20px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:48px;width:100%;transition:background .2s}.winning-button:hover:not(:disabled){background:#105b35}.winning-button:disabled{opacity:.65;cursor:not-allowed}.winning-button:focus-visible{outline:3px solid #309662;outline-offset:3px}.winning-button .material-symbols-outlined{font-size:21px}.winning-error{font-size:12px;line-height:1.6;color:#9e2929;background:#fff0ee;border-radius:10px;padding:12px;margin:14px 0 0}
+.winning-stats{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:20px}.winning-total,.winning-count{padding:20px;border-radius:14px;display:flex;flex-direction:column;gap:8px}.winning-total{background:#17613d;color:white}.winning-count{background:#eaf5ee;color:#205436}.winning-stats span{font-size:12px}.winning-stats strong{font-size:32px;line-height:1.2;letter-spacing:-1px;overflow-wrap:anywhere}.winning-stats small{font-size:11px;opacity:.85;line-height:1.5}.winning-legend{display:flex;align-items:center;gap:8px;color:#186b3e;font-size:12px;margin-top:18px;line-height:1.5}.winning-legend .material-symbols-outlined{font-size:20px;flex-shrink:0}.winning-snapshot{font-size:11px;color:#617365;line-height:1.7;margin:8px 0 0}.winning-empty{display:flex;gap:12px;margin-top:16px;padding:16px;background:#f1f5f2;border-radius:12px;color:#45614e;font-size:12px}.winning-empty p{margin:6px 0 0;line-height:1.6}
+.item-card.is-winning{background:#eefaf2;border:1px solid #78c798;box-shadow:inset 4px 0 0 #25824c}.item-card.is-winning .status-dot{background:#23834b}.winning-item-tag{display:inline-flex;align-items:center;gap:4px;width:fit-content;font-size:10px;font-weight:700;line-height:1.5;padding:3px 7px;border-radius:6px;color:#176337;background:#d7efdf;margin-top:5px}.winning-item-tag .material-symbols-outlined{font-size:14px}.data-table tbody tr.is-winning,.data-table tbody tr.is-winning:hover,.data-table tbody tr.is-winning.produto-selecionado-auto{background:#eaf8ef}.data-table tbody tr.is-winning td:first-child{box-shadow:inset 4px 0 0 #25824c}.data-table .is-winning .prod-cell{align-items:flex-start;flex-direction:column}
+@media(max-width:600px){.winning-panel{padding:16px;border-radius:16px}.winning-heading{flex-wrap:wrap;gap:10px}.winning-heading h2{font-size:17px}.winning-partial{margin-left:56px;margin-top:-5px}.winning-stats{grid-template-columns:1fr;gap:10px}.winning-total,.winning-count{padding:16px}.winning-stats strong{font-size:28px}.winning-count{display:grid;grid-template-columns:1fr auto;align-items:center}.winning-count small{grid-column:1/-1}.winning-button{font-size:12px;padding:14px 10px}}
+@media(prefers-reduced-motion:reduce){.winning-panel .spin{animation:none}.winning-button{transition:none}}
+
 </style>
